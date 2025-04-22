@@ -408,14 +408,10 @@ edhoc_get_key_id_cred_x(uint8_t **p, uint8_t *out_id_cred_x, cose_key_t *key)
     key->kid_sz = 1;
     ptr = key->kid;
 
-    if(key->kid[0] == 0) {
-      /* Read variable-length KID */
-      key->kid_sz = edhoc_get_bytes(p, &ptr);
-      memcpy(key->kid, ptr, key->kid_sz);
-    }
     label = 0;
   }
 
+  /* Note that currently only ID_CRED_R as KID is supported */
   switch(label) {
   case 0:
     /* ID_CRED_R = KID (compact encoding) */
