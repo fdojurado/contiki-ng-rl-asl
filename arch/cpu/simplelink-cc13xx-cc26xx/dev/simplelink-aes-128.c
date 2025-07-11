@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Hasso-Plattner-Institut.
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,29 +25,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
  */
 
 /**
- * \addtogroup cc2538-aes-128
+ * \addtogroup cc13xx-cc26xx-crypto
  * @{
  *
  * \file
- *         Implementation of the AES-128 driver for the CC2538 SoC
+ *         Implementation of the AES-128 driver for SimpleLink MCUs.
  * \author
  *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
-#include "dev/cc2538-aes-128.h"
-#include "dev/aes.h"
-#include "dev/sys-ctrl.h"
+#include "dev/simplelink-aes-128.h"
+#include "dev/crypto.h"
 #include "lib/assert.h"
-#include <stdbool.h>
+#include <ti/devices/DeviceFamily.h>
+#include DeviceFamily_constructPath(inc/hw_crypto.h)
+#include DeviceFamily_constructPath(inc/hw_types.h)
+#include DeviceFamily_constructPath(inc/hw_memmap.h)
+
+#ifdef SIMPLELINK_AES_128_CONF_KEY_AREA
+#define KEY_AREA SIMPLELINK_AES_128_CONF_KEY_AREA
+#else /* SIMPLELINK_AES_128_CONF_KEY_AREA */
+#define KEY_AREA 0
+#endif /* SIMPLELINK_AES_128_CONF_KEY_AREA */
 
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "cc2538-aes-128"
+#define LOG_MODULE "simplelink-aes-128"
 #define LOG_LEVEL LOG_LEVEL_NONE
 
 /*---------------------------------------------------------------------------*/
@@ -55,58 +61,57 @@ static bool
 set_key(const uint8_t key[static AES_128_KEY_LENGTH])
 {
   bool result = false;
-  bool was_crypto_enabled = CRYPTO_IS_ENABLED();
+  bool was_crypto_enabled = crypto_is_enabled();
   if(!was_crypto_enabled) {
     crypto_enable();
   }
 
   /* all previous interrupts should have been acknowledged */
-  assert(!REG(AES_CTRL_INT_STAT));
+  assert(!HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT));
 
   /* set up AES interrupts */
-  REG(AES_CTRL_INT_CFG) = AES_CTRL_INT_CFG_LEVEL;
-  REG(AES_CTRL_INT_EN) = AES_CTRL_INT_EN_RESULT_AV;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQTYPE) = CRYPTO_IRQTYPE_LEVEL;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQEN) = CRYPTO_IRQEN_RESULT_AVAIL;
 
   /* enable DMA path to the key store module */
-  REG(AES_CTRL_ALG_SEL) = AES_CTRL_ALG_SEL_KEYSTORE;
+  HWREG(CRYPTO_BASE + CRYPTO_O_ALGSEL) = CRYPTO_ALGSEL_KEY_STORE;
 
   /* configure key store module (area, size) - note that setting
-   * AES_KEY_STORE_SIZE to AES_KEY_STORE_SIZE_KEY_SIZE_128 is unnecessary
-   * because AES_KEY_STORE_SIZE_KEY_SIZE_128 is the reset value. Moreover,
-   * writing AES_KEY_STORE_SIZE would clear all other loaded keys. */
+   * CRYPTO_O_KEYSIZE to CRYPTO_KEYSIZE_SIZE_128_BIT is unnecessary
+   * because CRYPTO_KEYSIZE_SIZE_128_BIT is the reset value. Moreover,
+   * writing CRYPTO_O_KEYSIZE would clear all other loaded keys. */
   /* clear key to write */
-  REG(AES_KEY_STORE_WRITTEN_AREA) = 1 << CC2538_AES_128_KEY_AREA;
+  HWREG(CRYPTO_BASE + CRYPTO_O_KEYWRITTENAREA) = 1 << KEY_AREA;
   /* enable key to write */
-  REG(AES_KEY_STORE_WRITE_AREA) = 1 << CC2538_AES_128_KEY_AREA;
+  HWREG(CRYPTO_BASE + CRYPTO_O_KEYWRITEAREA) = 1 << KEY_AREA;
 
   /* configure DMAC */
-  REG(AES_DMAC_CH0_CTRL) = AES_DMAC_CH_CTRL_EN; /* enable DMA channel 0 */
-  uint8_t aligned_key[AES_128_KEY_LENGTH]__attribute__((aligned(4)));
-  memcpy(aligned_key, key, sizeof(aligned_key));
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0CTL) = CRYPTO_DMACH0CTL_EN; /* enable DMA channel 0 */
   /* set base address of the aligned key in external memory */
-  REG(AES_DMAC_CH0_EXTADDR) = (uintptr_t)aligned_key;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0EXTADDR) = (uintptr_t)key;
   /* total key length in bytes (e.g. 16 for 1 x 128-bit key) */
-  REG(AES_DMAC_CH0_DMALENGTH) = AES_128_KEY_LENGTH;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0LEN) = AES_128_KEY_LENGTH;
 
   /* wait for completion */
-  while(!(REG(AES_CTRL_INT_STAT) & AES_CTRL_INT_STAT_RESULT_AV));
+  while(!(HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT) & CRYPTO_IRQCLR_RESULT_AVAIL)) { LOG_DBG("."); }
 
   /* acknowledge the interrupt */
-  REG(AES_CTRL_INT_CLR) = AES_CTRL_INT_CLR_RESULT_AV;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQCLR) = CRYPTO_IRQCLR_RESULT_AVAIL;
 
   /* check for absence of errors in DMA and key store */
-  uint32_t errors = REG(AES_CTRL_INT_STAT)
-                    & (AES_CTRL_INT_STAT_DMA_BUS_ERR
-                       | AES_CTRL_INT_STAT_KEY_ST_WR_ERR);
+  uint32_t errors = HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT)
+                    & (CRYPTO_IRQSTAT_DMA_BUS_ERR
+                       | CRYPTO_IRQSTAT_KEY_ST_WR_ERR);
   if(errors) {
     LOG_ERR("error at line %d\n", __LINE__);
     /* clear errors */
-    REG(AES_CTRL_INT_CLR) = errors;
+    HWREG(CRYPTO_BASE + CRYPTO_O_IRQCLR) = errors;
     goto exit;
   }
 
   /* check that key was written */
-  if(!(REG(AES_KEY_STORE_WRITTEN_AREA) & (1 << CC2538_AES_128_KEY_AREA))) {
+  if(!(HWREG(CRYPTO_BASE + CRYPTO_O_KEYWRITTENAREA)
+       & (1 << KEY_AREA))) {
     LOG_ERR("error at line %d\n", __LINE__);
     goto exit;
   }
@@ -115,10 +120,10 @@ set_key(const uint8_t key[static AES_128_KEY_LENGTH])
 
 exit:
   /* all interrupts should have been acknowledged */
-  assert(!REG(AES_CTRL_INT_STAT));
+  assert(!HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT));
 
   /* disable master control/DMA clock */
-  REG(AES_CTRL_ALG_SEL) = 0;
+  HWREG(CRYPTO_BASE + CRYPTO_O_ALGSEL) = 0;
 
   if(!was_crypto_enabled) {
     crypto_disable();
@@ -130,69 +135,69 @@ static bool
 encrypt(uint8_t plaintext_and_result[static AES_128_BLOCK_SIZE])
 {
   bool result = false;
-  bool was_crypto_enabled = CRYPTO_IS_ENABLED();
+  bool was_crypto_enabled = crypto_is_enabled();
   if(!was_crypto_enabled) {
     crypto_enable();
   }
 
   /* all previous interrupts should have been acknowledged */
-  assert(!REG(AES_CTRL_INT_STAT));
+  assert(!HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT));
 
   /* set up AES interrupts */
-  REG(AES_CTRL_INT_CFG) = AES_CTRL_INT_CFG_LEVEL;
-  REG(AES_CTRL_INT_EN) = AES_CTRL_INT_EN_RESULT_AV;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQTYPE) = CRYPTO_IRQTYPE_LEVEL;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQEN) = CRYPTO_IRQEN_RESULT_AVAIL;
 
   /* enable the DMA path to the AES engine */
-  REG(AES_CTRL_ALG_SEL) = AES_CTRL_ALG_SEL_AES;
+  HWREG(CRYPTO_BASE + CRYPTO_O_ALGSEL) = CRYPTO_ALGSEL_AES;
 
   /* configure the key store to provide pre-loaded AES key */
-  REG(AES_KEY_STORE_READ_AREA) = CC2538_AES_128_KEY_AREA;
+  HWREG(CRYPTO_BASE + CRYPTO_O_KEYREADAREA) = KEY_AREA;
 
   /* wait until the key is loaded to the AES module */
-  while(REG(AES_KEY_STORE_READ_AREA) & AES_KEY_STORE_READ_AREA_BUSY);
+  while(HWREG(CRYPTO_BASE + CRYPTO_O_KEYREADAREA) & CRYPTO_KEYREADAREA_BUSY);
 
   /* check if the key was loaded without errors */
-  if(REG(AES_CTRL_INT_STAT) & AES_CTRL_INT_STAT_KEY_ST_RD_ERR) {
+  if(HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT) & CRYPTO_IRQSTAT_KEY_ST_RD_ERR) {
     LOG_ERR("error at line %d\n", __LINE__);
     /* clear error */
-    REG(AES_CTRL_INT_CLR) = AES_CTRL_INT_STAT_KEY_ST_RD_ERR;
+    HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT) = CRYPTO_IRQSTAT_KEY_ST_RD_ERR;
     goto exit;
   }
 
   /* configure AES engine */
-  REG(AES_AES_CTRL) = AES_AES_CTRL_DIRECTION_ENCRYPT;
-  REG(AES_AES_C_LENGTH_0) =
+  HWREG(CRYPTO_BASE + CRYPTO_O_AESCTL) = CRYPTO_AESCTL_DIR;
+  HWREG(CRYPTO_BASE + CRYPTO_O_AESDATALEN0) =
       AES_128_BLOCK_SIZE; /* write length of the message (lo) */
-  REG(AES_AES_C_LENGTH_1) = 0; /* write length of the message (hi) */
+  HWREG(CRYPTO_BASE + CRYPTO_O_AESDATALEN1) = 0; /* write length of the message (hi) */
 
   /* configure DMAC */
   /* enable DMA channel 0 */
-  REG(AES_DMAC_CH0_CTRL) = AES_DMAC_CH_CTRL_EN;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0CTL) = CRYPTO_DMACH0CTL_EN;
   /* base address of the input data in external memory */
-  REG(AES_DMAC_CH0_EXTADDR) = (uintptr_t)plaintext_and_result;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0EXTADDR) = (uintptr_t)plaintext_and_result;
   /* length of the input data to be transferred */
-  REG(AES_DMAC_CH0_DMALENGTH) = AES_128_BLOCK_SIZE;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH0LEN) = AES_128_BLOCK_SIZE;
   /* enable DMA channel 1 */
-  REG(AES_DMAC_CH1_CTRL) = AES_DMAC_CH_CTRL_EN;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH1CTL) = CRYPTO_DMACH1CTL_EN;
   /* base address of the output data in external memory */
-  REG(AES_DMAC_CH1_EXTADDR) = (uintptr_t)plaintext_and_result;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH1EXTADDR) = (uintptr_t)plaintext_and_result;
   /* length of the output data to be transferred */
-  REG(AES_DMAC_CH1_DMALENGTH) = AES_128_BLOCK_SIZE;
+  HWREG(CRYPTO_BASE + CRYPTO_O_DMACH1LEN) = AES_128_BLOCK_SIZE;
 
   /* wait for completion */
-  while(!(REG(AES_CTRL_INT_STAT) & AES_CTRL_INT_STAT_RESULT_AV));
+  while(!(HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT) & CRYPTO_IRQCLR_RESULT_AVAIL));
 
   /* acknowledge the interrupt */
-  REG(AES_CTRL_INT_CLR) = AES_CTRL_INT_CLR_RESULT_AV;
+  HWREG(CRYPTO_BASE + CRYPTO_O_IRQCLR) = CRYPTO_IRQCLR_RESULT_AVAIL;
 
   /* check for errors in DMA and key store */
-  uint32_t errors = REG(AES_CTRL_INT_STAT)
-                    & (AES_CTRL_INT_STAT_DMA_BUS_ERR
-                       | AES_CTRL_INT_STAT_KEY_ST_RD_ERR);
+  uint32_t errors = HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT)
+                    & (CRYPTO_IRQSTAT_DMA_BUS_ERR
+                       | CRYPTO_IRQSTAT_KEY_ST_RD_ERR);
   if(errors) {
     LOG_ERR("error at line %d\n", __LINE__);
     /* clear errors */
-    REG(AES_CTRL_INT_CLR) = errors;
+    HWREG(CRYPTO_BASE + CRYPTO_O_IRQCLR) = errors;
     goto exit;
   }
 
@@ -200,10 +205,10 @@ encrypt(uint8_t plaintext_and_result[static AES_128_BLOCK_SIZE])
 
 exit:
   /* all interrupts should have been acknowledged */
-  assert(!REG(AES_CTRL_INT_STAT));
+  assert(!HWREG(CRYPTO_BASE + CRYPTO_O_IRQSTAT));
 
   /* disable master control/DMA clock */
-  REG(AES_CTRL_ALG_SEL) = 0;
+  HWREG(CRYPTO_BASE + CRYPTO_O_ALGSEL) = 0;
 
   if(!was_crypto_enabled) {
     crypto_disable();
@@ -211,7 +216,7 @@ exit:
   return result;
 }
 /*---------------------------------------------------------------------------*/
-const struct aes_128_driver cc2538_aes_128_driver = {
+const struct aes_128_driver simplelink_aes_128_driver = {
   set_key,
   encrypt
 };

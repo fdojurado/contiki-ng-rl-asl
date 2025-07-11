@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, University of Bristol - http://www.bristol.ac.uk
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,57 +26,50 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 /**
- * \addtogroup cc26xx
+ * \addtogroup cc13xx-cc26xx-cpu
  * @{
  *
- * \defgroup cc26xx-aes CC26x0/CC13x0 AES-128
+ * \defgroup cc13xx-cc26xx-crypto AES and Hash Cryptoprocessor
  *
- * AES-128 driver for the CC26x0/CC13x0 SoC
+ * Driver for the AES and Hash Cryptoprocessor.
  * @{
  *
  * \file
- *         Header file of the AES-128 driver for the CC26xx SoC
+ *         General functions of the AES and Hash Cryptoprocessor.
  * \author
- *         Atis Elsts <atis.elsts@gmail.com>
+ *         Konrad Krentz <konrad.krentz@gmail.com>
  */
-#ifndef CC2538_AES_H_
-#define CC2538_AES_H_
 
-#include "lib/aes-128.h"
+#ifndef CRYPTO_H_
+#define CRYPTO_H_
+
+#include <stdbool.h>
 
 /**
- * \brief Set a key to use in subsequent encryption & decryption operations.
- * \param key The key to use
- * \return True on success
- *
- * The size of the key must be AES_128_KEY_LENGTH.
+ * \brief Resets the cryptoprocessor.
  */
-bool cc26xx_aes_set_key(const uint8_t key[static AES_128_KEY_LENGTH]);
+void crypto_init(void);
 
 /**
- * \brief Encrypt a message using the SoC AES-128 hardware implementation
- * \param plaintext_and_result In: message to encrypt, out: the encrypted message.
- * \return True on success
- *
- * The size of the message must be AES_128_BLOCK_SIZE.
- * The key to use in the encryption must be set before calling this function.
+ * \brief Enables the cryptoprocessor.
  */
-bool cc26xx_aes_encrypt(uint8_t plaintext_and_result[static AES_128_BLOCK_SIZE]);
+void crypto_enable(void);
 
 /**
- * \brief Decrypt a message using the SoC AES-128 hardware implementation
- * \param cyphertext_and_result In: message to decrypt, out: the decrypted message.
- * \return True on successs
- *
- * The size of the message must be AES_128_BLOCK_SIZE.
- * The key to use in the decryption must be set before calling this function.
+ * \brief Disables the cryptoprocessor.
  */
-bool cc26xx_aes_decrypt(uint8_t cyphertext_and_result[static AES_128_BLOCK_SIZE]);
+void crypto_disable(void);
 
-extern const struct aes_128_driver cc26xx_aes_128_driver;
+/**
+ * \brief  Checks if the cryptoprocessor is on.
+ * \return \c true if the cryptoprocessor is on and \c false otherwise.
+ */
+bool crypto_is_enabled(void);
 
-#endif /* CC2538_AES_H_ */
+#endif /* CRYPTO_H_ */
+
 /**
  * @}
  * @}

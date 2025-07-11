@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Hasso-Plattner-Institut.
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,56 +25,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
- *
  */
 
 /**
- * \addtogroup crypto
+ * \addtogroup cc13xx-cc26xx-crypto
  * @{
+ *
  * \file
- *         AES-128.
+ *         Header file of the AES-128 driver for SimpleLink MCUs.
  * \author
  *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
-#ifndef AES_128_H_
-#define AES_128_H_
+#ifndef SIMPLELINK_AES_128_H_
+#define SIMPLELINK_AES_128_H_
 
-#include "contiki.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include "lib/aes-128.h"
 
-#define AES_128_BLOCK_SIZE 16
-#define AES_128_KEY_LENGTH 16
+extern uint_fast8_t simplelink_aes_128_active_key_area;
+extern const struct aes_128_driver simplelink_aes_128_driver;
 
-#ifdef AES_128_CONF
-#define AES_128            AES_128_CONF
-#else /* AES_128_CONF */
-#define AES_128            aes_128_driver
-#endif /* AES_128_CONF */
-
-/**
- * Structure of AES drivers.
- */
-struct aes_128_driver {
-
-  /**
-   * \brief Sets the current key.
-   * \return True on success.
-   */
-  bool (* set_key)(const uint8_t key[static AES_128_KEY_LENGTH]);
-
-  /**
-   * \brief Encrypts.
-   * \return True on success.
-   */
-  bool (* encrypt)(uint8_t plaintext_and_result[static AES_128_BLOCK_SIZE]);
-};
-
-extern const struct aes_128_driver AES_128;
-
-#endif /* AES_128_H_ */
+#endif /* SIMPLELINK_AES_128_H_ */
 
 /** @} */

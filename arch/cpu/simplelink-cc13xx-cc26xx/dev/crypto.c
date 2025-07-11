@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Hasso-Plattner-Institut.
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,86 +25,61 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
- *
  */
 
 /**
- * \addtogroup csprng
+ * \addtogroup cc13xx-cc26xx-crypto
  * @{
+ *
  * \file
- *         An OFB-AES-128-based CSPRNG.
+ *         General functions of the AES and Hash Cryptoprocessor.
  * \author
  *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
-#include "lib/csprng.h"
-#include "lib/aes-128.h"
-#include "sys/cc.h"
-#include <string.h>
+#include "dev/crypto.h"
+#include <ti/devices/DeviceFamily.h>
+#include DeviceFamily_constructPath(inc/hw_crypto.h)
+#include DeviceFamily_constructPath(inc/hw_types.h)
+#include DeviceFamily_constructPath(inc/hw_memmap.h)
+#include DeviceFamily_constructPath(inc/hw_prcm.h)
+#include DeviceFamily_constructPath(driverlib/interrupt.h)
+#include DeviceFamily_constructPath(driverlib/prcm.h)
 
-/* Log configuration */
-#include "sys/log.h"
-#define LOG_MODULE "CSPRNG"
-#define LOG_LEVEL LOG_LEVEL_NONE
-
-static struct csprng_seed seed;
-static size_t read_state_bytes;
-static bool seeded;
+#ifndef CRYPTO_SWRESET_SW_RESET
+/* for backwards compatibility with CC13x0/CC26x0 */
+#define CRYPTO_SWRESET_SW_RESET CRYPTO_SWRESET_RESET
+#endif /* !CRYPTO_SWRESET_SW_RESET */
 
 /*---------------------------------------------------------------------------*/
 void
-csprng_feed(struct csprng_seed *new_seed)
+crypto_init(void)
 {
-  size_t i;
-
-  /*
-   * By XORing the current seed with the new seed, the seed of this CSPRNG
-   * remains secret as long as any of the mixed seeds remains secret.
-   */
-  for(i = 0; i < CSPRNG_SEED_LEN; i++) {
-    seed.u8[i] ^= new_seed->u8[i];
-  }
-
-  LOG_DBG("key = ");
-  LOG_DBG_BYTES(seed.key, CSPRNG_KEY_LEN);
-  LOG_DBG_("\n");
-  LOG_DBG("state = ");
-  LOG_DBG_BYTES(seed.state, CSPRNG_STATE_LEN);
-  LOG_DBG_("\n");
-
-  seeded = true;
+  crypto_enable();
+  HWREG(CRYPTO_BASE + CRYPTO_O_SWRESET) = 1;
+  crypto_disable();
+  IntDisable(INT_CRYPTO_RESULT_AVAIL_IRQ);
+}
+/*---------------------------------------------------------------------------*/
+void
+crypto_enable(void)
+{
+  HWREG(PRCM_BASE + PRCM_O_SECDMACLKGR) |= PRCM_SECDMACLKGR_CRYPTO_CLK_EN;
+  PRCMLoadSet();
+}
+/*---------------------------------------------------------------------------*/
+void
+crypto_disable(void)
+{
+  HWREG(PRCM_BASE + PRCM_O_SECDMACLKGR) &= ~PRCM_SECDMACLKGR_CRYPTO_CLK_EN;
+  PRCMLoadSet();
 }
 /*---------------------------------------------------------------------------*/
 bool
-csprng_rand(uint8_t *result, size_t len)
+crypto_is_enabled(void)
 {
-  size_t pos;
-
-  if(!seeded) {
-    return false;
-  }
-
-  pos = MIN(len, CSPRNG_STATE_LEN - read_state_bytes);
-  memcpy(result, seed.state + read_state_bytes, pos);
-  read_state_bytes += pos;
-  if(pos == len) {
-    return true;
-  }
-
-  if(!AES_128.set_key(seed.key)) {
-    return false;
-  }
-  for(; pos < len; pos += CSPRNG_STATE_LEN) {
-    if(!AES_128.encrypt(seed.state)) {
-      return false;
-    }
-    read_state_bytes = MIN(len - pos, CSPRNG_STATE_LEN);
-    memcpy(result + pos, seed.state, read_state_bytes);
-  }
-
-  return true;
+  return HWREG(PRCM_BASE + PRCM_O_SECDMACLKGR)
+         & PRCM_SECDMACLKGR_CRYPTO_CLK_EN;
 }
 /*---------------------------------------------------------------------------*/
 
