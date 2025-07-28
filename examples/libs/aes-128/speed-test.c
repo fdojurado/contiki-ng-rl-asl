@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Benoît Thébaudeau <benoit.thebaudeau.dev@gmail.com>
+ * Copyright (c) 2024, Konrad-Felix Krentz.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -28,64 +27,51 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /**
- * \addtogroup cc2538-cbc-mac
- * @{
- *
  * \file
- * Implementation of the cc2538 AES-CBC-MAC driver
+ *         Benchmarks AES-128 drivers.
+ * \author
+ *         Konrad Krentz <konrad.krentz@gmail.com>
  */
+
 #include "contiki.h"
-#include "dev/rom-util.h"
-#include "dev/cbc-mac.h"
+#include "lib/aes-128.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+/* Log configuration */
+#include "sys/log.h"
+#define LOG_MODULE "speed-test"
+#define LOG_LEVEL LOG_LEVEL_DBG
+
+PROCESS(speed_test_process, "speed_test_process");
+AUTOSTART_PROCESSES(&speed_test_process);
+
 /*---------------------------------------------------------------------------*/
-uint8_t
-cbc_mac_auth_start(uint8_t key_area, const void *mdata, uint16_t mdata_len,
-                   struct process *process)
+PROCESS_THREAD(speed_test_process, ev, data)
 {
-  uint32_t ctrl;
-  uint32_t iv[AES_IV_LEN / sizeof(uint32_t)];
+  const uint8_t key[AES_128_KEY_LENGTH] = {
+    0x00, 0x01, 0x02, 0x03,
+    0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B,
+    0x0C, 0x0D, 0x0E, 0x0F
+  };
+  uint8_t block[AES_128_BLOCK_SIZE] = {
+    0x00, 0x11, 0x22, 0x33,
+    0x44, 0x55, 0x66, 0x77,
+    0x88, 0x99, 0xAA, 0xBB,
+    0xCC, 0xDD, 0xEE, 0xFF
+  };
 
-  /* Program AES-CBC-MAC authentication operation */
-  ctrl = AES_AES_CTRL_SAVE_CONTEXT | /* Save context */
-    AES_AES_CTRL_CBC_MAC |           /* CBC-MAC */
-    AES_AES_CTRL_DIRECTION_ENCRYPT;  /* Encryption */
+  PROCESS_BEGIN();
 
-  /* Prepare the crypto initialization vector
-   * Set initialization vector to 0 */
-  rom_util_memset(iv, 0, AES_IV_LEN);
+  rtimer_clock_t t1 = RTIMER_NOW();
+  for(unsigned i = 0; i < 1000; i++) {
+    AES_128.set_key(key);
+    AES_128.encrypt(block);
+  }
+  rtimer_clock_t t2 = RTIMER_NOW();
+  LOG_INFO("%" PRIu64 "ms\n", (((uint64_t)(t2 - t1)) * 1000) / RTIMER_SECOND);
 
-  return aes_auth_crypt_start(ctrl, key_area, iv, NULL, 0,
-                              mdata, NULL, mdata_len, process);
+  PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
-uint8_t
-cbc_mac_auth_get_result(const void *mac_in, void *mac_out)
-{
-  uint32_t tag[AES_TAG_LEN / sizeof(uint32_t)];
-  uint8_t ret;
-
-  ret = aes_auth_crypt_get_result(NULL, tag);
-  if(ret != CRYPTO_SUCCESS) {
-    return ret;
-  }
-
-  if(mac_in != NULL) {
-    /* Check MAC */
-    if(rom_util_memcmp(tag, mac_in, CBC_MAC_MAC_LEN)) {
-      ret = AES_AUTHENTICATION_FAILED;
-    }
-  }
-
-  if(mac_out != NULL) {
-    /* Copy tag to MAC */
-    rom_util_memcpy(mac_out, tag, CBC_MAC_MAC_LEN);
-  }
-
-  return ret;
-}
-
-/** @} */
