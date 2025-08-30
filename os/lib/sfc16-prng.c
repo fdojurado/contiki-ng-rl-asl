@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Swedish Institute of Computer Science.
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,37 +25,58 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#include "dev/moteid.h"
-#include "lib/simEnvChange.h"
+/**
+ * \addtogroup random
+ * @{
+ *
+ * \file
+ *         Implements sfc16 of PractRand.
+ * \author
+ *         Konrad Krentz <konrad.krentz@gmail.com>
+ */
+
 #include "lib/random.h"
-#include "lib/csprng.h"
-#include "lib/sha-256.h"
-#include <string.h>
 
-// COOJA variables
-int simMoteID;
-char simMoteIDChanged;
-int simRandomSeed;
+enum {
+  BARREL_SHIFT = 6,
+  RSHIFT = 5,
+  LSHIFT = 3
+};
 
-/*-----------------------------------------------------------------------------------*/
-static void
-doInterfaceActionsBeforeTick(void)
+static uint16_t a;
+static uint16_t b;
+static uint16_t c;
+static uint16_t counter;
+
+/*---------------------------------------------------------------------------*/
+static uint_fast16_t
+rand(void)
 {
-  if (simMoteIDChanged) {
-    struct csprng_seed csprng_seed;
-
-    simMoteIDChanged = 0;
-    random_init(simRandomSeed);
-
-    sha_256_hkdf(NULL, 0,
-                 (const uint8_t *)&simRandomSeed, sizeof(simRandomSeed),
-                 NULL, 0,
-                 csprng_seed.u8, sizeof(csprng_seed.u8));
-    csprng_feed(&csprng_seed);
+  uint16_t tmp = a + b + counter++;
+  a = b ^ (b >> RSHIFT);
+  b = c + (c << LSHIFT);
+  c = ((c << BARREL_SHIFT) | (c >> (16 - BARREL_SHIFT))) + tmp;
+  return tmp;
+}
+/*---------------------------------------------------------------------------*/
+static void
+seed(uint64_t seed)
+{
+  a = seed;
+  b = seed >> 16;
+  c = seed >> 32;
+  counter = seed >> 48;
+  for(uint_fast8_t i = 0; i < 10; i++) {
+    rand();
   }
 }
-/*-----------------------------------------------------------------------------------*/
-COOJA_PRE_TICK_ACTION(COOJA_MOTEID_INIT_PRIO, doInterfaceActionsBeforeTick);
+/*---------------------------------------------------------------------------*/
+const struct random_prng sfc16_prng = {
+  seed,
+  rand
+};
+/*---------------------------------------------------------------------------*/
+
+/** @} */
