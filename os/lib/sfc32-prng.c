@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,66 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*---------------------------------------------------------------------------*/
-#ifndef MSP430_CONF_H_
-#define MSP430_CONF_H_
-/*---------------------------------------------------------------------------*/
-/* default DCOSYNCH Period is 30 seconds */
-#ifdef DCOSYNCH_CONF_PERIOD
-#define DCOSYNCH_PERIOD DCOSYNCH_CONF_PERIOD
-#else
-#define DCOSYNCH_PERIOD 30
-#endif
 
-#ifdef F_CPU
-#define MSP430_CPU_SPEED F_CPU
-#else
-#define MSP430_CPU_SPEED 2457600UL
-#endif
-
-#ifndef SLIP_ARCH_CONF_ENABLED
-/*
- * Determine whether we need SLIP
- * This will keep working while UIP_FALLBACK_INTERFACE and CMD_CONF_OUTPUT
- * keep using SLIP
- */
-#if defined(UIP_FALLBACK_INTERFACE) || defined(CMD_CONF_OUTPUT)
-#define SLIP_ARCH_CONF_ENABLED      1
-#else
-#define SLIP_ARCH_CONF_ENABLED      0
-#endif
-#endif
-/*---------------------------------------------------------------------------*/
 /**
- * \name PRNG Configuration
- *
+ * \addtogroup random
  * @{
+ *
+ * \file
+ *         Implements sfc32 of PractRand.
+ * \author
+ *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
-#ifndef RANDOM_CONF_PRNG
-#define RANDOM_CONF_PRNG sfc16_prng
-#endif /* RANDOM_CONF_PRNG */
+#include "lib/random.h"
+#include <stdbool.h>
+
+enum {
+  BARREL_SHIFT = 21,
+  RSHIFT = 9,
+  LSHIFT = 3
+};
+
+static bool cached;
+static uint32_t a;
+static uint32_t b;
+static uint32_t c;
+static uint32_t counter;
+
+/*---------------------------------------------------------------------------*/
+static uint_fast16_t
+rand(void)
+{
+  static uint32_t tmp;
+  if(cached) {
+    cached = false;
+    return tmp >> 16;
+  }
+  tmp = a + b + counter++;
+  a = b ^ (b >> RSHIFT);
+  b = c + (c << LSHIFT);
+  c = ((c << BARREL_SHIFT) | (c >> (32 - BARREL_SHIFT))) + tmp;
+  cached = true;
+  return tmp & 0xFFFF;
+}
+/*---------------------------------------------------------------------------*/
+static void
+seed(uint64_t seed)
+{
+  cached = false;
+  a = 0;
+  b = seed;
+  c = seed >> 32;
+  counter = 1;
+  for(uint_fast8_t i = 0; i < 24; i++) {
+    rand();
+  }
+}
+/*---------------------------------------------------------------------------*/
+const struct random_prng sfc32_prng = {
+  seed,
+  rand
+};
+/*---------------------------------------------------------------------------*/
 
 /** @} */
-/*---------------------------------------------------------------------------*/
-#endif /* MSP430_CONF_H_ */
-/*---------------------------------------------------------------------------*/

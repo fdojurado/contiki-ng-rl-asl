@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science
+ * Copyright (c) 2025, Konrad-Felix Krentz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,57 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*---------------------------------------------------------------------------*/
-#ifndef MSP430_CONF_H_
-#define MSP430_CONF_H_
-/*---------------------------------------------------------------------------*/
-/* default DCOSYNCH Period is 30 seconds */
-#ifdef DCOSYNCH_CONF_PERIOD
-#define DCOSYNCH_PERIOD DCOSYNCH_CONF_PERIOD
-#else
-#define DCOSYNCH_PERIOD 30
-#endif
 
-#ifdef F_CPU
-#define MSP430_CPU_SPEED F_CPU
-#else
-#define MSP430_CPU_SPEED 2457600UL
-#endif
-
-#ifndef SLIP_ARCH_CONF_ENABLED
-/*
- * Determine whether we need SLIP
- * This will keep working while UIP_FALLBACK_INTERFACE and CMD_CONF_OUTPUT
- * keep using SLIP
- */
-#if defined(UIP_FALLBACK_INTERFACE) || defined(CMD_CONF_OUTPUT)
-#define SLIP_ARCH_CONF_ENABLED      1
-#else
-#define SLIP_ARCH_CONF_ENABLED      0
-#endif
-#endif
-/*---------------------------------------------------------------------------*/
 /**
- * \name PRNG Configuration
- *
+ * \addtogroup random
  * @{
+ *
+ * \file
+ *         Implements sfc16 of PractRand.
+ * \author
+ *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
-#ifndef RANDOM_CONF_PRNG
-#define RANDOM_CONF_PRNG sfc16_prng
-#endif /* RANDOM_CONF_PRNG */
+#include "lib/random.h"
+
+enum {
+  BARREL_SHIFT = 6,
+  RSHIFT = 5,
+  LSHIFT = 3
+};
+
+static uint16_t a;
+static uint16_t b;
+static uint16_t c;
+static uint16_t counter;
+
+/*---------------------------------------------------------------------------*/
+static uint_fast16_t
+rand(void)
+{
+  uint16_t tmp = a + b + counter++;
+  a = b ^ (b >> RSHIFT);
+  b = c + (c << LSHIFT);
+  c = ((c << BARREL_SHIFT) | (c >> (16 - BARREL_SHIFT))) + tmp;
+  return tmp;
+}
+/*---------------------------------------------------------------------------*/
+static void
+seed(uint64_t seed)
+{
+  a = seed;
+  b = seed >> 16;
+  c = seed >> 32;
+  counter = seed >> 48;
+  for(uint_fast8_t i = 0; i < 10; i++) {
+    rand();
+  }
+}
+/*---------------------------------------------------------------------------*/
+const struct random_prng sfc16_prng = {
+  seed,
+  rand
+};
+/*---------------------------------------------------------------------------*/
 
 /** @} */
-/*---------------------------------------------------------------------------*/
-#endif /* MSP430_CONF_H_ */
-/*---------------------------------------------------------------------------*/
