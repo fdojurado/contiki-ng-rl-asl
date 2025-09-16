@@ -118,7 +118,13 @@ simple_energest_step(void)
   log_energest("Radio Rx (active)", delta_active, delta_time);
   log_energest("Radio Idle Rx",     delta_idle,   delta_time);
 
-  log_energest("Radio total (with idle)", delta_tx + delta_rx,     delta_time);
+  /* Ratio: fraction of listening that was idle */
+  if(delta_rx > 0) {
+    float idle_ratio = (float)delta_idle / (float)delta_rx;
+    log_energest("Radio Idle ratio", (uint64_t)(idle_ratio * 1000), 1000);
+  }
+
+  log_energest("Radio total (with idle)",   delta_tx + delta_rx,     delta_time);
   log_energest("Radio total (active only)", delta_tx + delta_active, delta_time);
 #else
   log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
@@ -136,6 +142,7 @@ simple_energest_step(void)
   last_idle_rx  = curr_idle_rx;
 #endif
 }
+
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)
