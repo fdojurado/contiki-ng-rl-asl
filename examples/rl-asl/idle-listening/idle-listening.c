@@ -46,9 +46,9 @@
 // #include "sage.h"
 // #endif /* SAGE_ROOT || SAGE_RELAY */
 
-#ifdef SAGE_LEAF
+#ifdef LEAF
 #include "rl-asl-data-packet-generator.h"
-#endif /* SAGE_LEAF */
+#endif /* LEAF */
 
 #include "sys/log.h"
 #define LOG_MODULE "main"
@@ -76,9 +76,10 @@ PROCESS_THREAD(rl_asl_idle_listening_process, ev, data)
   // process_start(&sage_process, NULL);
 #endif /* ROOT || RELAY */
 
-#ifdef SAGE_LEAF
+#ifdef LEAF
+  LOG_INFO("Starting data packet generator process\n"); 
   process_start(&data_packet_generator_process, NULL);
-#endif /* SAGE_LEAF */
+#endif /* LEAF */
 
   while (1)
   {
