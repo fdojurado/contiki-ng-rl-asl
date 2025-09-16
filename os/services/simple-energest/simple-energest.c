@@ -54,6 +54,9 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 static uint64_t last_tx, last_rx, last_time, last_cpu, last_lpm, last_deep_lpm;
+#if WITH_RL_ASL_NET
+static uint64_t last_idle_rx;
+#endif /* WITH_RL_ASL_NET */
 
 PROCESS(simple_energest_process, "Simple Energest");
 /*---------------------------------------------------------------------------*/
@@ -75,37 +78,65 @@ simple_energest_step(void)
 {
   static unsigned count = 0;
   uint64_t curr_tx, curr_rx, curr_time, curr_cpu, curr_lpm, curr_deep_lpm;
+#if WITH_RL_ASL_NET
+  uint64_t curr_idle_rx;
+#endif
   uint64_t delta_time;
 
   energest_flush();
 
-  curr_time = ENERGEST_GET_TOTAL_TIME();
-  curr_cpu = energest_type_time(ENERGEST_TYPE_CPU);
-  curr_lpm = energest_type_time(ENERGEST_TYPE_LPM);
+  curr_time     = ENERGEST_GET_TOTAL_TIME();
+  curr_cpu      = energest_type_time(ENERGEST_TYPE_CPU);
+  curr_lpm      = energest_type_time(ENERGEST_TYPE_LPM);
   curr_deep_lpm = energest_type_time(ENERGEST_TYPE_DEEP_LPM);
-  curr_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT);
-  curr_rx = energest_type_time(ENERGEST_TYPE_LISTEN);
+  curr_tx       = energest_type_time(ENERGEST_TYPE_TRANSMIT);
+  curr_rx       = energest_type_time(ENERGEST_TYPE_LISTEN);
+#if WITH_RL_ASL_NET
+  curr_idle_rx  = energest_type_time(ENERGEST_TYPE_IDLE_LISTEN);
+#endif
 
   delta_time = MAX(curr_time - last_time, 1);
 
   LOG_INFO("--- Period summary #%u (%"PRIu64" seconds)\n",
            count++, delta_time / ENERGEST_SECOND);
   LOG_INFO("Total time  : %10"PRIu64"\n", delta_time);
-  log_energest("CPU", curr_cpu - last_cpu, delta_time);
-  log_energest("LPM", curr_lpm - last_lpm, delta_time);
-  log_energest("Deep LPM", curr_deep_lpm - last_deep_lpm, delta_time);
-  log_energest("Radio Tx", curr_tx - last_tx, delta_time);
-  log_energest("Radio Rx", curr_rx - last_rx, delta_time);
+
+  log_energest("CPU",       curr_cpu      - last_cpu,      delta_time);
+  log_energest("LPM",       curr_lpm      - last_lpm,      delta_time);
+  log_energest("Deep LPM",  curr_deep_lpm - last_deep_lpm, delta_time);
+  log_energest("Radio Tx",  curr_tx       - last_tx,       delta_time);
+  log_energest("Radio Rx",  curr_rx       - last_rx,       delta_time);
+
+#if WITH_RL_ASL_NET
+  uint64_t delta_rx   = curr_rx      - last_rx;
+  uint64_t delta_idle = curr_idle_rx - last_idle_rx;
+  uint64_t delta_tx   = curr_tx      - last_tx;
+
+  /* Guard against underflow if idle > rx */
+  uint64_t delta_active = (delta_rx > delta_idle) ? (delta_rx - delta_idle) : 0;
+
+  log_energest("Radio Rx (active)", delta_active, delta_time);
+  log_energest("Radio Idle Rx",     delta_idle,   delta_time);
+
+  log_energest("Radio total (with idle)", delta_tx + delta_rx,     delta_time);
+  log_energest("Radio total (active only)", delta_tx + delta_active, delta_time);
+#else
   log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
                delta_time);
+#endif
 
-  last_time = curr_time;
-  last_cpu = curr_cpu;
-  last_lpm = curr_lpm;
+  /* Update last snapshot */
+  last_time     = curr_time;
+  last_cpu      = curr_cpu;
+  last_lpm      = curr_lpm;
   last_deep_lpm = curr_deep_lpm;
-  last_tx = curr_tx;
-  last_rx = curr_rx;
+  last_tx       = curr_tx;
+  last_rx       = curr_rx;
+#if WITH_RL_ASL_NET
+  last_idle_rx  = curr_idle_rx;
+#endif
 }
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)
 {

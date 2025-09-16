@@ -53,6 +53,9 @@
 #include "net/mac/framer/framer-802154.h"
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
+#if WITH_RL_ASL_NET
+#include "sys/energest.h"
+#endif /* WITH_RL_ASL_NET */
 
 #include "sys/log.h"
 /* TSCH debug macros, i.e. to set LEDs or GPIOs on various TSCH
@@ -832,6 +835,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+#if WITH_RL_ASL_NET
+    ENERGEST_ON(ENERGEST_TYPE_IDLE_LISTEN);
+#endif /* WITH_RL_ASL_NET */
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
     if(!packet_seen) {
       /* Check if receiving within guard time */
@@ -841,8 +847,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     if(!packet_seen) {
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
+#if WITH_RL_ASL_NET
+      ENERGEST_OFF(ENERGEST_TYPE_IDLE_LISTEN);
+#endif /* WITH_RL_ASL_NET */
     } else {
       TSCH_DEBUG_RX_EVENT();
+#if WITH_RL_ASL_NET
+      ENERGEST_OFF(ENERGEST_TYPE_IDLE_LISTEN);
+#endif /* WITH_RL_ASL_NET */
       /* Save packet timestamp */
       rx_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
 
