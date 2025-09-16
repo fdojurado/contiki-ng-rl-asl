@@ -11,13 +11,21 @@ MAKE_WITH_ORCHESTRA ?= 1
 
 MAKE_WITH_RL_ASL ?= 0
 
+# CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
+# CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
+# Lets define a flag that we can use in the code to check if we are using rl_asl_net_driver and rl_asl_routing_driver
+MAKE_WITH_RL_ASL_NET ?= 1
+ifeq ($(MAKE_WITH_RL_ASL_NET),1)
+  CFLAGS += -DWITH_RL_ASL_NET=1
+  CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
+  CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
+endif
+
 ifeq ($(MAKE_WITH_ORCHESTRA),1)
  ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_rpl_ns
-
- MODULES += $(CONTIKI_NG_SERVICES_DIR)/orchestra
-
  # pass the Orchestra rules to the compiler
-CFLAGS += -DORCHESTRA_CONF_RULES="{&eb_per_time_source,$(ORCHESTRA_EXTRA_RULES),&default_common}"
+ CFLAGS += -DORCHESTRA_CONF_RULES="{&eb_per_time_source,$(ORCHESTRA_EXTRA_RULES),&default_common}"
+ MODULES += $(CONTIKI_NG_SERVICES_DIR)/orchestra
 endif
 
 ifeq ($(MAKE_WITH_RL_ASL),1)
@@ -30,6 +38,10 @@ CFLAGS += -DSLIP_ARCH_CONF_ENABLE=0 -DWITH_SLIP=0
 MODULES_SOURCES_EXCLUDES += slip.c
 
 CONTIKI_SOURCES_EXCLUDES_COOJA += slip-arch.c
+
+PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-utils.c ../rl-asl-ds-nbr.c ../rl-asl-data-packet-processor.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-routing.c
+# PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-packets.c ../rl-asl-routing.c
+CFLAGS += -I../../rl-asl
 
 ifeq (${ROOT}, 1)
  CFLAGS += -DROOT

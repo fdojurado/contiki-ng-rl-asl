@@ -48,6 +48,10 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
 
+#if WITH_RL_ASL
+#include "rl-asl-packets.h"
+#endif /* WITH_RL_ASL */
+
 #include "sys/log.h"
 #define LOG_MODULE "Orchestra"
 #define LOG_LEVEL  LOG_LEVEL_MAC
@@ -78,8 +82,12 @@ orchestra_packet_sent(int mac_status)
   /* Check if our parent just ACKed a DAO */
   if(orchestra_parent_knows_us == 0
      && mac_status == MAC_TX_OK
+#if (ROUTING_CONF_RPL_CLASSIC || ROUTING_CONF_RPL_LITE)
      && packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
-     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO))
+#endif /* WITH_RL_ASL */
+  )
+    {
     if(!linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
        && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
       orchestra_parent_knows_us = 1;

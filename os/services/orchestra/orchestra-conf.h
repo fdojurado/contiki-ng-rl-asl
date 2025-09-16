@@ -97,6 +97,8 @@
  * For rules with multiple channel offsets, it is also used to select the channel offset. */
 #ifdef ORCHESTRA_CONF_LINKADDR_HASH
 #define ORCHESTRA_LINKADDR_HASH                   ORCHESTRA_CONF_LINKADDR_HASH
+#elif WITH_RL_ASL_NET
+#define ORCHESTRA_LINKADDR_HASH(addr)              ((addr != NULL) ? (addr)->u8[0] : -1)
 #else /* ORCHESTRA_CONF_LINKADDR_HASH */
 #define ORCHESTRA_LINKADDR_HASH(addr)             ((addr != NULL) ? (addr)->u8[LINKADDR_SIZE - 1] : -1)
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH */
@@ -108,6 +110,8 @@
  * `ORCHESTRA_LINKADDR_HASH2(a1, a2) != ORCHESTRA_LINKADDR_HASH2(a2, a1)` */
 #ifdef ORCHESTRA_CONF_LINKADDR_HASH2
 #define ORCHESTRA_LINKADDR_HASH2                  ORCHESTRA_CONF_LINKADDR_HASH2
+#elif WITH_RL_ASL_NET
+#define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1)->u8[0] + 264 * (addr2)->u8[0])
 #else /* ORCHESTRA_CONF_LINKADDR_HASH2 */
 #define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1)->u8[LINKADDR_SIZE - 1] + 264 * (addr2)->u8[LINKADDR_SIZE - 1])
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH2 */
