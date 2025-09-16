@@ -1132,14 +1132,15 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           if (!skip_rx) {
             static struct pt slot_rx_pt;
             PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
-          } else {
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "!skipped Rx slot due to ASL %u %u",
-                    tsch_current_asn.ls4b,
-                    current_link->slotframe_handle);
-            );
-          }
+          } 
+          // else {
+          //   TSCH_LOG_ADD(tsch_log_message,
+          //       snprintf(log->message, sizeof(log->message),
+          //           "!skipped Rx slot due to ASL %u %u",
+          //           tsch_current_asn.ls4b,
+          //           current_link->slotframe_handle);
+          //   );
+          // }
 #else/* BUILD_WITH_RL_ASL */
           static struct pt slot_rx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
