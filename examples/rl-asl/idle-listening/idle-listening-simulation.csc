@@ -120,6 +120,23 @@
       </interface_config>
       <motetype_identifier>relay</motetype_identifier>
     </mote>
+    <mote>
+      <interface_config>
+        org.contikios.cooja.interfaces.Position
+        <x>55</x>
+        <y>-54.64</y>
+        <z>0.0</z>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+        <id>3</id>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.contikimote.interfaces.ContikiRadio
+        <bitrate>250.0</bitrate>
+      </interface_config>
+      <motetype_identifier>leaf</motetype_identifier>
+    </mote>
   </simulation>
   <plugin>
     org.contikios.cooja.plugins.SimControl
@@ -165,11 +182,6 @@
       <mote>1</mote>
       <mote>2</mote>
       <mote>3</mote>
-      <mote>4</mote>
-      <mote>5</mote>
-      <mote>6</mote>
-      <mote>7</mote>
-      <mote>8</mote>
       <showRadioRXTX />
       <showRadioHW />
       <showLEDs />
@@ -199,7 +211,7 @@
   <plugin>
     org.contikios.cooja.plugins.ScriptRunner
     <plugin_config>
-      <scriptfile>[CONFIG_DIR]/script.js</scriptfile>
+      <scriptfile>[CONFIG_DIR]/../script.js</scriptfile>
       <active>true</active>
     </plugin_config>
     <width>457</width>
