@@ -44,13 +44,7 @@ void send_data_packet(void)
   print_ip_header();
 
   // aligned jitter which is in ticks to seconds
-  RL_ASL_DATA_BUF->generation_time_offset_asn = rl_asl_ip_ntohl64(full_asn);
-  RL_ASL_DATA_BUF->asn_at_last_hop = rl_asl_ip_ntohl64(full_asn);
-  RL_ASL_DATA_BUF->expiration_time = rl_asl_ip_ntohl64(0); // No expiration for now
-  RL_ASL_DATA_BUF->hops_from_leaf = 0;                   // Initialize hops from leaf
-  RL_ASL_DATA_BUF->flow_id = linkaddr_node_addr.u8[0];   // Use the first byte of the node address as flow ID
-  RL_ASL_DATA_BUF->seqnum = rl_asl_ip_htons(seqnum);       // Use the global sequence number
-  RL_ASL_DATA_BUF->payload_len = 0;                      // No payload for now
+  RL_ASL_DATA_BUF->payload_len = 0; // No payload for now
 
   rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 3); // Set max MAC transmissions
 

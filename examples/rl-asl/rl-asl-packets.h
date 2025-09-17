@@ -50,19 +50,12 @@ extern rl_asl_buf_t rl_asl_aligned_buf;
 /* Header sizes. */
 #define RL_ASL_IPH_LEN 10
 #define RL_ASL_DATAH_LEN sizeof(struct rl_asl_data_hdr)
-#define RL_ASL_BC_SCHEDULEH_LEN 4
-#define RL_ASL_BC_SCHEDULE_ACKH_LEN sizeof(struct rl_asl_bc_schedule_ack)
 
 #define RL_ASL_IP_BUF ((struct rl_asl_uip_hdr *)rl_asl_buf)
 #define RL_ASL_IP_PAYLOAD(ext) ((unsigned char *)rl_asl_buf + RL_ASL_IPH_LEN + (ext))
 
 #define RL_ASL_DATA_BUF ((struct rl_asl_data_hdr *)RL_ASL_IP_PAYLOAD(0))
 #define RL_ASL_DATA_PAYLOAD_PTR ((uint8_t *)RL_ASL_DATA_BUF + RL_ASL_DATAH_LEN)
-
-#define RL_ASL_BC_SCHEDULE_BUF ((struct rl_asl_bc_schedule_hdr *)RL_ASL_IP_PAYLOAD(0))
-#define RL_ASL_BC_SCHEDULE_PAYLOAD(ext) ((struct rl_asl_bc_schedule_payload *)(RL_ASL_IP_PAYLOAD(0) + RL_ASL_BC_SCHEDULEH_LEN) + (ext))
-
-#define RL_ASL_BC_SCHEDULE_ACK_BUF ((struct rl_asl_bc_schedule_ack *)RL_ASL_IP_PAYLOAD(0))
 
 // Lets define the packet structure
 struct rl_asl_uip_hdr
@@ -77,39 +70,11 @@ struct rl_asl_uip_hdr
 
 struct rl_asl_data_hdr
 {
-    uint8_t payload_len;                 // Length of the payload
-    uint8_t flow_id;                     // Flow ID for the packet
-    int16_t seqnum;                      // Sequence number of the packet
-    uint64_t generation_time_offset_asn; // ASN at the time of generation
-    uint64_t asn_at_last_hop;            // ASN at the last hop
-    uint64_t expiration_time;            // Expiration time in ticks
-    int8_t hops_from_leaf;               // Hops from leaf node
-    uint8_t padding;                     // Padding for alignment
-    int16_t datachksum;                  // Checksum for the data
-} __attribute__((packed));
-
-struct rl_asl_bc_schedule_hdr
-{
-    uint8_t version;     // ID of the schedule
     uint8_t payload_len; // Length of the payload
-    int16_t bcchksum;    // Checksum for the broadcast schedule
-} __attribute__((packed));
-
-struct rl_asl_bc_schedule_payload
-{
-    linkaddr_t addr;        // Address of the node
-    uint8_t timeslot;       // Timeslot for the schedule
-    uint8_t channel_offset; // Channel offset for the schedule
-} __attribute__((packed));
-
-struct rl_asl_bc_schedule_ack
-{
-    uint8_t version; // ID of the schedule
+    int16_t datachksum;  // Checksum for the data
 } __attribute__((packed));
 
 #define RL_ASL_PROTO_DATA 0x01
-#define RL_ASL_PROTO_BC_SCHEDULE 0x02
-#define RL_ASL_PROTO_BC_SCHEDULE_ACK 0x03
 
 #define RL_ASL_LINK_MTU 1000
 
