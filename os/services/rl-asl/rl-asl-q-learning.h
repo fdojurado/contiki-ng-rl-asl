@@ -21,20 +21,20 @@
 #define RL_ASL_B_INTERARRIVAL 4
 #define RL_ASL_B_ASN 3
 
-#define REWARD_RX_TX          10.0
-#define REWARD_SKIP_RX_NO_TX   1.0
-#define PENALTY_RX_NO_TX     -1.0
-#define PENALTY_SKIP_RX_TX   -10.0
+#define REWARD_RX_TX 10.0
+#define REWARD_SKIP_RX_NO_TX 1.0
+#define PENALTY_RX_NO_TX -1.0
+#define PENALTY_SKIP_RX_TX -10.0
 
 #define RL_ASL_NUM_STATES (RL_ASL_B_LISTEN * RL_ASL_B_REWARD * RL_ASL_B_INTERARRIVAL * RL_ASL_B_ASN)
 
 // enum actions
-typedef enum
+enum
 {
     RL_ASL_ACTION_SKIP_RX,
     RL_ASL_ACTION_DO_NOT_SKIP_RX,
     RL_ASL_NUM_ACTIONS
-} rl_asl_action_t;
+};
 
 // Q-Learning table
 typedef struct
