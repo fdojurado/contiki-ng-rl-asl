@@ -11,6 +11,8 @@
 #define LOG_MODULE "rl-asl"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL
 
+#define RL_ASL_INVALID_EXPECTED_REWARD -1000.0f
+
 static float clampf(float v, float lo, float hi)
 {
     if (v < lo)
@@ -40,10 +42,7 @@ static float rl_asl_expected_reward_for_action(int action, float p)
     {
         return p * PENALTY_SKIP_RX_TX + (1.0f - p) * REWARD_SKIP_RX_NO_TX;
     }
-    else
-    { // listen
-        LOG_ERR("Unexpected: expected reward for LISTEN action should not be computed here\n");
-    }
+    return RL_ASL_INVALID_EXPECTED_REWARD;
 }
 
 void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
@@ -157,6 +156,11 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             // apply expected reward (we don't yet know the real outcome)
             float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
             float expected_reward = rl_asl_expected_reward_for_action(rl_asl_q_table.action, p);
+            if (expected_reward <= RL_ASL_INVALID_EXPECTED_REWARD + 0.1f)
+            {
+                LOG_ERR("Invalid expected reward computation for SKIP action\n");
+                expected_reward = 0.0f;
+            }
             rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
             LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
                     rl_asl_q_table.state, p, expected_reward, current_state);
@@ -164,7 +168,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         else
         {
             // previous was LISTEN — do nothing now; we will update in rl_asl_on_slot_outcome()
-            LOG_DBG("Previous action LISTEN -> deferring actual update until slot outcome observed\n");
+            // LOG_DBG("Previous action LISTEN -> deferring actual update until slot outcome observed\n");
         }
     }
 
