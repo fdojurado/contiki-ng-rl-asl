@@ -39,6 +39,7 @@ typedef struct
     float q_values[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS];
     float epsilon;
     int state;
+    int action;
     unsigned long step_count;    // total steps in current episode
     unsigned long episode_count; // total episodes completed
 } rl_asl_q_table_t;
