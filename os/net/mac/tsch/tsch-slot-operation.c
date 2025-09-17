@@ -846,12 +846,18 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_RL_ASL_NET
     ENERGEST_ON(ENERGEST_TYPE_IDLE_LISTEN);
 #endif /* WITH_RL_ASL_NET */
+#if BUILD_WITH_RL_ASL
+      uint32_t asn_low32 = tsch_current_asn.ls4b;
+#endif /* BUILD_WITH_RL_ASL */
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
     if(!packet_seen) {
       /* Check if receiving within guard time */
       RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
     }
+#if BUILD_WITH_RL_ASL
+    rl_asl_on_slot_outcome(asn_low32, packet_seen);
+#endif /* BUILD_WITH_RL_ASL */
     if(!packet_seen) {
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
