@@ -9,12 +9,15 @@ typedef struct
 {
     uint32_t last_seqno;
     uint64_t last_heard_asn; // Last ASN when a packet was heard from this neighbor
+    // EWMA of the time difference between the received packet's ASN and the last_heard_asn
+    // This can be used to estimate the neighbor's current ASN
+    uint32_t asn_diff_ewma;
 } rl_asl_ds_nbr_t;
 
 void rl_asl_ds_nbr_init(void);
 rl_asl_ds_nbr_t *rl_asl_ds_nbr_get(const linkaddr_t *addr);
 const linkaddr_t *rl_asl_ds_nbr_get_addr(rl_asl_ds_nbr_t *nbr);
-void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn);
+void rl_asl_ds_nbr_update(const linkaddr_t *addr, const uint32_t seqno, const uint64_t asn);
 void rl_asl_ds_nbr_remove(const linkaddr_t *addr);
 void rl_asl_ds_nbr_print(void);
 

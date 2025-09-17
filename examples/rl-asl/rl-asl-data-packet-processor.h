@@ -4,6 +4,8 @@
 #include "contiki.h"
 #include "net/linkaddr.h"
 
-void rl_asl_data_packet_input(int8_t is_for_us);
+void rl_asl_data_packet_input(const linkaddr_t *src,
+                              const uint16_t seqnum,
+                              const int8_t is_for_us);
 
 #endif /* RL_ASL_DATA_PACKET_PROCESSOR_H */

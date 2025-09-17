@@ -25,12 +25,12 @@
 // static struct tsch_asn_t *asn = &tsch_current_asn;
 
 /*---------------------------------------------------------------------------*/
-void rl_asl_data_packet_input(int8_t is_for_us)
+void rl_asl_data_packet_input(const linkaddr_t *src, const uint16_t seqnum, const int8_t is_for_us)
 {
 #if BUILD_WITH_RL_ASL
     uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
     LOG_INFO("Processing data packet input (is_for_us=%d) at ASN %" PRIu64 "\n", is_for_us, full_asn);
-    rl_asl_ds_nbr_update((linkaddr_t *)&RL_ASL_IP_BUF->scr, RL_ASL_DATA_BUF->seqnum, full_asn);
+    rl_asl_ds_nbr_update(src, seqnum, full_asn);
 #else
     LOG_INFO("Processing data packet input (is_for_us=%d) at ASN unknown\n", is_for_us);
 #endif /* BUILD_WITH_RL_ASL */

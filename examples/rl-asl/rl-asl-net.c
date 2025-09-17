@@ -39,6 +39,7 @@ set_packet_attrs(void)
 static void rl_asl_net_init(void)
 {
     LOG_INFO("RL-ASL Net driver initialized\n");
+    rl_asl_init();
 }
 /*---------------------------------------------------------------------------*/
 static void rl_asl_net_input(void)

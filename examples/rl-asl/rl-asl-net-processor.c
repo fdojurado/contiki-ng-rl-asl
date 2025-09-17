@@ -186,7 +186,7 @@ data_input:
     LOG_DBG("Processing data packet from %02x:%02x to %02x:%02x\n",
             scr.u8[0], scr.u8[1], dest.u8[0], dest.u8[1]);
 
-    rl_asl_data_packet_input(is_for_us);
+    rl_asl_data_packet_input(&scr, rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), is_for_us);
 
     if (is_for_us)
         goto drop; // If it's for us, we don't forward it
