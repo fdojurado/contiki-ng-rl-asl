@@ -4,6 +4,7 @@
 #include "rl-asl-q-learning.h"
 #include "rl-asl-ds-nbr.h"
 #include "rl-asl-decision-buffer.h"
+#include <math.h> // For expf()
 
 /* log */
 #include "sys/log.h"
@@ -19,35 +20,18 @@ static float clampf(float v, float lo, float hi)
     return v;
 }
 
-static float rl_asl_compute_p(uint32_t asn_diff_ewma, uint32_t estimated_elapsed_s)
+static float rl_asl_compute_p(uint32_t asn_diff_ewma, uint32_t elapsed)
 {
-    // params: tune these
-    const float p_min = 0.001f;  // minimal belief
-    const float p_max = 0.95f;   // maximal belief
-    const float alpha = 1.0f;    // modulation strength (tune)
-    const float mult_min = 0.2f; // lower multiplier bound
-    const float mult_max = 4.0f; // upper multiplier bound
+    if (asn_diff_ewma < 1)
+        return 0.5f; // fallback
 
-    // safety
-    float lambda = (asn_diff_ewma < 1u) ? 1.0f : (float)asn_diff_ewma;
-    float s = (float)estimated_elapsed_s;
+    float lambda = (float)asn_diff_ewma;
+    float r = (float)elapsed / lambda;
 
-    // base per-slot probability (cheap approx)
-    float p0 = 1.0f / lambda;
+    // Poisson model: probability that >=1 event arrived in elapsed slots
+    float p = 1.0f - expf(-r);
 
-    // elapsed ratio
-    float r = s / lambda;
-
-    // linear modulation (simple, robust)
-    float multiplier = 1.0f + alpha * (r - 1.0f);
-
-    // clamp multiplier to avoid extreme scaling
-    multiplier = clampf(multiplier, mult_min, mult_max);
-
-    float p = p0 * multiplier;
-    p = clampf(p, p_min, p_max);
-
-    return p;
+    return clampf(p, 0.001f, 0.95f);
 }
 
 static float rl_asl_expected_reward_for_action(int action, float p)
@@ -58,7 +42,7 @@ static float rl_asl_expected_reward_for_action(int action, float p)
     }
     else
     { // listen
-        return p * REWARD_RX_TX + (1.0f - p) * PENALTY_RX_NO_TX;
+        LOG_ERR("Unexpected: expected reward for LISTEN action should not be computed here\n");
     }
 }
 
@@ -106,7 +90,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         return;
     }
 
-    
     if (rl_asl_ds_nbr_count() == 0)
     {
         *skip_rx = false;
@@ -175,8 +158,8 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
             float expected_reward = rl_asl_expected_reward_for_action(rl_asl_q_table.action, p);
             rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
-            LOG_DBG("Exp-update prev_state=%d action=SKIP expected_r=%.3f next=%d\n",
-                    rl_asl_q_table.state, expected_reward, current_state);
+            LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
+                    rl_asl_q_table.state, p, expected_reward, current_state);
         }
         else
         {
