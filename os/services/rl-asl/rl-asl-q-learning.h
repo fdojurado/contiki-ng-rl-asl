@@ -16,17 +16,14 @@
 #define RL_ASL_Q_LEARNING_MIN_EPSILON 0.01
 #define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.99
 
-#define RL_ASL_B_LISTEN 4
-#define RL_ASL_B_REWARD 3
-#define RL_ASL_B_INTERARRIVAL 4
-#define RL_ASL_B_ASN 3
+#define RL_ASL_B_INTERARRIVAL 10
 
 #define REWARD_RX_TX 10.0
 #define REWARD_SKIP_RX_NO_TX 1.0
 #define PENALTY_RX_NO_TX -1.0
 #define PENALTY_SKIP_RX_TX -10.0
 
-#define RL_ASL_NUM_STATES (RL_ASL_B_LISTEN * RL_ASL_B_REWARD * RL_ASL_B_INTERARRIVAL * RL_ASL_B_ASN)
+#define RL_ASL_NUM_STATES RL_ASL_B_INTERARRIVAL
 
 // enum actions
 enum
@@ -55,12 +52,13 @@ extern rl_asl_q_table_t rl_asl_q_table;
 void rl_asl_q_learning_init(void);
 void rl_asl_q_learning_update(const int, const int, const float, const int);
 int rl_asl_q_learning_select_action(int state);
-int rl_asl_q_learning_get_state(int listen, int reward, int interarrival, int asn);
+int rl_asl_q_learning_get_state(int interarrival);
 void rl_asl_q_learning_decay_epsilon(float decay_rate);
 float rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);
 void rl_asl_q_learning_step_done(void);
 void rl_asl_q_learning_end_episode(void);
+int rl_asl_q_bin_interarrival(uint32_t interarrival);
 void rl_asl_q_learning_print_table(void);
 void rl_asl_q_learning_reset_table(void);
 

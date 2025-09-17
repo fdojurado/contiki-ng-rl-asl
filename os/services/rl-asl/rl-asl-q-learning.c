@@ -56,21 +56,18 @@ int rl_asl_q_learning_select_action(int state)
     }
 }
 /***************************************************************/
-int rl_asl_q_learning_get_state(int listen, int reward, int interarrival, int asn)
+int rl_asl_q_learning_get_state(int interarrival)
 {
     // Ensure inputs are within bounds
-    if (listen < 0 || listen >= RL_ASL_B_LISTEN ||
-        reward < 0 || reward >= RL_ASL_B_REWARD ||
-        interarrival < 0 || interarrival >= RL_ASL_B_INTERARRIVAL ||
-        asn < 0 || asn >= RL_ASL_B_ASN)
+    if (interarrival < 0 || interarrival >= RL_ASL_B_INTERARRIVAL)
     {
-        LOG_ERR("Invalid state parameters: listen=%d, reward=%d, interarrival=%d, asn=%d\n",
-                listen, reward, interarrival, asn);
+        LOG_ERR("Invalid state parameters: interarrival=%d\n",
+                interarrival);
         return -1; // Indicate error
     }
 
     // Compute state index
-    int state = (((listen * RL_ASL_B_REWARD) + reward) * RL_ASL_B_INTERARRIVAL + interarrival) * RL_ASL_B_ASN + asn;
+    int state = interarrival;
     if (state < 0 || state >= RL_ASL_NUM_STATES)
     {
         LOG_ERR("Computed invalid state index: %d\n", state);
@@ -139,6 +136,19 @@ void rl_asl_q_learning_end_episode(void)
              rl_asl_q_table.episode_count, rl_asl_q_table.epsilon);
 }
 
+/***************************************************************/
+int rl_asl_q_bin_interarrival(uint32_t interarrival)
+{
+    uint32_t bin_size = RL_ASL_EPISODE_LENGTH / RL_ASL_B_INTERARRIVAL;
+    for (int i = 1; i < RL_ASL_B_INTERARRIVAL; i++)
+    {
+        if (interarrival < i * bin_size)
+        {
+            return i - 1;
+        }
+    }
+    return RL_ASL_B_INTERARRIVAL - 1;
+}
 /***************************************************************/
 void rl_asl_q_learning_print_table(void)
 {
