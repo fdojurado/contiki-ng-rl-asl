@@ -20,8 +20,12 @@ void rl_asl_q_learning_init(void)
 void rl_asl_q_learning_update(const int state, const int action,
                               const float reward, const int next_state)
 {
-    if (state == -1)
+    if (state < 0 || state >= RL_ASL_NUM_STATES ||
+        action < 0 || action >= RL_ASL_NUM_ACTIONS ||
+        next_state < 0 || next_state >= RL_ASL_NUM_STATES)
     {
+        LOG_ERR("Invalid parameters for Q-learning update: state=%d, action=%d, next_state=%d\n",
+                state, action, next_state);
         return; // Invalid state, do not update
     }
 

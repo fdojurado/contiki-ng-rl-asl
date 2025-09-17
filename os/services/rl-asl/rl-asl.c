@@ -36,5 +36,5 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     int action = rl_asl_q_learning_select_action(state);
     *skip_rx = (action == RL_ASL_ACTION_SKIP_RX);
     // rl_asl_q_learning_update(state, action, 0.0, state); // Placeholder for reward and next_state
-    rl_asl_q_learning_decay_epsilon(RL_ASL_Q_LEARNING_EPSILON_DECAY);
+    // rl_asl_q_learning_decay_epsilon(RL_ASL_Q_LEARNING_EPSILON_DECAY);
 }
