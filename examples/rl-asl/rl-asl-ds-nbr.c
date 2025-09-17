@@ -9,6 +9,8 @@ NBR_TABLE(rl_asl_ds_nbr_t, rl_asl_ds_nbr_table);
 
 #define EWMA_ALPHA 0.2
 
+static int count_neighbors = 0;
+
 /***********************************************************************/
 void rl_asl_ds_nbr_init(void)
 {
@@ -44,6 +46,7 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn)
         nbr->asn_diff_ewma = 0;
         LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 "\n",
                  addr->u8[0], addr->u8[1], seqno, asn);
+        count_neighbors++;
         return;
     }
 
@@ -87,6 +90,11 @@ void rl_asl_ds_nbr_remove(const linkaddr_t *addr)
     {
         LOG_WARN("Neighbor %02x:%02x not found in table for removal\n", addr->u8[0], addr->u8[1]);
     }
+}
+/***********************************************************************/
+int rl_asl_ds_nbr_count(void)
+{
+    return count_neighbors;
 }
 /***********************************************************************/
 void rl_asl_ds_nbr_print(void)

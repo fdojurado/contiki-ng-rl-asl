@@ -19,6 +19,7 @@ rl_asl_ds_nbr_t *rl_asl_ds_nbr_get(const linkaddr_t *addr);
 const linkaddr_t *rl_asl_ds_nbr_get_addr(rl_asl_ds_nbr_t *nbr);
 void rl_asl_ds_nbr_update(const linkaddr_t *addr, const uint32_t seqno, const uint64_t asn);
 void rl_asl_ds_nbr_remove(const linkaddr_t *addr);
+int rl_asl_ds_nbr_count(void);
 void rl_asl_ds_nbr_print(void);
 
 #endif /* RL_ASL_DS_NBR_H_ */
