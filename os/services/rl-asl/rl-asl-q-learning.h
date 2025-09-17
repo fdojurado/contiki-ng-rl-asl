@@ -19,7 +19,15 @@
 #define RL_ASL_B_ASN 3
 
 #define RL_ASL_NUM_STATES (RL_ASL_B_LISTEN * RL_ASL_B_REWARD * RL_ASL_B_INTERARRIVAL * RL_ASL_B_ASN)
-#define RL_ASL_NUM_ACTIONS 2 // 0: skip RX, 1: do not skip RX
+
+// enum actions
+typedef enum
+{
+    RL_ASL_ACTION_SKIP_RX,
+    RL_ASL_ACTION_DO_NOT_SKIP_RX,
+    RL_ASL_NUM_ACTIONS
+} rl_asl_action_t;
+
 
 // Q-Learning table
 typedef struct
