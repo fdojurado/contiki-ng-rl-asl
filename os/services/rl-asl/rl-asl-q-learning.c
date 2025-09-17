@@ -116,6 +116,29 @@ int rl_asl_q_learning_get_best_action(int state)
     return best_action;
 }
 /***************************************************************/
+void rl_asl_q_learning_step_done(void)
+{
+    rl_asl_q_table.step_count++;
+    if (rl_asl_q_table.step_count >= RL_ASL_EPISODE_LENGTH)
+    {
+        rl_asl_q_table.step_count = 0;
+        rl_asl_q_learning_end_episode();
+    }
+}
+/***************************************************************/
+void rl_asl_q_learning_end_episode(void)
+{
+    rl_asl_q_table.episode_count++;
+    rl_asl_q_table.epsilon *= RL_ASL_Q_LEARNING_EPSILON_DECAY;
+    if (rl_asl_q_table.epsilon < RL_ASL_Q_LEARNING_MIN_EPSILON)
+    {
+        rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
+    }
+    LOG_INFO("Episode %lu ended. Epsilon=%.3f\n",
+             rl_asl_q_table.episode_count, rl_asl_q_table.epsilon);
+}
+
+/***************************************************************/
 void rl_asl_q_learning_print_table(void)
 {
     LOG_INFO("Q-Learning Table:\n");
