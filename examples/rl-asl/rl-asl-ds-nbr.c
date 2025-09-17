@@ -92,6 +92,11 @@ void rl_asl_ds_nbr_remove(const linkaddr_t *addr)
     }
 }
 /***********************************************************************/
+rl_asl_ds_nbr_t *rl_asl_ds_nbr_get_any(void)
+{
+    return nbr_table_head(rl_asl_ds_nbr_table);
+}
+/***********************************************************************/
 int rl_asl_ds_nbr_count(void)
 {
     return count_neighbors;
