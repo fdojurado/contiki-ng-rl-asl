@@ -137,9 +137,9 @@ void rl_asl_q_learning_end_episode(void)
 }
 
 /***************************************************************/
-int rl_asl_q_bin_interarrival(uint32_t interarrival)
+int rl_asl_q_bin_interarrival(uint32_t interarrival, uint32_t asn_diff_ewma)
 {
-    uint32_t bin_size = RL_ASL_EPISODE_LENGTH / RL_ASL_B_INTERARRIVAL;
+    uint32_t bin_size = asn_diff_ewma / RL_ASL_B_INTERARRIVAL;
     for (int i = 1; i < RL_ASL_B_INTERARRIVAL; i++)
     {
         if (interarrival < i * bin_size)

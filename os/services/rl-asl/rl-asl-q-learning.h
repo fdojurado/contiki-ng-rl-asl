@@ -58,7 +58,7 @@ float rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);
 void rl_asl_q_learning_step_done(void);
 void rl_asl_q_learning_end_episode(void);
-int rl_asl_q_bin_interarrival(uint32_t interarrival);
+int rl_asl_q_bin_interarrival(uint32_t interarrival, uint32_t asn_diff_ewma);
 void rl_asl_q_learning_print_table(void);
 void rl_asl_q_learning_reset_table(void);
 
