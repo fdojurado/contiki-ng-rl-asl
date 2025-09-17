@@ -71,6 +71,7 @@ struct rl_asl_uip_hdr
 struct rl_asl_data_hdr
 {
     uint8_t payload_len; // Length of the payload
+    uint16_t seqnum;      // Sequence number
     int16_t datachksum;  // Checksum for the data
 } __attribute__((packed));
 
