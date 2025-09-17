@@ -72,16 +72,14 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     }
 
     // Compute actual reward for previous action (listen or skip)
-    float actual_reward;
     if (prev_action == RL_ASL_ACTION_SKIP_RX)
     {
-        // If we skipped, and we now know packet_received==true -> missed a packet
-        actual_reward = packet_received ? PENALTY_SKIP_RX_TX : REWARD_SKIP_RX_NO_TX;
+        LOG_ERR("Unexpected: outcome for SKIP action should not be reported here\n");
+        return;
     }
-    else
-    { // listened (DO_NOT_SKIP)
-        actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
-    }
+
+    float actual_reward;
+    actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
 
     // Compute next_state (optional): re-evaluate interarrival bin / neighbor stats now, or reuse prev_state
     // For simplicity use prev_state as next_state; this is acceptable for immediate correction.
