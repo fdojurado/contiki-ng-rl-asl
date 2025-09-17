@@ -26,9 +26,11 @@ const linkaddr_t *rl_asl_ds_nbr_get_addr(rl_asl_ds_nbr_t *nbr)
     return nbr_table_get_lladdr(rl_asl_ds_nbr_table, nbr);
 }
 /***********************************************************************/
-void rl_asl_ds_nbr_update(const linkaddr_t *addr, const uint32_t seqno, const uint64_t asn)
+void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn)
 {
     rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_get(addr);
+    int32_t asn_diff = 0;
+
     if (nbr == NULL)
     {
         nbr = nbr_table_add_lladdr(rl_asl_ds_nbr_table, addr, NBR_TABLE_REASON_IPV6_ND, NULL);
@@ -39,35 +41,38 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, const uint32_t seqno, const ui
         }
         nbr->last_seqno = seqno;
         nbr->last_heard_asn = asn;
+        nbr->asn_diff_ewma = 0;
         LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 "\n",
                  addr->u8[0], addr->u8[1], seqno, asn);
+        return;
     }
-    else
+
+    if (seqno > nbr->last_seqno)
     {
-        if (seqno > nbr->last_seqno)
+        nbr->last_seqno = seqno;
+    }
+
+    if (nbr->last_heard_asn != 0 && asn > nbr->last_heard_asn)
+    {
+        asn_diff = (int32_t)(asn - nbr->last_heard_asn);
+        if (nbr->asn_diff_ewma == 0)
         {
-            nbr->last_seqno = seqno;
+            nbr->asn_diff_ewma = asn_diff;
+            LOG_INFO("Neighbor %02x:%02x ASN diff EWMA initialized to %u\n",
+                     addr->u8[0], addr->u8[1], nbr->asn_diff_ewma);
         }
-        LOG_INFO("Updated neighbor %02x:%02x to seqno %u and ASN %" PRIu64 "\n",
-                 addr->u8[0], addr->u8[1], nbr->last_seqno, asn);
+        else
+        {
+            nbr->asn_diff_ewma = (uint32_t)(EWMA_ALPHA * asn_diff + (1.0f - EWMA_ALPHA) * nbr->asn_diff_ewma);
+            LOG_INFO("Neighbor %02x:%02x ASN diff: %d, EWMA updated to %u\n",
+                     addr->u8[0], addr->u8[1], asn_diff, nbr->asn_diff_ewma);
+        }
     }
-    // Update ASN difference EWMA
-    int32_t asn_diff = (int32_t)(asn - nbr->last_heard_asn);
-    LOG_INFO("Neighbor %02x:%02x ASN diff: %d\n",
-             addr->u8[0], addr->u8[1], asn_diff);
-    if (nbr->asn_diff_ewma == 0){
-        nbr->asn_diff_ewma = asn_diff;
-        LOG_INFO("Neighbor %02x:%02x ASN diff EWMA initialized to %u\n",
-                 addr->u8[0], addr->u8[1], nbr->asn_diff_ewma);
-    }
-    else
-    {
-        nbr->asn_diff_ewma = (EWMA_ALPHA * asn_diff) + ((1 - EWMA_ALPHA) * nbr->asn_diff_ewma);
-    }
+
     nbr->last_heard_asn = asn;
 
-    LOG_INFO("Neighbor %02x:%02x ASN diff EWMA updated to %u\n",
-             addr->u8[0], addr->u8[1], nbr->asn_diff_ewma);
+    LOG_INFO("Updated neighbor %02x:%02x to seqno %u and ASN %" PRIu64 "\n",
+             addr->u8[0], addr->u8[1], nbr->last_seqno, asn);
 }
 /***********************************************************************/
 void rl_asl_ds_nbr_remove(const linkaddr_t *addr)
