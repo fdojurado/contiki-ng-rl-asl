@@ -1,13 +1,12 @@
 #include "rl-asl.h"
-#include <stdlib.h> 
+#include <stdlib.h>
 #include "rl-asl-conf.h"
+#include "rl-asl-q-learning.h"
 
 /* log */
 #include "sys/log.h"
 #define LOG_MODULE "rl-asl"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL
-
-static uint64_t counter = 0;
 
 void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
 {
@@ -24,17 +23,18 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         return;
     }
 
-
-
-
-    // Every ten consecutive slots, skip the RX slot if the link has RX option
-    if ((link->link_options & LINK_OPTION_RX) && ((counter % 200) == 0))
+    int listen = 0;
+    int reward_mean = 0;
+    int interarrival = 0;
+    int asn = 0; // Placeholder
+    int state = rl_asl_q_learning_get_state(listen, reward_mean, interarrival, asn);
+    if (state == -1)
     {
-        *skip_rx = false;
+        *skip_rx = RL_ASL_ACTION_DO_NOT_SKIP_RX;
+        return;
     }
-    else
-    {
-        *skip_rx = true;
-    }
-    counter++;
+    int action = rl_asl_q_learning_select_action(state);
+    *skip_rx = (action == RL_ASL_ACTION_SKIP_RX);
+    // rl_asl_q_learning_update(state, action, 0.0, state); // Placeholder for reward and next_state
+    rl_asl_q_learning_decay_epsilon(RL_ASL_Q_LEARNING_EPSILON_DECAY);
 }

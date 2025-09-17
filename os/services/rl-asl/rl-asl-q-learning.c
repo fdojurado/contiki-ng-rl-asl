@@ -17,35 +17,20 @@ void rl_asl_q_learning_init(void)
     LOG_INFO("Q-Learning initialized with %d states and %d actions\n", RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS);
 }
 /***************************************************************/
-void rl_asl_q_learning_update_q_value(int state, int action, float reward)
+void rl_asl_q_learning_update(const int state, const int action,
+                              const float reward, const int next_state)
 {
-    // Get the maximum Q-value for the next state (which is the same as current state in this context)
-    float max_next_q_value = rl_asl_q_learning_get_max_q_value(state);
-
-    // Q-learning update rule
-    float old_q_value = rl_asl_q_table.q_values[state][action];
-    float new_q_value = old_q_value + RL_ASL_Q_LEARNING_ALPHA * (reward + RL_ASL_Q_LEARNING_GAMMA * max_next_q_value - old_q_value);
-    rl_asl_q_table.q_values[state][action] = new_q_value;
-
-    LOG_DBG("Updated Q-value for state %d, action %d: old=%.3f, reward=%.3f, new=%.3f\n",
-            state, action, old_q_value, reward, new_q_value);
-}
-/***************************************************************/
-void rl_asl_q_learning_update(const struct tsch_link *link, bool skip_rx)
-{
-    // Extract state parameters from the link and other metrics
-    int listen = 0;
-    int reward_mean = 0;
-    int interarrival = 0;
-    int asn = 0; // Placeholder
-    int state = rl_asl_q_learning_get_state(listen, reward_mean, interarrival, asn);
     if (state == -1)
     {
         return; // Invalid state, do not update
     }
-    int action = skip_rx ? 0 : 1; // Action taken
-    float reward = 0.0;           // Placeholder for reward calculation
-    rl_asl_q_learning_update_q_value(state, action, reward);
+
+    // Q-learning update rule
+    float old_q_value = rl_asl_q_table.q_values[state][action];
+    float max_next_q_value = rl_asl_q_learning_get_max_q_value(next_state);
+    float new_q_value = old_q_value + RL_ASL_Q_LEARNING_ALPHA * (reward + RL_ASL_Q_LEARNING_GAMMA * max_next_q_value - old_q_value);
+    rl_asl_q_table.q_values[state][action] = new_q_value;
+    rl_asl_q_table.state = next_state;
 }
 /***************************************************************/
 int rl_asl_q_learning_select_action(int state)

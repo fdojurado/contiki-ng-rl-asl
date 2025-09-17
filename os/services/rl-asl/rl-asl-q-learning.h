@@ -28,7 +28,6 @@ typedef enum
     RL_ASL_NUM_ACTIONS
 } rl_asl_action_t;
 
-
 // Q-Learning table
 typedef struct
 {
@@ -44,8 +43,7 @@ extern rl_asl_q_table_t rl_asl_q_table;
  *****************************************************************/
 
 void rl_asl_q_learning_init(void);
-void rl_asl_q_learning_update_q_value(int state, int action, float reward);
-void rl_asl_q_learning_update(const struct tsch_link *link, bool skip_rx);
+void rl_asl_q_learning_update(const int, const int, const float, const int);
 int rl_asl_q_learning_select_action(int state);
 int rl_asl_q_learning_get_state(int listen, int reward, int interarrival, int asn);
 void rl_asl_q_learning_decay_epsilon(float decay_rate);
