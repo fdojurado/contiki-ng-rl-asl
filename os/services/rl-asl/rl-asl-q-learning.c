@@ -1,4 +1,5 @@
 #include "rl-asl-q-learning.h"
+#include "rl-asl-decision-buffer.h"
 #include <stdlib.h> // For rand()
 
 /* Log system */
@@ -13,6 +14,7 @@ void rl_asl_q_learning_init(void)
 {
     // Initialize Q-table with zeros
     rl_asl_q_learning_reset_table();
+    rl_asl_decision_buffer_reset();
 
     LOG_INFO("Q-Learning initialized with %d states, %d actions and number of steps per episode %d\n",
              RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS, RL_ASL_EPISODE_LENGTH);
