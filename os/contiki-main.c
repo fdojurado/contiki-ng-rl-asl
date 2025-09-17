@@ -58,6 +58,10 @@
 #include "services/simple-energest/simple-energest.h"
 #include "services/tsch-cs/tsch-cs.h"
 
+#if BUILD_WITH_RL_ASL
+#include "services/rl-asl/rl-asl-q-learning.h"
+#endif /* BUILD_WITH_RL_ASL */
+
 #include <stdio.h>
 #include <stdint.h>
 /*---------------------------------------------------------------------------*/
@@ -264,6 +268,11 @@ main(void)
   orchestra_init();
   LOG_DBG("With Orchestra\n");
 #endif /* BUILD_WITH_ORCHESTRA */
+
+#if BUILD_WITH_RL_ASL
+  rl_asl_q_learning_init();
+  LOG_DBG("With RL-ASL Q-Learning\n");
+#endif /* BUILD_WITH_RL_ASL */
 
 #if BUILD_WITH_SHELL
   serial_shell_init();
