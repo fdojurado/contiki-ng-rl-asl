@@ -65,11 +65,12 @@ int rl_asl_q_learning_get_state(int listen, int reward, int interarrival, int as
     }
 
     // Compute state index
-    int state = listen * RL_ASL_B_REWARD * RL_ASL_B_INTERARRIVAL * RL_ASL_B_ASN +
-                reward * RL_ASL_B_INTERARRIVAL * RL_ASL_B_ASN +
-                interarrival * RL_ASL_B_ASN +
-                asn;
-
+    int state = (((listen * RL_ASL_B_REWARD) + reward) * RL_ASL_B_INTERARRIVAL + interarrival) * RL_ASL_B_ASN + asn;
+    if (state < 0 || state >= RL_ASL_NUM_STATES)
+    {
+        LOG_ERR("Computed invalid state index: %d\n", state);
+        return -1; // Indicate error
+    }
     return state;
 }
 /***************************************************************/
