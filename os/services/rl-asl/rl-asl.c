@@ -67,7 +67,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     int prev_state, prev_action;
     if (!rl_asl_decision_buffer_consume(asn_low32, &prev_state, &prev_action))
     {
-        LOG_DBG("rl_asl_on_slot_outcome: no stored decision for ASN %u\n", asn_low32);
+        // LOG_DBG("rl_asl_on_slot_outcome: no stored decision for ASN %u\n", asn_low32);
         return;
     }
 
@@ -86,7 +86,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     int next_state = prev_state;
     rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
 
-    LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f",
+    LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
              asn_low32, prev_state, prev_action, (int)packet_received, actual_reward);
 }
 
@@ -129,7 +129,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     }
     uint32_t estimated_neighbor_asn = (est_diff64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)est_diff64;
 
-    LOG_DBG("Neighbor last=%llu curr=%llu est_diff=%u EWMA=%u",
+    LOG_DBG("Neighbor last=%llu curr=%llu est_diff=%u EWMA=%u\n",
             (unsigned long long)last_heard_asn,
             (unsigned long long)curr_asn64,
             estimated_neighbor_asn,
@@ -160,13 +160,13 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
             float expected_reward = rl_asl_expected_reward_for_action(rl_asl_q_table.action, p);
             rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
-            LOG_DBG("Exp-update prev_state=%d action=SKIP expected_r=%.3f next=%d",
+            LOG_DBG("Exp-update prev_state=%d action=SKIP expected_r=%.3f next=%d\n",
                     rl_asl_q_table.state, expected_reward, current_state);
         }
         else
         {
             // previous was LISTEN — do nothing now; we will update in rl_asl_on_slot_outcome()
-            LOG_DBG("Previous action LISTEN -> deferring actual update until slot outcome observed");
+            LOG_DBG("Previous action LISTEN -> deferring actual update until slot outcome observed\n");
         }
     }
 
@@ -181,7 +181,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     rl_asl_q_table.action = chosen_action;
 
     *skip_rx = (chosen_action == RL_ASL_ACTION_SKIP_RX);
-    LOG_DBG("Decision ASN=%u state=%d action=%d skip=%d (eps=%.3f)",
+    LOG_DBG("Decision ASN=%u state=%d action=%d skip=%d (eps=%.3f)\n",
             asn_low32, current_state, chosen_action, (int)*skip_rx, rl_asl_q_table.epsilon);
 
     rl_asl_q_learning_step_done();
