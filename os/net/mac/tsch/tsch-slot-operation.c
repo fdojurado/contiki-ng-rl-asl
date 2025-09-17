@@ -83,6 +83,10 @@
 #define TSCH_DEBUG_SLOT_END()
 #endif
 
+#if BUILD_WITH_RL_ASL
+struct tsch_asn_t last_rx_asn;
+#endif /* BUILD_WITH_RL_ASL */
+
 /* Check if TSCH_MAX_INCOMING_PACKETS is power of two */
 #if (TSCH_MAX_INCOMING_PACKETS & (TSCH_MAX_INCOMING_PACKETS - 1)) != 0
 #error TSCH_MAX_INCOMING_PACKETS must be power of two
@@ -1013,6 +1017,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 
             /* Log every reception */
+#if BUILD_WITH_RL_ASL
+            last_rx_asn = tsch_current_asn;
+#endif /* BUILD_WITH_RL_ASL */
             TSCH_LOG_ADD(tsch_log_rx,
               linkaddr_copy(&log->rx.src, (linkaddr_t *)&frame.src_addr);
               log->rx.is_unicast = frame.fcf.ack_required;

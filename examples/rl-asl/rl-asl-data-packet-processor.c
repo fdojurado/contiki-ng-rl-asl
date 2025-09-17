@@ -5,6 +5,9 @@
 #include "rl-asl-net.h"
 #include "rl-asl-net-processor.h"
 #include "tsch.h"
+#if BUILD_WITH_RL_ASL
+#include "net/mac/tsch/tsch-slot-operation.h"
+#endif /* BUILD_WITH_RL_ASL */
 // #ifndef SAGE_MINIMAL
 // #include "orchestra.h"
 // #endif /* SAGE_MINIMAL */
@@ -24,5 +27,10 @@
 /*---------------------------------------------------------------------------*/
 void rl_asl_data_packet_input(int8_t is_for_us)
 {
-    LOG_INFO("Processing data packet input\n");
+#if BUILD_WITH_RL_ASL
+    uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
+    LOG_INFO("Processing data packet input (is_for_us=%d) at ASN %" PRIu64 "\n", is_for_us, full_asn);
+#else
+    LOG_INFO("Processing data packet input (is_for_us=%d) at ASN unknown\n", is_for_us);
+#endif /* BUILD_WITH_RL_ASL */
 }

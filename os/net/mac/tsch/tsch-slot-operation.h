@@ -47,6 +47,10 @@
 
 /***** External Variables *****/
 
+#if BUILD_WITH_RL_ASL
+extern struct tsch_asn_t last_rx_asn;
+#endif /* BUILD_WITH_RL_ASL */
+
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
 extern struct ringbufindex dequeued_ringbuf;
