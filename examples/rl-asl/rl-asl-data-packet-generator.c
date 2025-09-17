@@ -62,7 +62,6 @@ void send_data_packet(void)
   print_raw_buffer((uint8_t *)RL_ASL_IP_BUF, rl_asl_len);
   // print_raw_buffer(SAGE_IP_BUF, sage_len);
 
-  LOG_DBG("ASN: %" PRIu64 "\n", full_asn);
   LOG_INFO("Sending data packet with sequence number %d and ASN %" PRIu64 "\n",
            seqnum, full_asn);
 
