@@ -69,14 +69,6 @@ uint8_t *rl_asl_buf_get_ip_next_header(uint8_t *buffer, uint16_t size, uint8_t *
     {
         next_hdr_len = RL_ASL_DATAH_LEN;
     }
-    else if (*protocol == RL_ASL_PROTO_BC_SCHEDULE)
-    {
-        next_hdr_len = RL_ASL_BC_SCHEDULEH_LEN;
-    }
-    else if (*protocol == RL_ASL_PROTO_BC_SCHEDULE_ACK)
-    {
-        next_hdr_len = RL_ASL_BC_SCHEDULE_ACKH_LEN;
-    }
     else
     {
         LOG_ERR("Unknown protocol: %d\n", *protocol);

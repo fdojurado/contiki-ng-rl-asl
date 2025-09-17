@@ -170,10 +170,6 @@ void rl_asl_ip_process(void)
         {
         case RL_ASL_PROTO_DATA:
             goto data_input; /* Process data packet */
-        case RL_ASL_PROTO_BC_SCHEDULE:
-            goto rl_asl_bc_schedule_input; /* Process broadcast schedule */
-        case RL_ASL_PROTO_BC_SCHEDULE_ACK:
-            goto rl_asl_bc_schedule_ack_in; /* Process broadcast schedule ACK */
         default:
             LOG_DBG("Unknown protocol %d, dropping packet\n", protocol);
             goto drop;
@@ -199,35 +195,6 @@ data_input:
             scr.u8[0], scr.u8[1]);
 
     goto send;
-
-rl_asl_bc_schedule_input:
-    if (rl_asl_bc_schedule_chksum() != 0xffff)
-    {
-        LOG_DBG("Bad broadcast schedule checksum, dropping packet\n");
-        goto drop;
-    }
-    LOG_DBG("Processing broadcast schedule packet from %02x:%02x to %02x:%02x\n",
-            scr.u8[0], scr.u8[1], dest.u8[0], dest.u8[1]);
-
-// #if !WITH_SAGE_ORCHESTRA
-// #ifndef SAGE_MINIMAL
-//     rl_asl_bc_schedule_input();
-// #endif /* SAGE_MINIMAL */
-// #endif /* !WITH_SAGE_ORCHESTRA */
-
-    goto drop; // We don't forward broadcast schedules
-
-rl_asl_bc_schedule_ack_in:
-    LOG_DBG("Processing broadcast schedule ACK packet from %02x:%02x to %02x:%02x\n",
-            scr.u8[0], scr.u8[1], dest.u8[0], dest.u8[1]);
-
-// #if !WITH_SAGE_ORCHESTRA
-// #ifndef SAGE_MINIMAL
-//     rl_asl_bc_schedule_ack_input(&scr);
-// #endif /* SAGE_MINIMAL */
-// #endif /* !WITH_SAGE_ORCHESTRA */
-
-    goto drop;
 
 send:
     RL_ASL_IP_BUF->ipchksum = 0;
