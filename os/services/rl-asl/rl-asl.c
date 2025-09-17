@@ -98,6 +98,15 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         *skip_rx = false;
         return;
     }
+
+    // * We only operate over unicast orchestra links
+    if (link->handle != RL_ASL_UNICAST_SLOTFRAME_HANDLE)
+    {
+        *skip_rx = false;
+        return;
+    }
+
+    
     if (rl_asl_ds_nbr_count() == 0)
     {
         *skip_rx = false;
@@ -114,6 +123,12 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
 
     uint64_t last_heard_asn = nbr->last_heard_asn;
     uint32_t asn_diff_ewma = nbr->asn_diff_ewma;
+
+    if (last_heard_asn == 0 || asn_diff_ewma == 0)
+    {
+        *skip_rx = false;
+        return;
+    }
 
     /* get current ASN robustly */
     uint64_t curr_asn64 = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
