@@ -165,6 +165,8 @@ void rl_asl_q_learning_reset_table(void)
     }
     rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_EPSILON;
     rl_asl_q_table.state = 0;
+    rl_asl_q_table.step_count = 0;
+    rl_asl_q_table.episode_count = 0;
     LOG_INFO("Q-Learning table reset\n");
 }
 /***************************************************************/
