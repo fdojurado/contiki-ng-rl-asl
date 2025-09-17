@@ -2,12 +2,13 @@
 #define RL_ASL_Q_LEARNING_H
 
 #include "rl-asl.h"
+#include "rl-asl-data-packet-generator.h"
 
 /*****************************************************************
  * Q-Learning parameters
  *****************************************************************/
 
-#define RL_ASL_EPISODE_LENGTH 1000 // Number of steps per episode
+#define RL_ASL_EPISODE_LENGTH (int)(RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S * 1e6 / TSCH_DEFAULT_TIMESLOT_TIMING[tsch_ts_timeslot_length] + 1)
 
 #define RL_ASL_Q_LEARNING_ALPHA 0.1
 #define RL_ASL_Q_LEARNING_GAMMA 0.9

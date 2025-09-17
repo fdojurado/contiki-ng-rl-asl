@@ -14,7 +14,8 @@ void rl_asl_q_learning_init(void)
     // Initialize Q-table with zeros
     rl_asl_q_learning_reset_table();
 
-    LOG_INFO("Q-Learning initialized with %d states and %d actions\n", RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS);
+    LOG_INFO("Q-Learning initialized with %d states, %d actions and number of steps per episode %d\n",
+             RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS, RL_ASL_EPISODE_LENGTH);
 }
 /***************************************************************/
 void rl_asl_q_learning_update(const int state, const int action,
