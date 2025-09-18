@@ -191,7 +191,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
                     rl_asl_q_table.state, p, expected_reward, current_state);
             // Check for terminal state: if we just skipped and now received a packet, end episode (negative terminal)
-            if (estimated_neighbor_asn >= asn_diff_ewma)
+            if (estimated_neighbor_asn >= (asn_diff_ewma + 10))
             {
                 // end episode early (reset step_count and decay epsilon)
                 rl_asl_q_table.step_count = 0;
