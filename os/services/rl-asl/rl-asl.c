@@ -76,7 +76,6 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     if (packet_received)
     {
         // end episode early (reset step_count and decay epsilon)
-        rl_asl_q_table.step_count = 0;
         rl_asl_q_learning_end_episode();
         LOG_INFO("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
         actual_reward += REWARD_SUCCESS; // bonus for success
@@ -193,7 +192,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             if (estimated_neighbor_asn >= (asn_diff_ewma + ORCHESTRA_UNICAST_PERIOD * 7)) // allow some margin
             {
                 // end episode early (reset step_count and decay epsilon)
-                rl_asl_q_table.step_count = 0;
                 rl_asl_q_learning_end_episode();
                 LOG_INFO("Episode terminated (failure) due to skipped RX followed by packet reception\n");
                 // we need to update the nbr last_heard_asn and asn_diff_ewma accordingly
