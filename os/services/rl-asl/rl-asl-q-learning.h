@@ -27,6 +27,9 @@
 #define REWARD_SUCCESS 10.0
 #define PENALTY_FAILURE -10.0
 
+// episode window averages
+#define RL_ASL_EPISODE_AVG_WINDOW 100
+
 #define RL_ASL_NUM_STATES RL_ASL_B_INTERARRIVAL
 
 // enum actions
@@ -47,6 +50,11 @@ typedef struct
     unsigned long step_count;    // total steps in current episode
     unsigned long episode_count; // total episodes completed
     float episode_return;
+
+    /* episode window averages */
+    float episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
+    int buffer_index;
+    int buffer_filled;
 } rl_asl_q_table_t;
 
 extern rl_asl_q_table_t rl_asl_q_table;

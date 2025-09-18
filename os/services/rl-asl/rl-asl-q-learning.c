@@ -137,12 +137,26 @@ void rl_asl_q_learning_end_episode(void)
 {
     rl_asl_q_table.episode_count++;
 
+    // Insert return into rolling buffer
+    rl_asl_q_table.episode_returns_buffer[rl_asl_q_table.buffer_index] = rl_asl_q_table.episode_return;
+    rl_asl_q_table.buffer_index = (rl_asl_q_table.buffer_index + 1) % RL_ASL_EPISODE_AVG_WINDOW;
+    if (rl_asl_q_table.buffer_filled < RL_ASL_EPISODE_AVG_WINDOW)
+        rl_asl_q_table.buffer_filled++;
+
+    // Compute rolling average
+    float sum = 0.0f;
+    for (int i = 0; i < rl_asl_q_table.buffer_filled; i++)
+        sum += rl_asl_q_table.episode_returns_buffer[i];
+
+    float rolling_avg = (rl_asl_q_table.buffer_filled > 0) ? sum / rl_asl_q_table.buffer_filled : 0.0f;
+
     // Log episode summary in CSV-like format for easy parsing
-    LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu\n",
+    LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu,%.3f\n",
              rl_asl_q_table.episode_count,
              rl_asl_q_table.episode_return,
              rl_asl_q_table.epsilon,
-             rl_asl_q_table.step_count);
+             rl_asl_q_table.step_count,
+             rolling_avg);
 
     // Reset episode accumulator
     rl_asl_q_table.episode_return = 0.0f;
@@ -201,6 +215,10 @@ void rl_asl_q_learning_reset_table(void)
     rl_asl_q_table.action = -1;
     rl_asl_q_table.step_count = 0;
     rl_asl_q_table.episode_count = 0;
+    rl_asl_q_table.episode_return = 0.0f;
+    rl_asl_q_table.buffer_index = 0;
+    rl_asl_q_table.buffer_filled = 0;
+    memset(rl_asl_q_table.episode_returns_buffer, 0, sizeof(rl_asl_q_table.episode_returns_buffer));
     LOG_INFO("Q-Learning table reset\n");
 }
 /***************************************************************/
