@@ -72,14 +72,6 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
 
     float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
 
-    // Compute next_state (optional): re-evaluate interarrival bin / neighbor stats now, or reuse prev_state
-    // For simplicity use prev_state as next_state; this is acceptable for immediate correction.
-    int next_state = prev_state;
-    rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
-
-    LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
-             asn_low32, prev_state, prev_action, (int)packet_received, actual_reward);
-
     // Terminal on successful reception: end the episode (positive terminal)
     if (packet_received)
     {
@@ -87,7 +79,16 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         rl_asl_q_table.step_count = 0;
         rl_asl_q_learning_end_episode();
         LOG_INFO("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
+        actual_reward += 10; // bonus for success
     }
+
+    // Compute next_state (optional): re-evaluate interarrival bin / neighbor stats now, or reuse prev_state
+    // For simplicity use prev_state as next_state; this is acceptable for immediate correction.
+    int next_state = prev_state;
+    rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
+
+    LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
+             asn_low32, prev_state, prev_action, (int)packet_received, actual_reward);
 }
 
 // ---------- corrected rl_asl_check_skip_rx ----------
@@ -188,9 +189,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                 LOG_ERR("Invalid expected reward computation for SKIP action\n");
                 expected_reward = 0.0f;
             }
-            rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
-            LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
-                    rl_asl_q_table.state, p, expected_reward, current_state);
             // Check for terminal state: if we just skipped and now received a packet, end episode (negative terminal)
             if (estimated_neighbor_asn >= (asn_diff_ewma + ORCHESTRA_UNICAST_PERIOD * 7)) // allow some margin
             {
@@ -204,7 +202,11 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                 {
                     rl_asl_ds_nbr_update(addr, nbr->last_seqno + 1, curr_asn64);
                 }
+                expected_reward += 10; // apply penalty for failed skip
             }
+            rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
+            LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
+                    rl_asl_q_table.state, p, expected_reward, current_state);
         }
         else
         {
