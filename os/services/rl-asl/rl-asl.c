@@ -79,7 +79,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         rl_asl_q_table.step_count = 0;
         rl_asl_q_learning_end_episode();
         LOG_INFO("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
-        actual_reward += 10; // bonus for success
+        actual_reward += REWARD_SUCCESS; // bonus for success
     }
 
     // Compute next_state (optional): re-evaluate interarrival bin / neighbor stats now, or reuse prev_state
@@ -202,7 +202,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                 {
                     rl_asl_ds_nbr_update(addr, nbr->last_seqno + 1, curr_asn64);
                 }
-                expected_reward += 10; // apply penalty for failed skip
+                expected_reward += PENALTY_FAILURE; // penalty for failure
             }
             rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
             LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",

@@ -23,6 +23,10 @@
 #define PENALTY_RX_NO_TX -0.5
 #define PENALTY_SKIP_RX_TX -1.0
 
+// Bonus/Penalty for terminal states
+#define REWARD_SUCCESS 10.0
+#define PENALTY_FAILURE -10.0
+
 #define RL_ASL_NUM_STATES RL_ASL_B_INTERARRIVAL
 
 // enum actions
