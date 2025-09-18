@@ -46,6 +46,7 @@ typedef struct
     int action;
     unsigned long step_count;    // total steps in current episode
     unsigned long episode_count; // total episodes completed
+    float episode_return;
 } rl_asl_q_table_t;
 
 extern rl_asl_q_table_t rl_asl_q_table;

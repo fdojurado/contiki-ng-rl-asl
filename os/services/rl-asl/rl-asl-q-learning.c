@@ -38,6 +38,11 @@ void rl_asl_q_learning_update(const int state, const int action,
     float new_q_value = old_q_value + RL_ASL_Q_LEARNING_ALPHA * (reward + RL_ASL_Q_LEARNING_GAMMA * max_next_q_value - old_q_value);
     rl_asl_q_table.q_values[state][action] = new_q_value;
     rl_asl_q_table.state = next_state;
+
+    rl_asl_q_table.episode_return += reward;
+
+    // LOG_DBG("Step state=%d action=%d reward=%.3f next_state=%d q=%.3f\n",
+    //         state, action, reward, next_state, new_q_value);
 }
 /***************************************************************/
 int rl_asl_q_learning_select_action(int state)
@@ -131,13 +136,24 @@ void rl_asl_q_learning_step_done(void)
 void rl_asl_q_learning_end_episode(void)
 {
     rl_asl_q_table.episode_count++;
+
+    // Log episode summary in CSV-like format for easy parsing
+    LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu\n",
+             rl_asl_q_table.episode_count,
+             rl_asl_q_table.episode_return,
+             rl_asl_q_table.epsilon,
+             rl_asl_q_table.step_count);
+
+    // Reset episode accumulator
+    rl_asl_q_table.episode_return = 0.0f;
+    rl_asl_q_table.step_count = 0;
+
+    // Decay epsilon
     rl_asl_q_table.epsilon *= RL_ASL_Q_LEARNING_EPSILON_DECAY;
     if (rl_asl_q_table.epsilon < RL_ASL_Q_LEARNING_MIN_EPSILON)
     {
         rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
     }
-    LOG_INFO("Episode %lu ended. Epsilon=%.3f\n",
-             rl_asl_q_table.episode_count, rl_asl_q_table.epsilon);
 }
 
 /***************************************************************/
