@@ -127,10 +127,7 @@ void rl_asl_q_learning_step_done(void)
 {
     rl_asl_q_table.step_count++;
     if (rl_asl_q_table.step_count >= RL_ASL_EPISODE_LENGTH)
-    {
-        rl_asl_q_table.step_count = 0;
         rl_asl_q_learning_end_episode();
-    }
 }
 /***************************************************************/
 void rl_asl_q_learning_end_episode(void)
