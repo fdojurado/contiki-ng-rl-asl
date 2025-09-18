@@ -4,7 +4,8 @@
 #include "rl-asl-q-learning.h"
 #include "rl-asl-ds-nbr.h"
 #include "rl-asl-decision-buffer.h"
-#include <math.h> // For expf()
+#include "os/services/orchestra/orchestra.h" // For ORCHESTRA_UNICAST_PERIOD
+#include <math.h>                            // For expf()
 
 /* log */
 #include "sys/log.h"
@@ -191,12 +192,18 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
                     rl_asl_q_table.state, p, expected_reward, current_state);
             // Check for terminal state: if we just skipped and now received a packet, end episode (negative terminal)
-            if (estimated_neighbor_asn >= (asn_diff_ewma + 10))
+            if (estimated_neighbor_asn >= (asn_diff_ewma + ORCHESTRA_UNICAST_PERIOD * 7)) // allow some margin
             {
                 // end episode early (reset step_count and decay epsilon)
                 rl_asl_q_table.step_count = 0;
                 rl_asl_q_learning_end_episode();
                 LOG_INFO("Episode terminated (failure) due to skipped RX followed by packet reception\n");
+                // we need to update the nbr last_heard_asn and asn_diff_ewma accordingly
+                const linkaddr_t *addr = rl_asl_ds_nbr_get_addr(nbr);
+                if (addr != NULL)
+                {
+                    rl_asl_ds_nbr_update(addr, nbr->last_seqno + 1, curr_asn64);
+                }
             }
         }
         else
