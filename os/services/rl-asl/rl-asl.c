@@ -54,6 +54,14 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         return;
     }
 
+    // Defensive checks
+    if (prev_state < 0 || prev_state >= RL_ASL_NUM_STATES ||
+        prev_action < 0 || prev_action >= RL_ASL_NUM_ACTIONS)
+    {
+        LOG_ERR("rl_asl_on_slot_outcome: invalid stored decision state=%d action=%d\n", prev_state, prev_action);
+        return;
+    }
+
     // Compute actual reward for previous action (listen or skip)
     if (prev_action == RL_ASL_ACTION_SKIP_RX)
     {
@@ -61,8 +69,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         return;
     }
 
-    float actual_reward;
-    actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
+    float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
 
     // Compute next_state (optional): re-evaluate interarrival bin / neighbor stats now, or reuse prev_state
     // For simplicity use prev_state as next_state; this is acceptable for immediate correction.
@@ -71,6 +78,15 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
 
     LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
              asn_low32, prev_state, prev_action, (int)packet_received, actual_reward);
+
+    // Terminal on successful reception: end the episode (positive terminal)
+    if (packet_received)
+    {
+        // end episode early (reset step_count and decay epsilon)
+        rl_asl_q_table.step_count = 0;
+        rl_asl_q_learning_end_episode();
+        LOG_INFO("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
+    }
 }
 
 // ---------- corrected rl_asl_check_skip_rx ----------
@@ -145,6 +161,16 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         return;
     }
 
+    /* Choose action for current state */
+    int chosen_action = rl_asl_q_learning_select_action(current_state);
+
+    /* Store decision in history keyed by ASN low32 so we can apply true reward later */
+    uint32_t asn_low32 = (uint32_t)curr_asn64; // low 32 bits for matching
+    rl_asl_decision_buffer_add(asn_low32, current_state, chosen_action);
+
+    rl_asl_q_table.state = current_state;
+    rl_asl_q_table.action = chosen_action;
+
     /* If previous decision exists and was SKIP, apply expected reward now.
        If previous decision was LISTEN, defer update until rl_asl_on_slot_outcome() is called. */
     if (rl_asl_q_table.state >= 0 && rl_asl_q_table.action >= 0 &&
@@ -164,6 +190,14 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             rl_asl_q_learning_update(rl_asl_q_table.state, rl_asl_q_table.action, expected_reward, current_state);
             LOG_DBG("Exp-update prev_state=%d action=SKIP p=%.3f expected_r=%.3f next=%d\n",
                     rl_asl_q_table.state, p, expected_reward, current_state);
+            // Check for terminal state: if we just skipped and now received a packet, end episode (negative terminal)
+            if (estimated_neighbor_asn >= asn_diff_ewma)
+            {
+                // end episode early (reset step_count and decay epsilon)
+                rl_asl_q_table.step_count = 0;
+                rl_asl_q_learning_end_episode();
+                LOG_INFO("Episode terminated (failure) due to skipped RX followed by packet reception\n");
+            }
         }
         else
         {
@@ -171,16 +205,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             // LOG_DBG("Previous action LISTEN -> deferring actual update until slot outcome observed\n");
         }
     }
-
-    /* Choose action for current state */
-    int chosen_action = rl_asl_q_learning_select_action(current_state);
-
-    /* Store decision in history keyed by ASN low32 so we can apply true reward later */
-    uint32_t asn_low32 = (uint32_t)curr_asn64; // low 32 bits for matching
-    rl_asl_decision_buffer_add(asn_low32, current_state, chosen_action);
-
-    rl_asl_q_table.state = current_state;
-    rl_asl_q_table.action = chosen_action;
 
     *skip_rx = (chosen_action == RL_ASL_ACTION_SKIP_RX);
     LOG_DBG("Decision ASN=%u state=%d action=%d skip=%d (eps=%.3f)\n",

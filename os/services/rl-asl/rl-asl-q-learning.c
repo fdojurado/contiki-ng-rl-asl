@@ -54,7 +54,9 @@ int rl_asl_q_learning_select_action(int state)
     else
     {
         // Exploit: select the action with the highest Q-value
-        return rl_asl_q_learning_get_best_action(state);
+        int action = rl_asl_q_learning_get_best_action(state);
+        LOG_DBG("Exploiting: selected best action %d (epsilon=%.3f)\n", action, rl_asl_q_table.epsilon);
+        return action;
     }
 }
 /***************************************************************/
