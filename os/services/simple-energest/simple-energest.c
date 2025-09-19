@@ -111,6 +111,8 @@ simple_energest_step(void)
   log_energest("Deep LPM",  curr_deep_lpm - last_deep_lpm, delta_time);
   log_energest("Radio Tx",  curr_tx       - last_tx,       delta_time);
   log_energest("Radio Rx",  delta_rx,       delta_time);
+  log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
+               delta_time);
 
 #if WITH_RL_ASL_NET
   uint64_t delta_uc_rx = curr_uc_rx - last_uc_rx;
@@ -128,10 +130,6 @@ simple_energest_step(void)
     float uc_ratio = (float)delta_uc_rx / (float)delta_rx;
     log_energest("UC ratio", (uint64_t)(uc_ratio * 1000), 1000);
   }
-  
-#else
-  log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
-               delta_time);
 #endif
 
   /* Update last snapshot */
