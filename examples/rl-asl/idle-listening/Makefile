@@ -21,17 +21,19 @@ ifeq ($(MAKE_WITH_RL_ASL_NET),1)
   CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
 endif
 
-ifeq ($(MAKE_WITH_ORCHESTRA),1)
- ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_rpl_ns
- # pass the Orchestra rules to the compiler
- CFLAGS += -DORCHESTRA_CONF_RULES="{&eb_per_time_source,$(ORCHESTRA_EXTRA_RULES),&default_common}"
- MODULES += $(CONTIKI_NG_SERVICES_DIR)/orchestra
-endif
-
 ifeq ($(MAKE_WITH_RL_ASL),1)
   MODULES += $(CONTIKI_NG_SERVICES_DIR)/rl-asl
 endif
 
+ifeq ($(MAKE_WITH_ORCHESTRA),1)
+ ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_rpl_ns
+ ifeq ($(MAKE_WITH_RL_ASL),1)
+  ORCHESTRA_EXTRA_RULES = &unicast_rl_asl
+ endif
+ # pass the Orchestra rules to the compiler
+ CFLAGS += -DORCHESTRA_CONF_RULES="{&eb_per_time_source,$(ORCHESTRA_EXTRA_RULES),&default_common}"
+ MODULES += $(CONTIKI_NG_SERVICES_DIR)/orchestra
+endif
 
 CFLAGS += -DSLIP_ARCH_CONF_ENABLE=0 -DWITH_SLIP=0
 
