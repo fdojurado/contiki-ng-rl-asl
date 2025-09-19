@@ -188,7 +188,7 @@
       <skin>org.contikios.cooja.plugins.skins.GridVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.TrafficVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.UDGMVisualizerSkin</skin>
-      <viewport>1.7405603810040515 0.0 0.0 1.7405603810040515 47.95980153208088 -42.576134155447555</viewport>
+      <viewport>2.0 0.0 0.0 2.0 112.0 8.0</viewport>
     </plugin_config>
     <width>236</width>
     <z>3</z>
