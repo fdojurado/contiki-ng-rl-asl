@@ -70,14 +70,12 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     }
 
     float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
-    const char *episode = "NONE";
 
     // Terminal on successful reception
     if (packet_received)
     {
         rl_asl_q_learning_end_episode();
         actual_reward += REWARD_SUCCESS; // bonus
-        episode = "SUCCESS";
     }
 
     LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=LISTEN,SUCCESS=%d\n",
@@ -157,7 +155,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     {
         float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
         float expected_reward = rl_asl_expected_reward_for_action(chosen_action, p);
-        const char *episode = "NONE";
         int pkt = 0;
 
         if (estimated_neighbor_asn >= (asn_diff_ewma + ORCHESTRA_UNICAST_PERIOD * 7))
@@ -165,7 +162,6 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             rl_asl_q_learning_end_episode();
             expected_reward += PENALTY_FAILURE;
             pkt = 1;
-            episode = "FAIL";
         }
 
         LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=SKIP,SUCCESS=%d\n",
