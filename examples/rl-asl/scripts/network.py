@@ -594,3 +594,22 @@ class Network:
                             'time': sample.time
                         } for asn, sample in rl_asl_samples.items()}
                     }
+
+    def calc_episode_monitoring(self, results: Dict[int, Dict[str, Any]]) -> None:
+        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+        for node in nodes_sorted:
+            if node.id > 1:
+                episode_samples = node.episode_monitoring.get_samples()
+                if episode_samples:
+                    # check if the node id is already in results
+                    if node.id not in results:
+                        results[node.id] = {}
+                    results[node.id]['episode_monitoring'] = {
+                        'samples': {count: {
+                            'episode_reward': sample.episode_reward,
+                            'epsilon': sample.epsilon,
+                            'steps': sample.steps,
+                            'avg_reward': sample.avg_reward,
+                            'time': sample.time
+                        } for count, sample in episode_samples.items()}
+                    }
