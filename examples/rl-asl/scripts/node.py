@@ -45,6 +45,7 @@ class Node():
         self.power_trace = PowerTraceSamples(self)
         self.rl_asl_trace = RLASLTraceSamples(self)
         self.delay = DelaySamples(self)
+        self.episode_monitoring = EpisodeSamples(self)
         self.last_power_seq = 0
 
     # ---------------------------------------------------------------------------
