@@ -50,6 +50,14 @@ _RE_ENERGEST_RADIO_TX_TIME = re.compile(
     r"\[INFO: Energest\s*\]\s*Radio Tx\s*:\s*(\d+)")
 _RE_ENERGEST_RADIO_RX_TIME = re.compile(
     r"\[INFO: Energest\s*\]\s*Radio Rx\s*:\s*(\d+)")
+_RE_ENERGEST_RADIO_UC_RX_TIME = re.compile(
+    r"\[INFO: Energest\s*\]\s*UC Radio Rx\s*:\s*(\d+)")
+_RE_ENERGEST_RADIO_UC_IDLE_RX_TIME = re.compile(
+    r"\[INFO: Energest\s*\]\s*UC Idle Radio Rx\s*:\s*(\d+)")
+_RE_ENERGEST_RADIO_UC_IDLE_RATIO = re.compile(
+    r"\[INFO: Energest\s*\]\s*UC Idle ratio\s*\([\d\.]+\s*\)\s*:\s*([\d\.]+)")
+_RE_ENERGEST_RADIO_UC_RATIO = re.compile(
+    r"\[INFO: Energest\s*\]\s*UC ratio\s*\([\d\.]+\s*\)\s*:\s*([\d\.]+)")
 _RE_ENERGEST_RADIO_TOTAL_TIME = re.compile(
     r"\[INFO: Energest\s*\]\s*Radio total\s*:\s*(\d+)")
 _RE_ENERGEST_ENERGY = re.compile(
@@ -87,6 +95,11 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     energest_deep_lpm_time = _RE_ENERGEST_DEEP_LPM_TIME.search(msg)
     energest_radio_tx_time = _RE_ENERGEST_RADIO_TX_TIME.search(msg)
     energest_radio_rx_time = _RE_ENERGEST_RADIO_RX_TIME.search(msg)
+    energest_radio_uc_rx_time = _RE_ENERGEST_RADIO_UC_RX_TIME.search(msg)
+    energest_radio_uc_idle_rx_time = _RE_ENERGEST_RADIO_UC_IDLE_RX_TIME.search(
+        msg)
+    energest_radio_uc_idle_ratio = _RE_ENERGEST_RADIO_UC_IDLE_RATIO.search(msg)
+    energest_radio_uc_ratio = _RE_ENERGEST_RADIO_UC_RATIO.search(msg)
     energest_radio_total_time = _RE_ENERGEST_RADIO_TOTAL_TIME.search(msg)
     send_seq = _RE_SEND_SEQ.search(msg)
     receive_seq = _RE_RX_SEQ.search(msg)
@@ -114,6 +127,20 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     if energest_radio_rx_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "rx", "value": energest_radio_rx_time.group(1)}, time=timestamp)
+
+    if energest_radio_uc_rx_time:
+        node.power_trace_add(seq=node.get_last_power_seq(), data={
+                             "type": "uc_rx", "value": energest_radio_uc_rx_time.group(1)}, time=timestamp)
+    if energest_radio_uc_idle_rx_time:
+        node.power_trace_add(seq=node.get_last_power_seq(), data={
+                             "type": "uc_idle_rx", "value": energest_radio_uc_idle_rx_time.group(1)}, time=timestamp)
+    if energest_radio_uc_idle_ratio:
+        node.power_trace_add(seq=node.get_last_power_seq(), data={
+                             "type": "uc_idle_ratio", "value": energest_radio_uc_idle_ratio.group(1)}, time=timestamp)
+    if energest_radio_uc_ratio:
+        node.power_trace_add(seq=node.get_last_power_seq(), data={
+                             "type": "uc_ratio", "value": energest_radio_uc_ratio.group(1)}, time=timestamp)
+
     if energest_radio_total_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "radio_total", "value": energest_radio_total_time.group(1)}, time=timestamp)

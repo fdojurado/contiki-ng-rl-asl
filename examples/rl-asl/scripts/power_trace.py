@@ -53,6 +53,10 @@ class PowerTrace():
         deep_lpm=None,
         tx=None,
         rx=None,
+        uc_rx=None,
+        uc_idle_rx=None,
+        uc_idle_ratio=None,
+        uc_ratio=None,
         radio_total=None,
         total_time_secs=None,
         total_time_ticks=None,
@@ -72,6 +76,14 @@ class PowerTrace():
             assert isinstance(tx, int)
         if rx is not None:
             assert isinstance(rx, int)
+        if uc_rx is not None:
+            assert isinstance(uc_rx, int)
+        if uc_idle_rx is not None:
+            assert isinstance(uc_idle_rx, int)
+        if uc_idle_ratio is not None:
+            assert isinstance(uc_idle_ratio, float)
+        if uc_ratio is not None:
+            assert isinstance(uc_ratio, float)
         if radio_total is not None:
             assert isinstance(radio_total, int)
         self.seq = seq
@@ -80,6 +92,10 @@ class PowerTrace():
         self.deep_lpm = deep_lpm
         self.tx = tx
         self.rx = rx
+        self.uc_rx = uc_rx
+        self.uc_idle_rx = uc_idle_rx
+        self.uc_idle_ratio = uc_idle_ratio
+        self.uc_ratio = uc_ratio
         self.radio_total = radio_total
         self.total_time_secs = total_time_secs
         self.total_time_ticks = total_time_ticks
@@ -92,6 +108,7 @@ class PowerTrace():
     def __str__(self):
         return (f"PowerTrace(seq={self.seq}, cpu={self.cpu}, lpm={self.lpm}, "
                 f"deep_lpm={self.deep_lpm}, tx={self.tx}, rx={self.rx}, "
+                f"uc_rx={self.uc_rx}, uc_idle_rx={self.uc_idle_rx}, uc_idle_ratio={self.uc_idle_ratio}, uc_ratio={self.uc_ratio}, "
                 f"radio_total={self.radio_total}, total_time_secs={self.total_time_secs}, "
                 f"total_time_ticks={self.total_time_ticks}, power={self.power}, energy={self.energy}, RDC={self.rdc}, time={self.time})")
 
@@ -160,7 +177,7 @@ class PowerTraceSamples():
     def add_sample(self, seq: int, data: Dict[str, int], time=None) -> PowerTrace:
         power_trace = self.get_sample(seq)
         data_type = data.get("type")
-        if data_type not in ["cpu", "lpm", "deep_lpm", "tx", "rx", "radio_total", "power", "total_time_secs", "total_time_ticks"]:
+        if data_type not in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "uc_idle_rx", "uc_idle_ratio", "uc_ratio", "radio_total", "power", "total_time_secs", "total_time_ticks"]:
             logger.warning(
                 f'Node {self.node.id}: unknown power data type {data_type}')
             return
@@ -170,13 +187,17 @@ class PowerTraceSamples():
         # Update the sample with the new data
         setattr(power_trace, data_type, data.get("value"))
         # If we have all the data, we can calculate the total power
-        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "radio_total", "total_time_secs", "total_time_ticks"]]):
+        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "uc_idle_rx", "uc_idle_ratio", "uc_ratio", "radio_total", "total_time_secs", "total_time_ticks"]]):
             # Calculate energy
             cpu_time = int(getattr(power_trace, "cpu", 0))
             lpm_time = int(getattr(power_trace, "lpm", 0))
             deep_lpm_time = int(getattr(power_trace, "deep_lpm", 0))
             tx_time = int(getattr(power_trace, "tx", 0))
             rx_time = int(getattr(power_trace, "rx", 0))
+            uc_rx_time = int(getattr(power_trace, "uc_rx", 0))
+            uc_idle_rx_time = int(getattr(power_trace, "uc_idle_rx", 0))
+            uc_idle_ratio = float(getattr(power_trace, "uc_idle_ratio", 0.0))
+            uc_ratio = float(getattr(power_trace, "uc_ratio", 0.0))
             radio_total_time = int(getattr(power_trace, "radio_total", 0))
             total_time_ticks = int(getattr(power_trace, "total_time_ticks", 1))
             total_time_secs = int(getattr(power_trace, "total_time_secs", 1))
