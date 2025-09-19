@@ -7,6 +7,11 @@
 #include "rl-asl-packets.h"
 #include "rl-asl-utils.h"
 #include "rl-asl-data-packet-processor.h"
+
+#if BUILD_WITH_RL_ASL
+#include "rl-asl-handshake.h"
+#endif /* BUILD_WITH_RL_ASL */
+
 // #if !WITH_RL_ASL_ORCHESTRA
 // #ifndef RL_ASL_MINIMAL
 // #include "rl-asl-broadcast-schedule.h"
@@ -85,6 +90,9 @@ void rl_asl_callback_joining_network(void)
         LOG_INFO("Setting time source to %02x:%02x\n", nxthop->u8[0], nxthop->u8[1]);
         tsch_queue_update_time_source(nxthop);
     }
+#if BUILD_WITH_RL_ASL
+    rl_asl_handshake_update_parent(nxthop);
+#endif /* BUILD_WITH_RL_ASL */
 }
 /*---------------------------------------------------------------------------*/
 static void packet_input(void)
