@@ -91,7 +91,10 @@ void rl_asl_callback_joining_network(void)
         tsch_queue_update_time_source(nxthop);
     }
 #if BUILD_WITH_RL_ASL
-    rl_asl_handshake_update_parent(nxthop);
+    if (!linkaddr_cmp(nxthop, &root_node_addr))
+    {
+        rl_asl_handshake_update_parent(nxthop);
+    }
 #endif /* BUILD_WITH_RL_ASL */
 }
 /*---------------------------------------------------------------------------*/
@@ -178,6 +181,21 @@ void rl_asl_ip_process(void)
         {
         case RL_ASL_PROTO_DATA:
             goto data_input; /* Process data packet */
+        case RL_ASL_PROTO_HANDSHAKE:
+#if BUILD_WITH_RL_ASL
+            if (rl_asl_handshake_input())
+            {
+                goto drop; // Handshake processed, drop the packet
+            }
+            else
+            {
+                LOG_DBG("Handshake processing failed, dropping packet\n");
+                goto drop;
+            }
+#else
+            LOG_DBG("Handshake protocol not supported, dropping packet\n");
+            goto drop;
+#endif /* BUILD_WITH_RL_ASL */
         default:
             LOG_DBG("Unknown protocol %d, dropping packet\n", protocol);
             goto drop;
@@ -273,6 +291,10 @@ PROCESS_THREAD(rl_asl_net_processor_process, ev, data)
     NETSTACK_ROUTING.init();
 
     rl_asl_buf_clear();
+
+#if BUILD_WITH_RL_ASL
+    process_start(&rl_asl_handshake_process, NULL);
+#endif /* BUILD_WITH_RL_ASL */
 
     while (1)
     {
