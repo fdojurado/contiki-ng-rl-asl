@@ -55,9 +55,9 @@ _RE_ENERGEST_RADIO_UC_RX_TIME = re.compile(
 _RE_ENERGEST_RADIO_UC_IDLE_RX_TIME = re.compile(
     r"\[INFO: Energest\s*\]\s*UC Idle Rx\s*:\s*(\d+)")
 _RE_ENERGEST_RADIO_UC_IDLE_RATIO = re.compile(
-    r"\[INFO: Energest\s*\]\s*UC Idle ratio\s*\([\d\.]+\s*\)\s*:\s*([\d\.]+)")
+    r"\[INFO: Energest\s*\]\s*UC Idle ratio\s*:\s*(\d+)")
 _RE_ENERGEST_RADIO_UC_RATIO = re.compile(
-    r"\[INFO: Energest\s*\]\s*UC ratio\s*\([\d\.]+\s*\)\s*:\s*([\d\.]+)")
+    r"\[INFO: Energest\s*\]\s*UC ratio\s*:\s*(\d+)")
 _RE_ENERGEST_RADIO_TOTAL_TIME = re.compile(
     r"\[INFO: Energest\s*\]\s*Radio total\s*:\s*(\d+)")
 _RE_ENERGEST_ENERGY = re.compile(
