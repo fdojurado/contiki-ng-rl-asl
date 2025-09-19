@@ -60,6 +60,9 @@ extern struct orchestra_rule unicast_per_neighbor_rpl_ns;
 extern struct orchestra_rule unicast_per_neighbor_link_based;
 extern struct orchestra_rule special_for_root;
 extern struct orchestra_rule default_common;
+#if BUILD_WITH_RL_ASL
+extern struct orchestra_rule unicast_rl_asl;
+#endif
 
 extern linkaddr_t orchestra_parent_linkaddr;
 extern int orchestra_parent_knows_us;
