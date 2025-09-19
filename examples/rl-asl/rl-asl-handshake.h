@@ -4,8 +4,8 @@
 #include "contiki.h"
 #include "net/linkaddr.h"
 
+PROCESS_NAME(rl_asl_handshake_process);
 
-/* This function sends a handshake message to the specified address */
-void send_handshake(const linkaddr_t *addr);
+void rl_asl_handshake_update_parent(const linkaddr_t *addr);
 
 #endif /* RL_ASL_HANDSHAKE_H */
