@@ -77,7 +77,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     {
         // end episode early (reset step_count and decay epsilon)
         rl_asl_q_learning_end_episode();
-        LOG_INFO("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
+        LOG_DBG("Episode terminated (success) due to packet reception at ASN %u\n", asn_low32);
         actual_reward += REWARD_SUCCESS; // bonus for success
     }
 
@@ -86,7 +86,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     int next_state = prev_state;
     rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
 
-    LOG_INFO("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
+    LOG_DBG("Outcome ASN=%u: prev_state=%d action=%d packet=%d reward=%.3f\n",
              asn_low32, prev_state, prev_action, (int)packet_received, actual_reward);
 }
 
@@ -193,7 +193,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             {
                 // end episode early (reset step_count and decay epsilon)
                 rl_asl_q_learning_end_episode();
-                LOG_INFO("Episode terminated (failure) due to skipped RX followed by packet reception\n");
+                LOG_DBG("Episode terminated (failure) due to skipped RX followed by packet reception\n");
                 // we need to update the nbr last_heard_asn and asn_diff_ewma accordingly
                 const linkaddr_t *addr = rl_asl_ds_nbr_get_addr(nbr);
                 if (addr != NULL)
