@@ -70,20 +70,20 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
     }
 
     float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
+    const char *episode = "NONE";
 
     // Terminal on successful reception
     if (packet_received)
     {
         rl_asl_q_learning_end_episode();
         actual_reward += REWARD_SUCCESS; // bonus
-        LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=LISTEN,PKT=1,REWARD=%.2f,EPISODE=SUCCESS\n",
-                 asn_low32, prev_state, actual_reward);
+        episode = "SUCCESS";
     }
-    else
-    {
-        LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=LISTEN,PKT=0,REWARD=%.2f\n",
-                 asn_low32, prev_state, actual_reward);
-    }
+
+    LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=LISTEN,EPS=-1.0,PKT=%d,REWARD=%.2f,EPISODE=%s\n",
+             asn_low32, prev_state,
+             packet_received ? 1 : 0,
+             actual_reward, episode);
 
     int next_state = prev_state;
     rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
@@ -149,8 +149,8 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     rl_asl_q_table.state = current_state;
     rl_asl_q_table.action = chosen_action;
 
-    // Log decision
-    LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=%s,EPS=%.3f\n",
+    // Decision log (before outcome known)
+    LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=%s,EPS=%.3f,PKT=-1,REWARD=0.0,EPISODE=NONE\n",
              asn_low32, current_state,
              (chosen_action == RL_ASL_ACTION_SKIP_RX ? "SKIP" : "LISTEN"),
              rl_asl_q_table.epsilon);
@@ -159,19 +159,21 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     {
         float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
         float expected_reward = rl_asl_expected_reward_for_action(chosen_action, p);
+        const char *episode = "NONE";
+        int pkt = 0;
 
         if (estimated_neighbor_asn >= (asn_diff_ewma + ORCHESTRA_UNICAST_PERIOD * 7))
         {
             rl_asl_q_learning_end_episode();
             expected_reward += PENALTY_FAILURE;
-            LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=SKIP,PKT=1,REWARD=%.2f,EPISODE=FAIL\n",
-                     asn_low32, current_state, expected_reward);
+            pkt = 1;
+            episode = "FAIL";
         }
-        else
-        {
-            LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=SKIP,PKT=0,REWARD=%.2f\n",
-                     asn_low32, current_state, expected_reward);
-        }
+
+        LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=SKIP,EPS=%.3f,PKT=%d,REWARD=%.2f,EPISODE=%s\n",
+                 asn_low32, current_state,
+                 rl_asl_q_table.epsilon,
+                 pkt, expected_reward, episode);
 
         rl_asl_q_learning_update(current_state, chosen_action, expected_reward, current_state);
     }
