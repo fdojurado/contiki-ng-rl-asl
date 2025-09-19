@@ -174,6 +174,13 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         epsilon = _safe_float(episode_end.group("epsilon"))
         steps = _safe_int(episode_end.group("steps"))
         avg_reward = _safe_float(episode_end.group("avg_reward"))
+        node.episode_monitoring_add(data={
+            "episode_count": episode_count,
+            "episode_reward": episode_reward,
+            "epsilon": epsilon,
+            "steps": steps,
+            "avg_reward": avg_reward
+        }, time=timestamp)
 
     if send_seq:
         seq = _safe_int(send_seq.group(1))

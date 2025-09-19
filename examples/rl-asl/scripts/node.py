@@ -20,6 +20,7 @@ import logging
 from delay import DelaySamples
 from power_trace import PowerTraceSamples, PowerTrace
 from rl_asl_trace import RLASLTraceSamples, RLASLTrace
+from episode_monitoring import EpisodeSamples, EpisodeSample
 
 
 from typing import Any, Optional, Dict
@@ -85,6 +86,12 @@ class Node():
         return trace
 
     # ---------------------------------------------------------------------------
+    def episode_monitoring_add(self, data: dict, time=None) -> EpisodeSample:
+        sample = self.episode_monitoring.add_sample(
+            data=data, time=time)
+        return sample
+    # ---------------------------------------------------------------------------
+
     def power_testbed_add(self, seq, power, time=None):
         power = self.power_testbed.add_sample(
             seq=seq, power=power, time=time)
