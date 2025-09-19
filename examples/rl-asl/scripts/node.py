@@ -19,6 +19,7 @@ import logging
 
 from delay import DelaySamples
 from power_trace import PowerTraceSamples, PowerTrace
+from rl_asl_trace import RLASLTraceSamples, RLASLTrace
 
 
 from typing import Any, Optional, Dict
@@ -41,6 +42,7 @@ class Node():
         else:
             self.sid = sid
         self.power_trace = PowerTraceSamples(self)
+        self.rl_asl_trace = RLASLTraceSamples(self)
         self.delay = DelaySamples(self)
         self.last_power_seq = 0
 
@@ -74,6 +76,13 @@ class Node():
 
     def power_trace_clear(self):
         self.power_trace.clear()
+
+    # ---------------------------------------------------------------------------
+
+    def rl_asl_trace_add(self, seq: int, data: dict, time=None) -> RLASLTrace:
+        trace = self.rl_asl_trace.add_sample(
+            seq=seq, data=data, time=time)
+        return trace
 
     # ---------------------------------------------------------------------------
     def power_testbed_add(self, seq, power, time=None):
@@ -147,6 +156,7 @@ class Node():
     def clear(self):
         self.delay.clear()
         self.power_trace.clear()
+        self.rl_asl_trace.clear()
 
     def performance_metrics_clear(self):
         self.delay_clear()

@@ -67,6 +67,13 @@ _RE_SEND_SEQ = re.compile(
     r"Sending request\s*(\d+)\s*to\s*([0-9a-fA-F:]+)\s* at asn\s*([0-9]+)(?:\s*\(timeslot\s*([0-9]+)\))?")
 _RE_RX_SEQ = re.compile(
     r"Received request 'hello\s*([0-9]+)'\s*from\s*([0-9a-fA-F:]+)")
+_RE_RL_ASL_TRACE = re.compile(
+    r"RL_ASL_TRACE,ASN=(\d+),STATE=(\d+),ACTION=(\w+)"
+    r"(?:,PKT=(\d+))?"                # optional packet flag
+    r"(?:,REWARD=([-+]?\d+\.\d+))?"   # optional reward
+    r"(?:,EPS=([\d\.]+))?"            # epsilon
+    r"(?:,EPISODE=(\w+))?"            # optional episode outcome
+)
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
 
@@ -103,6 +110,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     energest_radio_total_time = _RE_ENERGEST_RADIO_TOTAL_TIME.search(msg)
     send_seq = _RE_SEND_SEQ.search(msg)
     receive_seq = _RE_RX_SEQ.search(msg)
+    rl_asl_trace = _RE_RL_ASL_TRACE.search(msg)
 
     if energest_seq:
         node.update_last_power_seq(int(energest_seq.group(1)))
@@ -142,6 +150,24 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     if energest_radio_total_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "radio_total", "value": energest_radio_total_time.group(1)}, time=timestamp)
+    if rl_asl_trace:
+        asn = _safe_int(rl_asl_trace.group(1))
+        state = _safe_int(rl_asl_trace.group(2))
+        action = rl_asl_trace.group(3)
+        pkt = _safe_int(rl_asl_trace.group(4), -1)
+        reward = _safe_float(rl_asl_trace.group(5), float("nan"))
+        eps = _safe_float(rl_asl_trace.group(6), float("nan"))
+        outcome = rl_asl_trace.group(7) if rl_asl_trace.group(7) else None
+
+        node.rl_asl_trace_add(seq=node.get_last_power_seq(), data={
+            "asn": asn,
+            "state": state,
+            "action": action,
+            "packet": pkt if pkt != -1 else None,
+            "reward": reward if not np.isnan(reward) else None,
+            "epsilon": eps if not np.isnan(eps) else None,
+            "episode": outcome,
+        }, time=timestamp)
 
     if send_seq:
         seq = _safe_int(send_seq.group(1))

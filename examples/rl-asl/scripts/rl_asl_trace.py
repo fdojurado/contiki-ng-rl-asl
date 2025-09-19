@@ -15,7 +15,8 @@ class RLASLTrace():
         assert isinstance(asn, int)
         assert isinstance(state, int)
         assert isinstance(action, str)
-        assert isinstance(reward, float)
+        if reward is not None:
+            assert isinstance(reward, float)
 
         self.seq = seq              # like cycle counter or log seq
         self.asn = asn
