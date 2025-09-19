@@ -143,18 +143,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
 static void
 init(uint16_t sf_handle)
 {
-  uint16_t rx_timeslot;
-  linkaddr_t *local_addr = &linkaddr_node_addr;
-
   slotframe_handle = sf_handle;
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-  rx_timeslot = get_node_timeslot(local_addr);
-  /* Add a Rx link at our own timeslot. */
-  tsch_schedule_add_link(sf_unicast,
-      LINK_OPTION_RX,
-      LINK_TYPE_NORMAL, &tsch_broadcast_address,
-      rx_timeslot, get_node_channel_offset(local_addr), 1);
+  /* We dont initialize any links here; they will be added when we get to
+     know our neighbors through the neighbor callback */
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule unicast_rl_asl = {
