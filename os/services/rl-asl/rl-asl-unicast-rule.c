@@ -140,9 +140,9 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     add_uc_link(new_addr);
     /* Here we need to make sure that our parent knows that we exist, so we send
         a broadcast packet that will cause the parent to add us as its child */
-    if(new_addr != NULL) {
-      send_handshake(new_addr);
-    }
+    // if(new_addr != NULL) {
+    //   send_handshake(new_addr);
+    // }
   }
 }
 /*---------------------------------------------------------------------------*/
