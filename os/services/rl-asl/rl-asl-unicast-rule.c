@@ -44,6 +44,7 @@
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/packetbuf.h"
+#include "rl-asl-handshake.h"
 
 static uint16_t slotframe_handle = 0;
 static struct tsch_slotframe *sf_unicast;
@@ -137,6 +138,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     const linkaddr_t *new_addr = tsch_queue_get_nbr_address(new);
     remove_uc_link(old_addr);
     add_uc_link(new_addr);
+    /* Here we need to make sure that our parent knows that we exist, so we send
+        a broadcast packet that will cause the parent to add us as its child */
+    if(new_addr != NULL) {
+      send_handshake(new_addr);
+    }
   }
 }
 /*---------------------------------------------------------------------------*/

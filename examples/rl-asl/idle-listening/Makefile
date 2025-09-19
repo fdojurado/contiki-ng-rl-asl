@@ -41,7 +41,7 @@ MODULES_SOURCES_EXCLUDES += slip.c
 
 CONTIKI_SOURCES_EXCLUDES_COOJA += slip-arch.c
 
-PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-utils.c ../rl-asl-ds-nbr.c ../rl-asl-data-packet-processor.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-routing.c
+PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-utils.c ../rl-asl-ds-nbr.c ../rl-asl-data-packet-processor.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-routing.c ../rl-asl-handshake.c
 # PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-packets.c ../rl-asl-routing.c
 CFLAGS += -I../../rl-asl
 
