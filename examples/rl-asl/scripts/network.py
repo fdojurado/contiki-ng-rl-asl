@@ -577,7 +577,7 @@ class Network:
                                 'rdc': sample.rdc,
                                 'time': sample.time
                             }
-                            
+
     def calc_rl_asl(self, results: Dict[int, Dict[str, Any]]) -> None:
         nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
         for node in nodes_sorted:
@@ -588,14 +588,9 @@ class Network:
                     if node.id not in results:
                         results[node.id] = {}
                     results[node.id]['rl_asl'] = {
-                        'samples': {seq: {
-                            'asn': sample.asn,
-                            'state': sample.state,
+                        'samples': {asn: {
                             'action': sample.action,
-                            'reward': sample.reward,
-                            'packet': sample.packet,
-                            'epsilon': sample.epsilon,
-                            'episode': sample.episode,
+                            'success': sample.success,
                             'time': sample.time
-                        } for seq, sample in rl_asl_samples.items()}
+                        } for asn, sample in rl_asl_samples.items()}
                     }

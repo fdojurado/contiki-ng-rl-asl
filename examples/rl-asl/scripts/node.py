@@ -79,9 +79,9 @@ class Node():
 
     # ---------------------------------------------------------------------------
 
-    def rl_asl_trace_add(self, seq: int, data: dict, time=None) -> RLASLTrace:
+    def rl_asl_trace_add(self, data: dict, time=None) -> RLASLTrace:
         trace = self.rl_asl_trace.add_sample(
-            seq=seq, data=data, time=time)
+            data=data, time=time)
         return trace
 
     # ---------------------------------------------------------------------------

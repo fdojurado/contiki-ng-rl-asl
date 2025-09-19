@@ -1,37 +1,23 @@
 class RLASLTrace():
     def __init__(
         self,
-        seq: int,
         asn: int,
-        state: int,
         action: str,
-        reward: float,
-        packet: int = None,
-        epsilon: float = None,
-        episode: str = None,
+        success: int,
         time=None
     ) -> None:
-        assert isinstance(seq, int)
         assert isinstance(asn, int)
-        assert isinstance(state, int)
-        assert isinstance(action, str)
-        if reward is not None:
-            assert isinstance(reward, float)
+        assert isinstance(action, int)
+        assert isinstance(success, int)
 
-        self.seq = seq              # like cycle counter or log seq
         self.asn = asn
-        self.state = state
         self.action = action        # "LISTEN" or "SKIP"
-        self.reward = reward
-        self.packet = packet        # 0/1 if known
-        self.epsilon = epsilon      # exploration rate
-        self.episode = episode      # "SUCCESS", "FAIL", or None
+        self.success = success
         self.time = time            # log timestamp if you have it
 
     def __str__(self):
-        return (f"RLASLTrace(seq={self.seq}, asn={self.asn}, state={self.state}, "
-                f"action={self.action}, pkt={self.packet}, reward={self.reward:.2f}, "
-                f"eps={self.epsilon}, episode={self.episode}, time={self.time})")
+        return (f"RLASLTrace(seq={self.seq}, asn={self.asn}, action={self.action}, "
+                f"success={self.success}, time={self.time})")
 
 
 class RLASLTraceSamples():
@@ -40,25 +26,18 @@ class RLASLTraceSamples():
         self.samples = {}   # seq → RLASLTrace
         self.last_seq = 0
 
-    def add_sample(self, seq: int, data: dict, time=None) -> RLASLTrace:
+    def add_sample(self, data: dict, time=None) -> RLASLTrace:
         trace = RLASLTrace(
-            seq=seq,
             asn=data.get("asn"),
-            state=data.get("state"),
             action=data.get("action"),
-            reward=data.get("reward"),
-            packet=data.get("packet"),
-            epsilon=data.get("epsilon"),
-            episode=data.get("episode"),
+            success=data.get("success"),
             time=time
         )
-        self.samples[seq] = trace
-        if seq > self.last_seq:
-            self.last_seq = seq
+        self.samples[trace.asn] = trace
         return trace
 
-    def get_sample(self, seq: int) -> RLASLTrace:
-        return self.samples.get(seq)
+    def get_sample(self, asn: int) -> RLASLTrace:
+        return self.samples.get(asn)
 
     def get_samples(self) -> dict[int, RLASLTrace]:
         return self.samples

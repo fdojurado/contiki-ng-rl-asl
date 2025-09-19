@@ -68,12 +68,10 @@ _RE_SEND_SEQ = re.compile(
 _RE_RX_SEQ = re.compile(
     r"Received request 'hello\s*([0-9]+)'\s*from\s*([0-9a-fA-F:]+)")
 _RE_RL_ASL_TRACE = re.compile(
-    r".*RL_ASL_TRACE,ASN=(?P<asn>\d+),STATE=(?P<state>\d+),"
+    r".*TRACE_OUTCOME,"
+    r"ASN=(?P<asn>\d+),"
     r"ACTION=(?P<action>LISTEN|SKIP),"
-    r"EPS=(?P<eps>-?\d+(?:\.\d+)?),"
-    r"PKT=(?P<pkt>-?\d+),"
-    r"REWARD=(?P<reward>-?\d+(?:\.\d+)?|NaN),"
-    r"EPISODE=(?P<episode>[A-Z0-9_]+|NONE)"
+    r"SUCCESS=(?P<success>-?\d+)"
 )
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
@@ -152,21 +150,13 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "radio_total", "value": energest_radio_total_time.group(1)}, time=timestamp)
     if rl_asl_trace:
-        asn = _safe_int(rl_asl_trace.group(1))
-        state = _safe_int(rl_asl_trace.group(2))
-        action = rl_asl_trace.group(3)
-        eps = _safe_float(rl_asl_trace.group(4), float("nan"))
-        pkt = _safe_int(rl_asl_trace.group(5), -1)
-        reward = _safe_float(rl_asl_trace.group(6), float("nan"))
-        outcome = rl_asl_trace.group(7) if rl_asl_trace.group(7) else None
-        node.rl_asl_trace_add(seq=node.get_last_power_seq(), data={
+        asn = _safe_int(rl_asl_trace.group("asn"))
+        action = _safe_int(rl_asl_trace.group("action"))
+        success = _safe_int(rl_asl_trace.group("success"))
+        node.rl_asl_trace_add(data={
             "asn": asn,
-            "state": state,
             "action": action,
-            "packet": pkt if pkt != -1 else None,
-            "reward": reward if not np.isnan(reward) else None,
-            "epsilon": eps if not np.isnan(eps) else None,
-            "episode": outcome,
+            "success": success
         }, time=timestamp)
 
     if send_seq:
