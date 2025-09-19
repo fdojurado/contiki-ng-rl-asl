@@ -80,10 +80,9 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         episode = "SUCCESS";
     }
 
-    LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=LISTEN,EPS=-1.0,PKT=%d,REWARD=%.2f,EPISODE=%s\n",
-             asn_low32, prev_state,
-             packet_received ? 1 : 0,
-             actual_reward, episode);
+    LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=LISTEN,SUCCESS=%d\n",
+             asn_low32,
+             packet_received ? 1 : 0);
 
     int next_state = prev_state;
     rl_asl_q_learning_update(prev_state, prev_action, actual_reward, next_state);
@@ -150,10 +149,9 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     rl_asl_q_table.action = chosen_action;
 
     // Decision log (before outcome known)
-    LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=%s,EPS=%.3f,PKT=-1,REWARD=0.0,EPISODE=NONE\n",
-             asn_low32, current_state,
-             (chosen_action == RL_ASL_ACTION_SKIP_RX ? "SKIP" : "LISTEN"),
-             rl_asl_q_table.epsilon);
+    LOG_INFO("TRACE_ACTION,ASN=%u,ACTION=%s\n",
+             asn_low32,
+             (chosen_action == RL_ASL_ACTION_SKIP_RX ? "SKIP" : "LISTEN"));
 
     if (chosen_action == RL_ASL_ACTION_SKIP_RX)
     {
@@ -170,10 +168,9 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             episode = "FAIL";
         }
 
-        LOG_INFO("RL_ASL_TRACE,ASN=%u,STATE=%d,ACTION=SKIP,EPS=%.3f,PKT=%d,REWARD=%.2f,EPISODE=%s\n",
-                 asn_low32, current_state,
-                 rl_asl_q_table.epsilon,
-                 pkt, expected_reward, episode);
+        LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=SKIP,SUCCESS=%d\n",
+                 asn_low32,
+                 pkt ? 0 : 1);
 
         rl_asl_q_learning_update(current_state, chosen_action, expected_reward, current_state);
     }
