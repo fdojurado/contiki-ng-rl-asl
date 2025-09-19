@@ -127,7 +127,6 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     if energest_radio_rx_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "rx", "value": energest_radio_rx_time.group(1)}, time=timestamp)
-
     if energest_radio_uc_rx_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "uc_rx", "value": energest_radio_uc_rx_time.group(1)}, time=timestamp)
@@ -140,7 +139,6 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     if energest_radio_uc_ratio:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "uc_ratio", "value": energest_radio_uc_ratio.group(1)}, time=timestamp)
-
     if energest_radio_total_time:
         node.power_trace_add(seq=node.get_last_power_seq(), data={
                              "type": "radio_total", "value": energest_radio_total_time.group(1)}, time=timestamp)
