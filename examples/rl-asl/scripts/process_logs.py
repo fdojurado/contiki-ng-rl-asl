@@ -151,7 +151,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
                              "type": "radio_total", "value": energest_radio_total_time.group(1)}, time=timestamp)
     if rl_asl_trace:
         asn = _safe_int(rl_asl_trace.group("asn"))
-        action = _safe_int(rl_asl_trace.group("action"))
+        action = 0 if rl_asl_trace.group("action") == "SKIP" else 1
         success = _safe_int(rl_asl_trace.group("success"))
         node.rl_asl_trace_add(data={
             "asn": asn,
