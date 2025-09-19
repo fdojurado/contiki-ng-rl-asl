@@ -577,3 +577,25 @@ class Network:
                                 'rdc': sample.rdc,
                                 'time': sample.time
                             }
+                            
+    def calc_rl_asl(self, results: Dict[int, Dict[str, Any]]) -> None:
+        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+        for node in nodes_sorted:
+            if node.id > 1:
+                rl_asl_samples = node.rl_asl_trace.get_samples()
+                if rl_asl_samples:
+                    # check if the node id is already in results
+                    if node.id not in results:
+                        results[node.id] = {}
+                    results[node.id]['rl_asl'] = {
+                        'samples': {seq: {
+                            'asn': sample.asn,
+                            'state': sample.state,
+                            'action': sample.action,
+                            'reward': sample.reward,
+                            'packet': sample.packet,
+                            'epsilon': sample.epsilon,
+                            'episode': sample.episode,
+                            'time': sample.time
+                        } for seq, sample in rl_asl_samples.items()}
+                    }

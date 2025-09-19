@@ -175,6 +175,8 @@ def calculate_results(network):
     network.calc_avg_duty_cycle(results)
     # Calculate the duty cycle for each node
     network.calc_duty_cycle(results)
+    # Calculate the RL-ASL average reward for each node
+    network.calc_rl_asl(results)
     # Clear all performance metrics
     network.nodes_performance_metrics_clear()
 
