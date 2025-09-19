@@ -147,6 +147,8 @@ def calculate_results(network):
     network.calc_avg_power_trace_consumption(results)
     # Calculate the power consumption for each node using power trace
     network.calc_power_trace(results)
+    # Calculate the power consumption due to uc_rx for each node using power trace
+    network.calc_uc_power_trace(results)
     # Calculate the average energy consumption for the network using power trace
     network.calc_avg_energy_trace_consumption(results)
     # Calculate the energy consumption for each node using power trace

@@ -136,6 +136,27 @@ class Network:
                                 'time': sample.time
                             }
 
+    def calc_uc_power_trace(self, results: Dict[int, Dict[str, Any]]) -> None:
+        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+        for node in nodes_sorted:
+            if node.id > 1:
+                power_trace = node.power_trace.get_samples()
+                node_avg_power = node.power_trace_get_average()
+                if node_avg_power is not None:
+                    # check if the node id is already in results
+                    if node.id not in results:
+                        results[node.id] = {}
+                    results[node.id]['uc_power'] = {
+                        'joined_time': node.joined_time,
+                        'average_mW': node_avg_power['average_uc_mW'],
+                    }
+                    for seq, sample in power_trace.items():
+                        if sample.uc_power is not None:
+                            results[node.id]['uc_power'].setdefault('samples_mW', {})[seq] = {
+                                'uc_power': sample.uc_power,
+                                'time': sample.time
+                            }
+
     def calc_avg_energy_trace_consumption(self, results: Dict[int, Dict[str, Any]]) -> None:
         energy_trace = {}
         for node in self.nodes.values():
@@ -263,7 +284,7 @@ class Network:
                         'average_us': node_avg_latency['microseconds'],
                         'samples_us': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
                     }
-                    
+
     def calc_latency_ordered_by_timeslots(self, results: Dict[int, Dict[str, Any]]) -> None:
 
         def remove_outliers(data, m=2.0):
@@ -281,7 +302,8 @@ class Network:
                 delay_samples = node.delay.get_samples()
                 # Order samples by timeslot
                 ordered_by_timeslot = sorted(
-                    (sample for sample in delay_samples.values() if sample.timeslot is not None),
+                    (sample for sample in delay_samples.values()
+                     if sample.timeslot is not None),
                     key=lambda x: x.timeslot
                 )
                 # Create a dictionary with timeslot as key and values as array of delays

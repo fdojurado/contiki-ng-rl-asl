@@ -61,6 +61,7 @@ class PowerTrace():
         total_time_secs=None,
         total_time_ticks=None,
         power=None,
+        uc_power=None,
         energy=None,
         rdc=None,
         time=None
@@ -100,6 +101,7 @@ class PowerTrace():
         self.total_time_secs = total_time_secs
         self.total_time_ticks = total_time_ticks
         self.power = power
+        self.uc_power = uc_power
         self.energy = energy
         self.rdc = rdc
         self.time = time
@@ -143,15 +145,24 @@ class PowerTraceSamples():
             return None
         # Calculate the average power consumption of samples with time greater than joined_time
         total_power = 0
+        total_uc_power = 0
         count = 0
+        uc_count = 0
         for sample in self.samples.values():
             if sample.power is not None:
                 if joined_time is None or sample.time >= joined_time:
                     total_power += sample.power
                     count += 1
+            if sample.uc_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_uc_power += sample.uc_power
+                    uc_count += 1
         if count == 0:
             return None
+        if uc_count == 0:
+            return None
         average_power = total_power / count
+        average_uc_power = total_uc_power / uc_count if uc_count > 0 else 0
         # Calculate the average RDC of samples with time greater than joined_time
         total_rdc = 0
         rdc_count = 0
@@ -164,6 +175,7 @@ class PowerTraceSamples():
 
         return {
             'average_mW': average_power,
+            'average_uc_mW': average_uc_power,
             'samples_mW': {seq: sample.power for seq, sample in self.samples.items() if sample.power is not None},
             'average_rdc': average_rdc,
         }
@@ -206,10 +218,13 @@ class PowerTraceSamples():
                             deep_lpm_time * CURRENT["DEEP_LPM"] +
                             tx_time * CURRENT["TX"] +
                             rx_time * CURRENT["RX"])  # tick × mA
+            uc_energy = uc_rx_time * CURRENT["RX"]
             power = total_energy * VOLTAGE / total_time_ticks  # mW
+            uc_power = uc_energy * VOLTAGE / total_time_ticks  # mW
             energy_mj = power * total_time_secs
-
+            
             power_trace.power = power
+            power_trace.uc_power = uc_power
 
             power_trace.rdc = radio_total_time / \
                 total_time_ticks if total_time_ticks > 0 else 0
