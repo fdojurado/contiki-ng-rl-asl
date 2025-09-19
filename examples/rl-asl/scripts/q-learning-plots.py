@@ -64,6 +64,9 @@ def plot_rl_asl(node_id, node_data, output_folder, xlim=None):
 
     # Convert microseconds → seconds
     df["time"] = df["time"] / 1e6
+    
+    # convert to minutes
+    df["time"] = df["time"] / 60.0
 
     # Map success to color
     df["color"] = df["success"].map({1: "green", 0: "red"})
@@ -73,7 +76,7 @@ def plot_rl_asl(node_id, node_data, output_folder, xlim=None):
     plt.scatter(df["time"], df["action"], c=df["color"],
                 s=70, alpha=0.7, edgecolor="k", linewidth=0.5)
 
-    plt.xlabel("Time (s)", fontsize=16)
+    plt.xlabel("Time (m)", fontsize=16)
     plt.ylabel("Action", fontsize=16)
     plt.title(f"RL-ASL Decisions for Node {node_id}", fontsize=18)
     plt.grid(True, linestyle="--", alpha=0.6)
