@@ -32,7 +32,7 @@ import fit_iot_lab_conf
 
 logger = logging.getLogger("process_experiments")
 
-START_TIMESTAMP = 60*5*1e6
+START_TIMESTAMP = 0*5*1e6
 
 # --- regex patterns ---
 # Period summary #9 (60 seconds)
@@ -68,11 +68,12 @@ _RE_SEND_SEQ = re.compile(
 _RE_RX_SEQ = re.compile(
     r"Received request 'hello\s*([0-9]+)'\s*from\s*([0-9a-fA-F:]+)")
 _RE_RL_ASL_TRACE = re.compile(
-    r"RL_ASL_TRACE,ASN=(\d+),STATE=(\d+),ACTION=(\w+)"
-    r"(?:,PKT=(\d+))?"                # optional packet flag
-    r"(?:,REWARD=([-+]?\d+\.\d+))?"   # optional reward
-    r"(?:,EPS=([\d\.]+))?"            # epsilon
-    r"(?:,EPISODE=(\w+))?"            # optional episode outcome
+    r".*RL_ASL_TRACE,ASN=(?P<asn>\d+),STATE=(?P<state>\d+),"
+    r"ACTION=(?P<action>LISTEN|SKIP),"
+    r"EPS=(?P<eps>-?\d+(?:\.\d+)?),"
+    r"PKT=(?P<pkt>-?\d+),"
+    r"REWARD=(?P<reward>-?\d+(?:\.\d+)?|NaN),"
+    r"EPISODE=(?P<episode>[A-Z0-9_]+|NONE)"
 )
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
@@ -154,11 +155,10 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         asn = _safe_int(rl_asl_trace.group(1))
         state = _safe_int(rl_asl_trace.group(2))
         action = rl_asl_trace.group(3)
-        pkt = _safe_int(rl_asl_trace.group(4), -1)
-        reward = _safe_float(rl_asl_trace.group(5), float("nan"))
-        eps = _safe_float(rl_asl_trace.group(6), float("nan"))
+        eps = _safe_float(rl_asl_trace.group(4), float("nan"))
+        pkt = _safe_int(rl_asl_trace.group(5), -1)
+        reward = _safe_float(rl_asl_trace.group(6), float("nan"))
         outcome = rl_asl_trace.group(7) if rl_asl_trace.group(7) else None
-
         node.rl_asl_trace_add(seq=node.get_last_power_seq(), data={
             "asn": asn,
             "state": state,

@@ -199,7 +199,7 @@ class PowerTraceSamples():
         # Update the sample with the new data
         setattr(power_trace, data_type, data.get("value"))
         # If we have all the data, we can calculate the total power
-        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "uc_idle_rx", "uc_idle_ratio", "uc_ratio", "radio_total", "total_time_secs", "total_time_ticks"]]):
+        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "radio_total", "total_time_secs", "total_time_ticks"]]):
             # Calculate energy
             cpu_time = int(getattr(power_trace, "cpu", 0))
             lpm_time = int(getattr(power_trace, "lpm", 0))
@@ -207,9 +207,6 @@ class PowerTraceSamples():
             tx_time = int(getattr(power_trace, "tx", 0))
             rx_time = int(getattr(power_trace, "rx", 0))
             uc_rx_time = int(getattr(power_trace, "uc_rx", 0))
-            uc_idle_rx_time = int(getattr(power_trace, "uc_idle_rx", 0))
-            uc_idle_ratio = float(getattr(power_trace, "uc_idle_ratio", 0.0))
-            uc_ratio = float(getattr(power_trace, "uc_ratio", 0.0))
             radio_total_time = int(getattr(power_trace, "radio_total", 0))
             total_time_ticks = int(getattr(power_trace, "total_time_ticks", 1))
             total_time_secs = int(getattr(power_trace, "total_time_secs", 1))
@@ -222,7 +219,7 @@ class PowerTraceSamples():
             power = total_energy * VOLTAGE / total_time_ticks  # mW
             uc_power = uc_energy * VOLTAGE / total_time_ticks  # mW
             energy_mj = power * total_time_secs
-            
+
             power_trace.power = power
             power_trace.uc_power = uc_power
 
