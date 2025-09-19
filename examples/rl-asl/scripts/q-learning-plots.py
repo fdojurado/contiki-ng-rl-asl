@@ -50,7 +50,7 @@ def plot_rl_asl(node_id, node_data, output_folder, xlim=None):
         node_id (str): Node identifier
         node_data (dict): Node data with rl_asl info
         output_folder (Path): Where to save plots
-        xlim (tuple or None): (xmin, xmax) to zoom into the timeline
+        xlim (tuple or None): (xmin, xmax) to zoom into the timeline (in seconds)
     """
     samples = node_data.get("rl_asl", {}).get("samples", {})
     if not samples:
@@ -62,8 +62,8 @@ def plot_rl_asl(node_id, node_data, output_folder, xlim=None):
     df.index = df.index.astype(int)
     df = df.sort_index()
 
-    # Normalize time to start at zero
-    df["time"] = df["time"] - df["time"].min()
+    # Convert microseconds → seconds
+    df["time"] = df["time"] / 1e6
 
     # Map success to color
     df["color"] = df["success"].map({1: "green", 0: "red"})
@@ -73,7 +73,7 @@ def plot_rl_asl(node_id, node_data, output_folder, xlim=None):
     plt.scatter(df["time"], df["action"], c=df["color"],
                 s=70, alpha=0.7, edgecolor="k", linewidth=0.5)
 
-    plt.xlabel("Time (relative)", fontsize=16)
+    plt.xlabel("Time (s)", fontsize=16)
     plt.ylabel("Action", fontsize=16)
     plt.title(f"RL-ASL Decisions for Node {node_id}", fontsize=18)
     plt.grid(True, linestyle="--", alpha=0.6)
