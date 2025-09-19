@@ -99,7 +99,8 @@ typedef enum energest_type {
   ENERGEST_TYPE_TRANSMIT,
   ENERGEST_TYPE_LISTEN,
 #if WITH_RL_ASL_NET
-  ENERGEST_TYPE_IDLE_LISTEN,
+  ENERGEST_TYPE_UC_LISTEN,
+  ENERGEST_TYPE_UC_IDLE_LISTEN,
 #endif /* WITH_RL_ASL_NET */
 
 #ifdef ENERGEST_CONF_PLATFORM_ADDITIONS
@@ -157,6 +158,23 @@ energest_off(energest_type_t type)
 }
 #define ENERGEST_OFF(type) energest_off(type)
 
+/*
+  * This function accounts for the idle listening time.
+  * It basically moves the time accounted for listening to idle listening.
+  * It should be called when the radio is turned off after a period of idle listening.
+*/
+static inline void
+energest_idle_listen(energest_type_t type, energest_type_t idle_type)
+{
+  ENERGEST_TIME_T now = ENERGEST_CURRENT_TIME();
+  if(energest_current_mode[type]) {
+    // Add that duration to IDLE_LISTEN
+    energest_total_time[idle_type] += (ENERGEST_TIME_T)(now - energest_current_time[type]);
+    // keep idle_type "off" so it accumulates directly
+  }
+}
+#define ENERGEST_IDLE_LISTEN(type, idle_type) energest_idle_listen(type, idle_type)
+
 static inline void
 energest_switch(energest_type_t type_off, energest_type_t type_on)
 {
@@ -195,6 +213,7 @@ static inline void energest_switch(energest_type_t type_off,
 #define ENERGEST_ON(type) do { } while(0)
 #define ENERGEST_OFF(type) do { } while(0)
 #define ENERGEST_SWITCH(type_off, type_on) do { } while(0)
+#define ENERGEST_IDLE_LISTEN(type, idle_type) do { } while(0)
 
 #endif /* ENERGEST_CONF_ON */
 

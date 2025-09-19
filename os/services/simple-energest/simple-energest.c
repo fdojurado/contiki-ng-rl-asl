@@ -55,7 +55,8 @@
 
 static uint64_t last_tx, last_rx, last_time, last_cpu, last_lpm, last_deep_lpm;
 #if WITH_RL_ASL_NET
-static uint64_t last_idle_rx;
+static uint64_t last_uc_rx;
+static uint64_t last_uc_idle_rx;
 #endif /* WITH_RL_ASL_NET */
 
 PROCESS(simple_energest_process, "Simple Energest");
@@ -79,7 +80,8 @@ simple_energest_step(void)
   static unsigned count = 0;
   uint64_t curr_tx, curr_rx, curr_time, curr_cpu, curr_lpm, curr_deep_lpm;
 #if WITH_RL_ASL_NET
-  uint64_t curr_idle_rx;
+  uint64_t curr_uc_rx;
+  uint64_t curr_uc_idle_rx;
 #endif
   uint64_t delta_time;
 
@@ -92,7 +94,8 @@ simple_energest_step(void)
   curr_tx       = energest_type_time(ENERGEST_TYPE_TRANSMIT);
   curr_rx       = energest_type_time(ENERGEST_TYPE_LISTEN);
 #if WITH_RL_ASL_NET
-  curr_idle_rx  = energest_type_time(ENERGEST_TYPE_IDLE_LISTEN);
+  curr_uc_rx    = energest_type_time(ENERGEST_TYPE_UC_LISTEN);
+  curr_uc_idle_rx = energest_type_time(ENERGEST_TYPE_UC_IDLE_LISTEN);
 #endif
 
   delta_time = MAX(curr_time - last_time, 1);
@@ -101,31 +104,31 @@ simple_energest_step(void)
            count++, delta_time / ENERGEST_SECOND);
   LOG_INFO("Total time  : %10"PRIu64"\n", delta_time);
 
+  uint64_t delta_rx = curr_rx - last_rx;
+
   log_energest("CPU",       curr_cpu      - last_cpu,      delta_time);
   log_energest("LPM",       curr_lpm      - last_lpm,      delta_time);
   log_energest("Deep LPM",  curr_deep_lpm - last_deep_lpm, delta_time);
   log_energest("Radio Tx",  curr_tx       - last_tx,       delta_time);
-  log_energest("Radio Rx",  curr_rx       - last_rx,       delta_time);
+  log_energest("Radio Rx",  delta_rx,       delta_time);
 
 #if WITH_RL_ASL_NET
-  uint64_t delta_rx   = curr_rx      - last_rx;
-  uint64_t delta_idle = curr_idle_rx - last_idle_rx;
-  uint64_t delta_tx   = curr_tx      - last_tx;
+  uint64_t delta_uc_rx = curr_uc_rx - last_uc_rx;
+  uint64_t delta_uc_idle_rx = curr_uc_idle_rx - last_uc_idle_rx;
+  
+  log_energest("UC Radio Rx",  delta_uc_rx,       delta_time);
+  log_energest("UC Idle Rx",   delta_uc_idle_rx,  delta_time);
 
-  /* Guard against underflow if idle > rx */
-  uint64_t delta_active = (delta_rx > delta_idle) ? (delta_rx - delta_idle) : 0;
-
-  log_energest("Radio Rx (active)", delta_active, delta_time);
-  log_energest("Radio Idle Rx",     delta_idle,   delta_time);
-
-  /* Ratio: fraction of listening that was idle */
-  if(delta_rx > 0) {
-    float idle_ratio = (float)delta_idle / (float)delta_rx;
-    log_energest("Radio Idle ratio", (uint64_t)(idle_ratio * 1000), 1000);
+  if(delta_uc_rx > 0) {
+    float uc_idle_ratio = (float)delta_uc_idle_rx / (float)delta_uc_rx;
+    log_energest("UC Idle ratio", (uint64_t)(uc_idle_ratio * 1000), 1000);
   }
-
-  log_energest("Radio total (with idle)",   delta_tx + delta_rx,     delta_time);
-  log_energest("Radio total (active only)", delta_tx + delta_active, delta_time);
+  /* Lets calculate the ratio of unicast rx over total rx */
+  if(delta_rx > 0) {
+    float uc_ratio = (float)delta_uc_rx / (float)delta_rx;
+    log_energest("UC ratio", (uint64_t)(uc_ratio * 1000), 1000);
+  }
+  
 #else
   log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
                delta_time);
@@ -139,7 +142,8 @@ simple_energest_step(void)
   last_tx       = curr_tx;
   last_rx       = curr_rx;
 #if WITH_RL_ASL_NET
-  last_idle_rx  = curr_idle_rx;
+  last_uc_rx    = curr_uc_rx;
+  last_uc_idle_rx = curr_uc_idle_rx;
 #endif
 }
 
@@ -169,6 +173,10 @@ simple_energest_init(void)
   last_deep_lpm = energest_type_time(ENERGEST_TYPE_DEEP_LPM);
   last_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT);
   last_rx = energest_type_time(ENERGEST_TYPE_LISTEN);
+#if WITH_RL_ASL_NET
+  last_uc_rx = energest_type_time(ENERGEST_TYPE_UC_LISTEN);
+  last_uc_idle_rx = energest_type_time(ENERGEST_TYPE_UC_IDLE_LISTEN);
+#endif /* WITH_RL_ASL_NET */
   process_start(&simple_energest_process, NULL);
 }
 

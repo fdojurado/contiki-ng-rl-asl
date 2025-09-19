@@ -478,6 +478,14 @@ tsch_radio_on(enum tsch_radio_state_on_cmd command)
   }
   if(do_it) {
     NETSTACK_RADIO.on();
+#if WITH_RL_ASL_NET
+    /* Count idle listen only for unicast (Orchestra) slotframe handle */
+    if(current_link != NULL
+       && current_link->slotframe_handle == 1) {
+      // ENERGEST_ON(ENERGEST_TYPE_UC_IDLE_LISTEN);
+      ENERGEST_ON(ENERGEST_TYPE_UC_LISTEN);
+    }
+#endif /* WITH_RL_ASL_NET */
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -508,6 +516,13 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
     break;
   }
   if(do_it) {
+#if WITH_RL_ASL_NET
+    if(current_link != NULL
+       && current_link->slotframe_handle == 1) {
+      // ENERGEST_OFF(ENERGEST_TYPE_UC_IDLE_LISTEN);
+      ENERGEST_OFF(ENERGEST_TYPE_UC_LISTEN);
+    }
+#endif /* WITH_RL_ASL_NET */
     NETSTACK_RADIO.off();
   }
 }
@@ -843,9 +858,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
-#if WITH_RL_ASL_NET
-    ENERGEST_ON(ENERGEST_TYPE_IDLE_LISTEN);
-#endif /* WITH_RL_ASL_NET */
 #if BUILD_WITH_RL_ASL
       uint32_t asn_low32 = tsch_current_asn.ls4b;
 #endif /* BUILD_WITH_RL_ASL */
@@ -860,15 +872,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif /* BUILD_WITH_RL_ASL */
     if(!packet_seen) {
       /* no packets on air */
-      tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
 #if WITH_RL_ASL_NET
-      ENERGEST_OFF(ENERGEST_TYPE_IDLE_LISTEN);
+    if(current_link != NULL
+       && current_link->slotframe_handle == 1) {
+      ENERGEST_IDLE_LISTEN(ENERGEST_TYPE_UC_LISTEN, ENERGEST_TYPE_UC_IDLE_LISTEN);
+      }
 #endif /* WITH_RL_ASL_NET */
+      tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
     } else {
       TSCH_DEBUG_RX_EVENT();
-#if WITH_RL_ASL_NET
-      ENERGEST_OFF(ENERGEST_TYPE_IDLE_LISTEN);
-#endif /* WITH_RL_ASL_NET */
       /* Save packet timestamp */
       rx_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
 
