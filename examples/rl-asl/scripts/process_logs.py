@@ -73,6 +73,14 @@ _RE_RL_ASL_TRACE = re.compile(
     r"ACTION=(?P<action>LISTEN|SKIP),"
     r"SUCCESS=(?P<success>-?\d+)"
 )
+_RE_EPISODE_END = re.compile(
+    r"EPISODE_END,"
+    r"(?P<episode_count>\d+),"
+    r"(?P<episode_reward>-?\d+\.?\d*),"
+    r"(?P<epsilon>0\.?\d*),"
+    r"(?P<steps>\d+),"
+    r"(?P<avg_reward>-?\d+\.?\d*)"
+)
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
 
@@ -110,6 +118,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     send_seq = _RE_SEND_SEQ.search(msg)
     receive_seq = _RE_RX_SEQ.search(msg)
     rl_asl_trace = _RE_RL_ASL_TRACE.search(msg)
+    episode_end = _RE_EPISODE_END.search(msg)
 
     if energest_seq:
         node.update_last_power_seq(int(energest_seq.group(1)))
@@ -158,6 +167,13 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             "action": action,
             "success": success
         }, time=timestamp)
+
+    if episode_end:
+        episode_count = _safe_int(episode_end.group("episode_count"))
+        episode_reward = _safe_float(episode_end.group("episode_reward"))
+        epsilon = _safe_float(episode_end.group("epsilon"))
+        steps = _safe_int(episode_end.group("steps"))
+        avg_reward = _safe_float(episode_end.group("avg_reward"))
 
     if send_seq:
         seq = _safe_int(send_seq.group(1))
