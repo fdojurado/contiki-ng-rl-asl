@@ -159,6 +159,9 @@ int rl_asl_handshake_input(linkaddr_t *from, linkaddr_t *to)
     /* Does the IP dest match us? */
     if (linkaddr_cmp(to, &linkaddr_node_addr))
     {
+#ifdef NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK
+        NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(from, 1);
+#endif
         /* Schedule ACK to sender after short randomized delay */
         send_ack((uint8_t)version, from);
         return 1;
@@ -267,6 +270,17 @@ eventhandler(process_event_t ev, process_data_t data)
         {
             /* Timeout without ACK -> perform resend (or backoff) */
             LOG_WARN("Handshake ACK not received — resending handshake\n");
+            /* Resend handshake with possibly exponential backoff in production. */
+            send_handshake_to_parent(&parent_addr);
+            etimer_set(&resend_timer, CLOCK_SECOND * 2); /* next timeout longer */
+        }
+        break;
+
+    case PROCESS_EVENT_TIMER:
+        if (data == &resend_timer)
+        {
+            /* Timeout without ACK -> perform resend (or backoff) */
+            LOG_WARN("Handshake ACK not received (timer event) - resending handshake\n");
             /* Resend handshake with possibly exponential backoff in production. */
             send_handshake_to_parent(&parent_addr);
             etimer_set(&resend_timer, CLOCK_SECOND * 2); /* next timeout longer */
