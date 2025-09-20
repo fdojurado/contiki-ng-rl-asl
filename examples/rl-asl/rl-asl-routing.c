@@ -11,8 +11,7 @@ const routing_entry_t routing_table[] = {
     {{{0x02, 0x00}}, {{0x01, 0x00}}, {{0x01, 0x00}}},
     {{{0x03, 0x00}}, {{0x01, 0x00}}, {{0x02, 0x00}}},
     {{{0x04, 0x00}}, {{0x01, 0x00}}, {{0x02, 0x00}}},
-    {{{0x05, 0x00}}, {{0x01, 0x00}}, {{0x02, 0x00}}}
-};
+    {{{0x05, 0x00}}, {{0x01, 0x00}}, {{0x02, 0x00}}}};
 
 /*---------------------------------------------------------------------------*/
 static void init(void)
@@ -45,9 +44,17 @@ static int root_start(void)
 /*---------------------------------------------------------------------------*/
 static uint8_t is_in_leaf_mode(void)
 {
-    // LOG_INFO("RL ASL routing is in leaf mode\n");
-    /* In RL ASL, we consider the protocol to always be in leaf mode */
-    return 0;
+    /* Do we have any children? */
+    int has_children = 0;
+    for (size_t i = 0; i < sizeof(routing_table) / sizeof(routing_entry_t); i++)
+    {
+        if (linkaddr_cmp(&routing_table[i].next_hop, &linkaddr_node_addr))
+        {
+            has_children = 1;
+            break;
+        }
+    }
+    return has_children;
 }
 /*---------------------------------------------------------------------------*/
 const struct routing_driver rl_asl_routing_driver = {

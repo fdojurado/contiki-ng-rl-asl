@@ -135,6 +135,22 @@ orchestra_callback_activate_rx_link(void)
 }
 #endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
+#if BUILD_WITH_RL_ASL
+int
+orchestra_callback_deactivate_rx_link(void)
+{
+  int i;
+  for(i = 0; i < NUM_RULES; i++) {
+    if(all_rules[i]->deactivate_rx_link != NULL) {
+      if(all_rules[i]->deactivate_rx_link()) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+#endif /* BUILD_WITH_RL_ASL */
+/*---------------------------------------------------------------------------*/
 void
 orchestra_callback_neighbor_updated(const linkaddr_t *addr, uint8_t is_added)
 {

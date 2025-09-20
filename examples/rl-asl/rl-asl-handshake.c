@@ -5,6 +5,7 @@
 #include "os/services/orchestra/orchestra.h"
 #include "rl-asl-buf.h"
 #include "rl-asl-conf.h"
+#include "net/routing/routing.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -152,6 +153,13 @@ int rl_asl_handshake_ack_input(linkaddr_t *scr, linkaddr_t *dest)
 
         /* reset retry count for next handshake round */
         retry_count = 0;
+
+        /* We need to evaluate if we have children if we don't have any children
+         * we can switch to leaf mode */
+        if (NETSTACK_ROUTING.is_in_leaf_mode())
+        {
+            TSCH_CALLBACK_DEACTIVATE_RX_LINK();
+        }
 
         return 1;
     }
