@@ -189,6 +189,8 @@ int rl_asl_handshake_input(linkaddr_t *from, linkaddr_t *to)
         NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(from, 1);
 #endif
 
+        rl_asl_ds_nbr_update(from, 0, 0, 1); // Add/update neighbor with seqno 0 and ASN 0
+
         TSCH_CALLBACK_ACTIVATE_RX_LINK();
 
         /* Schedule ACK to sender after short randomized delay */

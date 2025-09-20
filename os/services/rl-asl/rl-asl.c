@@ -94,13 +94,13 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         return;
     }
 
-    if (link->handle != RL_ASL_UNICAST_SLOTFRAME_HANDLE)
+    if (link->slotframe_handle != RL_ASL_UNICAST_SLOTFRAME_HANDLE)
     {
         *skip_rx = false;
         return;
     }
 
-    if (rl_asl_ds_nbr_count() == 0)
+    if (rl_asl_ds_nbr_count() == 0 || rl_asl_ds_nbr_is_there_a_non_paired_child())
     {
         *skip_rx = false;
         return;

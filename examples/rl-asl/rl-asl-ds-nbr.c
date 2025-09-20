@@ -1,4 +1,5 @@
 #include "rl-asl-ds-nbr.h"
+#include "net/routing/routing.h"
 
 /* log */
 #include "sys/log.h"
@@ -28,7 +29,7 @@ const linkaddr_t *rl_asl_ds_nbr_get_addr(rl_asl_ds_nbr_t *nbr)
     return nbr_table_get_lladdr(rl_asl_ds_nbr_table, nbr);
 }
 /***********************************************************************/
-void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn)
+void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, int8_t is_child)
 {
     rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_get(addr);
     int32_t asn_diff = 0;
@@ -43,10 +44,11 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn)
         }
         nbr->first_seqno = seqno;
         nbr->last_seqno = seqno;
+        nbr->is_child = is_child;
         nbr->last_heard_asn = asn;
         nbr->asn_diff_ewma = 0;
-        LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 "\n",
-                 addr->u8[0], addr->u8[1], seqno, asn);
+        LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 " is child=%d\n",
+                 addr->u8[0], addr->u8[1], seqno, asn, nbr->is_child);
         count_neighbors++;
         return;
     }
@@ -106,6 +108,35 @@ int rl_asl_ds_nbr_is_nbr_paired(const linkaddr_t *addr)
         return 0;
     }
     return (nbr->last_seqno - nbr->first_seqno >= 3) ? 1 : 0;
+}
+/***********************************************************************/
+bool rl_asl_ds_nbr_is_there_a_non_paired_child(void)
+{
+    rl_asl_ds_nbr_t *nbr = nbr_table_head(rl_asl_ds_nbr_table);
+    while (nbr != NULL)
+    {
+        if (nbr->is_child && (nbr->last_seqno - nbr->first_seqno < 3))
+        {
+            return true;
+        }
+        nbr = nbr_table_next(rl_asl_ds_nbr_table, nbr);
+    }
+    return false;
+}
+/***********************************************************************/
+int rl_asl_ds_nbr_child_count(void)
+{
+    int child_count = 0;
+    rl_asl_ds_nbr_t *nbr = nbr_table_head(rl_asl_ds_nbr_table);
+    while (nbr != NULL)
+    {
+        if (nbr->is_child)
+        {
+            child_count++;
+        }
+        nbr = nbr_table_next(rl_asl_ds_nbr_table, nbr);
+    }
+    return child_count;
 }
 /***********************************************************************/
 int rl_asl_ds_nbr_count(void)
