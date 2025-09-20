@@ -183,7 +183,7 @@ void rl_asl_ip_process(void)
             goto data_input; /* Process data packet */
         case RL_ASL_PROTO_HANDSHAKE:
 #if BUILD_WITH_RL_ASL
-            if (rl_asl_handshake_input())
+            if (rl_asl_handshake_input(&scr, &dest))
             {
                 goto drop; // Handshake processed, drop the packet
             }
@@ -194,6 +194,21 @@ void rl_asl_ip_process(void)
             }
 #else
             LOG_DBG("Handshake protocol not supported, dropping packet\n");
+            goto drop;
+#endif /* BUILD_WITH_RL_ASL */
+        case RL_ASL_PROTO_HANDSHAKE_ACK:
+#if BUILD_WITH_RL_ASL
+            if (rl_asl_handshake_ack_input(&scr))
+            {
+                goto drop; // Handshake ACK processed, drop the packet
+            }
+            else
+            {
+                LOG_DBG("Handshake ACK processing failed, dropping packet\n");
+                goto drop;
+            }
+#else
+            LOG_DBG("Handshake ACK protocol not supported, dropping packet\n");
             goto drop;
 #endif /* BUILD_WITH_RL_ASL */
         default:
