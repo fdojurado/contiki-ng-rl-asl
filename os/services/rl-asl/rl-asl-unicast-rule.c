@@ -103,8 +103,12 @@ static void
 add_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
+    /* Let's first check if we already have a link to this neighbor */
     uint16_t timeslot = get_node_timeslot(linkaddr);
-
+    if(tsch_schedule_get_link_by_offsets(sf_unicast, timeslot, 0) != NULL) {
+      /* We already have a link, no need to add it again */
+      return;
+    }
     /* Add a Tx link to the neighbor; do not replace any existing links
      * at that cell. The channel offset here does not matter:
      * select_packet() always sets the right channel offset per packet. */
