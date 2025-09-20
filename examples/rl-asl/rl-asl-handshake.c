@@ -4,6 +4,7 @@
 #include "rl-asl-packets.h"
 #include "os/services/orchestra/orchestra.h"
 #include "rl-asl-buf.h"
+#include "rl-asl-conf.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -218,6 +219,8 @@ send_handshake_to_parent(const linkaddr_t *addr)
 #ifdef NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK
     NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(&parent_addr, 1);
 #endif
+
+    TSCH_CALLBACK_ACTIVATE_RX_LINK();
 
     /* Always send explicitly to the parent address */
     rl_asl_ip_output(NULL);
