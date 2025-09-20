@@ -51,6 +51,7 @@ extern rl_asl_buf_t rl_asl_aligned_buf;
 #define RL_ASL_IPH_LEN 10
 #define RL_ASL_DATAH_LEN sizeof(struct rl_asl_data_hdr)
 #define RL_ASL_HANDSHAKEH_LEN sizeof(struct rl_asl_handshake_hdr)
+#define RL_ASL_HANDSHAKE_ACKH_LEN sizeof(struct rl_asl_handshake_ack_hdr)
 
 #define RL_ASL_IP_BUF ((struct rl_asl_uip_hdr *)rl_asl_buf)
 #define RL_ASL_IP_PAYLOAD(ext) ((unsigned char *)rl_asl_buf + RL_ASL_IPH_LEN + (ext))
@@ -60,6 +61,9 @@ extern rl_asl_buf_t rl_asl_aligned_buf;
 
 #define RL_ASL_HANDSHAKE_BUF ((struct rl_asl_handshake_hdr *)RL_ASL_IP_PAYLOAD(0))
 #define RL_ASL_HANDSHAKE_PAYLOAD_PTR ((uint8_t *)RL_ASL_HANDSHAKE_BUF + RL_ASL_HANDSHAKEH_LEN)
+
+#define RL_ASL_HANDSHAKE_ACK_BUF ((struct rl_asl_handshake_ack_hdr *)RL_ASL_IP_PAYLOAD(0))
+#define RL_ASL_HANDSHAKE_ACK_PAYLOAD_PTR ((uint8_t *)RL_ASL_HANDSHAKE_ACK_BUF + RL_ASL_HANDSHAKE_ACKH_LEN)
 
 // Lets define the packet structure
 struct rl_asl_uip_hdr
@@ -74,19 +78,26 @@ struct rl_asl_uip_hdr
 
 struct rl_asl_handshake_hdr
 {
-    uint16_t paddng;
+    uint16_t version;
+} __attribute__((packed));
+
+struct rl_asl_handshake_ack_hdr
+{
+    uint16_t version;
+    // uint8_t status; // 0 = OK, 1 = ERROR
 } __attribute__((packed));
 
 struct rl_asl_data_hdr
 {
     uint8_t payload_len; // Length of the payload
     uint8_t paddng;
-    uint16_t seqnum;      // Sequence number
-    int16_t datachksum;  // Checksum for the data
+    uint16_t seqnum;    // Sequence number
+    int16_t datachksum; // Checksum for the data
 } __attribute__((packed));
 
 #define RL_ASL_PROTO_DATA 0x01
 #define RL_ASL_PROTO_HANDSHAKE 0x02
+#define RL_ASL_PROTO_HANDSHAKE_ACK 0x03
 
 #define RL_ASL_LINK_MTU 1000
 
