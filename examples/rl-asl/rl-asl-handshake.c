@@ -6,6 +6,7 @@
 #include "rl-asl-buf.h"
 #include "rl-asl-conf.h"
 #include "net/routing/routing.h"
+#include "rl-asl-ds-nbr.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -187,6 +188,9 @@ int rl_asl_handshake_input(linkaddr_t *from, linkaddr_t *to)
 #ifdef NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK
         NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(from, 1);
 #endif
+
+        TSCH_CALLBACK_ACTIVATE_RX_LINK();
+
         /* Schedule ACK to sender after short randomized delay */
         send_ack(version, from);
         return 1;

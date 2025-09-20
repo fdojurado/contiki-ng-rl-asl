@@ -41,6 +41,7 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn)
             LOG_ERR("Failed to add neighbor %02x:%02x to table\n", addr->u8[0], addr->u8[1]);
             return;
         }
+        nbr->first_seqno = seqno;
         nbr->last_seqno = seqno;
         nbr->last_heard_asn = asn;
         nbr->asn_diff_ewma = 0;
@@ -95,6 +96,16 @@ void rl_asl_ds_nbr_remove(const linkaddr_t *addr)
 rl_asl_ds_nbr_t *rl_asl_ds_nbr_get_any(void)
 {
     return nbr_table_head(rl_asl_ds_nbr_table);
+}
+/***********************************************************************/
+int rl_asl_ds_nbr_is_nbr_paired(const linkaddr_t *addr)
+{
+    rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_get(addr);
+    if (nbr == NULL)
+    {
+        return 0;
+    }
+    return (nbr->last_seqno - nbr->first_seqno >= 3) ? 1 : 0;
 }
 /***********************************************************************/
 int rl_asl_ds_nbr_count(void)
