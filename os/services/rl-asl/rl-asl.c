@@ -23,7 +23,8 @@ static float clampf(float v, float lo, float hi)
     return v;
 }
 
-static float rl_asl_compute_p(const uint64_t *curr_asn64)
+static float
+rl_asl_compute_p(const uint64_t *curr_asn64)
 {
     float prod_no_tx = 1.0f;
 
@@ -31,34 +32,48 @@ static float rl_asl_compute_p(const uint64_t *curr_asn64)
          nbr != NULL;
          nbr = rl_asl_ds_nbr_next(nbr))
     {
+
         if (nbr->is_child && nbr->asn_diff_ewma != 0)
         {
-            // elapsed slots since last packet from this neighbor
+
+            /* elapsed slots since last packet from this neighbor */
             uint64_t elapsed64 = (*curr_asn64 >= nbr->last_heard_asn)
                                      ? (*curr_asn64 - nbr->last_heard_asn)
                                      : 0;
             uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
 
-            float lambda = (float)nbr->asn_diff_ewma;
-            float p_tx = 1.0f - expf(-(float)elapsed_asn / lambda);
-            p_tx = clampf(p_tx, 0.0f, 1.0f);
+            float lambda = (float)nbr->asn_diff_ewma; /* expected period */
+            float jitter_sigma = 0.1f * lambda;       /* tune: 0.05–0.2 of λ */
 
-            // joint probability of no transmission = product of (1 - p_tx)
+            /* ---- choose k: nearest vs. future-biased ---- */
+            float k = ceilf((float)elapsed_asn / lambda);
+            float next = k * lambda;
+            float dist = (float)elapsed_asn - next;
+
+            /* Gaussian centered on the next TX */
+            float p_tx = expf(-(dist * dist) / (2.0f * jitter_sigma * jitter_sigma));
+
+            /* joint probability of no transmission = product of (1 - p_tx) */
             prod_no_tx *= (1.0f - p_tx);
 
-            LOG_DBG("Neighbor %02x:%02x elapsed=%u ewma=%u p_tx=%.3f\n",
+            LOG_DBG("Neighbor %02x:%02x elapsed=%u λ=%.1f k=%.1f dist=%.2f p_tx=%.3f\n",
                     rl_asl_ds_nbr_get_addr(nbr)->u8[0],
                     rl_asl_ds_nbr_get_addr(nbr)->u8[1],
                     elapsed_asn,
-                    nbr->asn_diff_ewma,
+                    lambda,
+                    k,
+                    dist,
                     p_tx);
         }
     }
 
-    LOG_DBG("Computed p=%.3f\n", 1.0f - prod_no_tx);
+    /* probability that at least one neighbor will TX */
+    float p = 1.0f - prod_no_tx;
 
-    // probability that at least one child transmits
-    return fminf(1.0f - prod_no_tx, 0.9f);
+    LOG_DBG("Computed p = %.3f\n", p);
+
+    /* clamp to avoid degeneracy */
+    return clampf(p, 0.001f, 0.99f);
 }
 
 static float rl_asl_expected_reward_for_action(int action, float p)
