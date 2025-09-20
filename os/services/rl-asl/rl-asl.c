@@ -5,7 +5,7 @@
 #include "rl-asl-ds-nbr.h"
 #include "rl-asl-decision-buffer.h"
 #include "os/services/orchestra/orchestra.h"
-#include <math.h>                            // For expf()
+#include <math.h> // For expf()
 
 /* log */
 #include "sys/log.h"
@@ -23,18 +23,42 @@ static float clampf(float v, float lo, float hi)
     return v;
 }
 
-static float rl_asl_compute_p(uint32_t asn_diff_ewma, uint32_t elapsed)
+static float rl_asl_compute_p(const uint64_t *curr_asn64)
 {
-    if (asn_diff_ewma < 1)
-        return 0.5f; // fallback
+    float prod_no_tx = 1.0f;
 
-    float lambda = (float)asn_diff_ewma;
-    float r = (float)elapsed / lambda;
+    for (rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_head();
+         nbr != NULL;
+         nbr = rl_asl_ds_nbr_next(nbr))
+    {
+        if (nbr->is_child && nbr->asn_diff_ewma != 0)
+        {
+            // elapsed slots since last packet from this neighbor
+            uint64_t elapsed64 = (*curr_asn64 >= nbr->last_heard_asn)
+                                     ? (*curr_asn64 - nbr->last_heard_asn)
+                                     : 0;
+            uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
 
-    // Poisson model: probability that >=1 event arrived in elapsed slots
-    float p = 1.0f - expf(-r);
+            float lambda = (float)nbr->asn_diff_ewma;
+            float p_tx = 1.0f - expf(-(float)elapsed_asn / lambda);
+            p_tx = clampf(p_tx, 0.0f, 1.0f);
 
-    return clampf(p, 0.001f, 0.95f);
+            // joint probability of no transmission = product of (1 - p_tx)
+            prod_no_tx *= (1.0f - p_tx);
+
+            LOG_DBG("Neighbor %02x:%02x elapsed=%u ewma=%u p_tx=%.3f\n",
+                    rl_asl_ds_nbr_get_addr(nbr)->u8[0],
+                    rl_asl_ds_nbr_get_addr(nbr)->u8[1],
+                    elapsed_asn,
+                    nbr->asn_diff_ewma,
+                    p_tx);
+        }
+    }
+
+    LOG_DBG("Computed p=%.3f\n", 1.0f - prod_no_tx);
+
+    // probability that at least one child transmits
+    return fminf(1.0f - prod_no_tx, 0.9f);
 }
 
 static float rl_asl_expected_reward_for_action(int action, float p)
@@ -173,7 +197,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
 
     if (chosen_action == RL_ASL_ACTION_SKIP_RX)
     {
-        float p = rl_asl_compute_p(asn_diff_ewma, estimated_neighbor_asn);
+        float p = rl_asl_compute_p(&curr_asn64);
         float expected_reward = rl_asl_expected_reward_for_action(chosen_action, p);
         int pkt = 0;
 
