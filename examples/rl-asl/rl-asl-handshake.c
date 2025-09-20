@@ -56,14 +56,6 @@ static void send_ack(uint16_t version, const linkaddr_t *dest);
 static void send_handshake_to_parent(const linkaddr_t *addr);
 static void eventhandler(process_event_t ev, process_data_t data);
 
-/* Random jitter bounds */
-#ifndef RL_ASL_HANDSHAKE_ACK_MIN_JITTER
-#define RL_ASL_HANDSHAKE_ACK_MIN_JITTER (CLOCK_SECOND / 2) /* 0.5 s */
-#endif
-#ifndef RL_ASL_HANDSHAKE_ACK_MAX_JITTER
-#define RL_ASL_HANDSHAKE_ACK_MAX_JITTER (CLOCK_SECOND) /* 1.0 s */
-#endif
-
 /***************************************************************/
 /* ctimer callback that actually sends the ACK (calls IP output) */
 static void
@@ -121,14 +113,10 @@ send_ack(uint16_t version, const linkaddr_t *dest)
     ack_params.version = version;
     linkaddr_copy(&ack_params.dest, dest);
 
-    /* Random delay in [min_jitter, max_jitter) */
-    clock_time_t range = RL_ASL_HANDSHAKE_ACK_MAX_JITTER - RL_ASL_HANDSHAKE_ACK_MIN_JITTER;
-    clock_time_t delay = RL_ASL_HANDSHAKE_ACK_MIN_JITTER + (range ? (rand() % range) : 0);
-
-    ctimer_set(&ack_params.ack_timer, delay, do_ack, &ack_params);
+    ctimer_set(&ack_params.ack_timer, 0, do_ack, &ack_params);
 
     LOG_DBG("ACK scheduled in %lu ticks for %02x:%02x (version=%u)\n",
-            (unsigned long)delay, dest->u8[0], dest->u8[1], ack_params.version);
+            (unsigned long)0, dest->u8[0], dest->u8[1], ack_params.version);
 }
 /***************************************************************/
 /* Called when we receive a handshake ACK packet from the network.
