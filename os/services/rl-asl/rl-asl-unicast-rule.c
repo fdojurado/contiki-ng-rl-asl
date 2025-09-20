@@ -91,7 +91,9 @@ deactivate_rx_link(void)
 {
   if(sf_unicast != NULL) {
     uint16_t timeslot = get_node_timeslot(&linkaddr_node_addr);
-    tsch_schedule_remove_link_by_offsets(sf_unicast, timeslot, 0);
+    uint16_t channel_offset = get_node_channel_offset(&linkaddr_node_addr);
+    /* Remove the Rx link at our own timeslot */
+    tsch_schedule_remove_link_by_offsets(sf_unicast, timeslot, channel_offset);
     return 1;
   }
   return 0;

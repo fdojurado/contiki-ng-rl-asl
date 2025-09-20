@@ -45,16 +45,16 @@ static int root_start(void)
 static uint8_t is_in_leaf_mode(void)
 {
     /* Do we have any children? */
-    int has_children = 0;
+    int is_leaf = 1;
     for (size_t i = 0; i < sizeof(routing_table) / sizeof(routing_entry_t); i++)
     {
         if (linkaddr_cmp(&routing_table[i].next_hop, &linkaddr_node_addr))
         {
-            has_children = 1;
+            is_leaf = 0;
             break;
         }
     }
-    return has_children;
+    return is_leaf;
 }
 /*---------------------------------------------------------------------------*/
 const struct routing_driver rl_asl_routing_driver = {
