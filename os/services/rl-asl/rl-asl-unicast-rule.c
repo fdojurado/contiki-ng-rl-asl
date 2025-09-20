@@ -71,6 +71,32 @@ get_node_channel_offset(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
+static int
+activate_rx_link(void)
+{
+  if(sf_unicast != NULL) {
+    /* Add a shared Rx link at our own timeslot */
+    uint16_t timeslot = get_node_timeslot(&linkaddr_node_addr);
+    tsch_schedule_add_link(sf_unicast,
+        LINK_OPTION_SHARED | LINK_OPTION_RX,
+        LINK_TYPE_NORMAL, &tsch_broadcast_address,
+        timeslot, get_node_channel_offset(&linkaddr_node_addr), 0);
+    return 1;
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+static int
+deactivate_rx_link(void)
+{
+  if(sf_unicast != NULL) {
+    uint16_t timeslot = get_node_timeslot(&linkaddr_node_addr);
+    tsch_schedule_remove_link_by_offsets(sf_unicast, timeslot, 0);
+    return 1;
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
 static void
 add_uc_link(const linkaddr_t *linkaddr)
 {
@@ -162,6 +188,8 @@ struct orchestra_rule unicast_rl_asl = {
   select_packet,
   NULL,
   NULL,
+  activate_rx_link,
+  deactivate_rx_link,
   neighbor_updated,
   NULL,
   "unicast RL ASL", // Updated description

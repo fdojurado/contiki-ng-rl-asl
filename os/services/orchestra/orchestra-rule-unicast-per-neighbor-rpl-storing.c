@@ -259,6 +259,10 @@ struct orchestra_rule unicast_per_neighbor_rpl_storing = {
   select_packet,
   child_added,
   child_removed,
+#if BUILD_WITH_RL_ASL
+  NULL,
+  NULL,
+#endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,
   "unicast per neighbor storing",
