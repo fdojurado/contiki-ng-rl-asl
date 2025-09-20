@@ -28,11 +28,15 @@ static uint8_t ack_received = 0;
 /* Timer used to trigger resend/timeout of handshake */
 static struct etimer resend_timer;
 
+/* retry/backoff parameters */
+static uint8_t retry_count = 0;
+static const uint8_t max_retries = 4;
+
 /* ack parameters structure passed to ctimer callback */
 struct ack_parameters
 {
     struct ctimer ack_timer;
-    uint8_t version;
+    uint16_t version;
     linkaddr_t dest;
 };
 /* Single persistent ack params instance (simple model: one outstanding ACK timer) */
@@ -48,9 +52,17 @@ enum
 
 /* Forward declarations */
 static void do_ack(void *ptr);
-static void send_ack(uint8_t version, const linkaddr_t *dest);
+static void send_ack(uint16_t version, const linkaddr_t *dest);
 static void send_handshake_to_parent(const linkaddr_t *addr);
 static void eventhandler(process_event_t ev, process_data_t data);
+
+/* Random jitter bounds */
+#ifndef RL_ASL_HANDSHAKE_ACK_MIN_JITTER
+#define RL_ASL_HANDSHAKE_ACK_MIN_JITTER (CLOCK_SECOND / 2) /* 0.5 s */
+#endif
+#ifndef RL_ASL_HANDSHAKE_ACK_MAX_JITTER
+#define RL_ASL_HANDSHAKE_ACK_MAX_JITTER (CLOCK_SECOND) /* 1.0 s */
+#endif
 
 /***************************************************************/
 /* ctimer callback that actually sends the ACK (calls IP output) */
@@ -64,7 +76,8 @@ do_ack(void *ptr)
         return;
     }
 
-    LOG_INFO("Sending handshake ACK to %02x:%02x\n", params->dest.u8[0], params->dest.u8[1]);
+    LOG_INFO("Sending handshake ACK to %02x:%02x (version=%u)\n",
+             params->dest.u8[0], params->dest.u8[1], params->version);
 
     /* Compose IP header for ACK */
     RL_ASL_IP_BUF->len = RL_ASL_IPH_LEN + RL_ASL_HANDSHAKE_ACKH_LEN;
@@ -85,7 +98,7 @@ do_ack(void *ptr)
     /* Set some MAC attribute if you want (e.g. retry limit) */
     rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 3);
 
-    /* Send directly to the destination stored in params */
+    /* Send explicitly to the destination */
     rl_asl_ip_output(&params->dest);
 
     LOG_INFO("Handshake ACK sent to %02x:%02x\n", params->dest.u8[0], params->dest.u8[1]);
@@ -94,7 +107,7 @@ do_ack(void *ptr)
 /* Schedule an ACK after a short randomized delay to avoid collisions.
  * We use the static ack_params instance so do_ack has valid storage. */
 static void
-send_ack(uint8_t version, const linkaddr_t *dest)
+send_ack(uint16_t version, const linkaddr_t *dest)
 {
     if (dest == NULL)
     {
@@ -102,14 +115,18 @@ send_ack(uint8_t version, const linkaddr_t *dest)
         return;
     }
 
+    /* Cancel any existing ack ctimer first to avoid clobbering params */
+    ctimer_stop(&ack_params.ack_timer);
+
     ack_params.version = version;
     linkaddr_copy(&ack_params.dest, dest);
 
-    /* Random delay in [0.5s, 1s) (you can tune) */
-    clock_time_t delay = (rand() % (CLOCK_SECOND / 2)) + (CLOCK_SECOND / 2);
+    /* Random delay in [min_jitter, max_jitter) */
+    clock_time_t range = RL_ASL_HANDSHAKE_ACK_MAX_JITTER - RL_ASL_HANDSHAKE_ACK_MIN_JITTER;
+    clock_time_t delay = RL_ASL_HANDSHAKE_ACK_MIN_JITTER + (range ? (rand() % range) : 0);
 
-    /* Cancel any existing ack_timer, then set a new one */
     ctimer_set(&ack_params.ack_timer, delay, do_ack, &ack_params);
+
     LOG_DBG("ACK scheduled in %lu ticks for %02x:%02x (version=%u)\n",
             (unsigned long)delay, dest->u8[0], dest->u8[1], ack_params.version);
 }
@@ -125,7 +142,7 @@ int rl_asl_handshake_ack_input(linkaddr_t *scr, linkaddr_t *dest)
     {
         uint16_t version = rl_asl_ip_htons(RL_ASL_HANDSHAKE_ACK_BUF->version);
         /* We expected handshake_version-1 */
-        uint16_t expected = (uint16_t)(handshake_version - 1);
+        uint16_t expected = (uint16_t)(handshake_version);
         if (version != expected)
         {
             LOG_WARN("Handshake ACK version mismatch: expected %u, got %u\n", expected, version);
@@ -135,8 +152,19 @@ int rl_asl_handshake_ack_input(linkaddr_t *scr, linkaddr_t *dest)
         LOG_INFO("Handshake ACK matches expected version %u — ACK accepted\n", version);
         ack_received = 1;
 
-        /* Stop resend timer (post event to handshake process to do it in process context) */
+        /* Stop resend etimer and any outstanding ctimer for ACK scheduling */
+        if (etimer_expired(&resend_timer) == 0)
+        {
+            etimer_stop(&resend_timer);
+        }
+        ctimer_stop(&ack_params.ack_timer);
+
+        /* Notify handshake process to handle success (in process context) */
         process_post(&rl_asl_handshake_process, HANDSHAKE_EVENT_RESEND, NULL);
+
+        /* reset retry count for next handshake round */
+        retry_count = 0;
+
         return 1;
     }
 
@@ -164,7 +192,7 @@ int rl_asl_handshake_input(linkaddr_t *from, linkaddr_t *to)
         NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(from, 1);
 #endif
         /* Schedule ACK to sender after short randomized delay */
-        send_ack((uint8_t)version, from);
+        send_ack(version, from);
         return 1;
     }
 
@@ -197,7 +225,8 @@ send_handshake_to_parent(const linkaddr_t *addr)
         return;
     }
 
-    LOG_INFO("Sending handshake to %02x:%02x (version=%u)\n", addr->u8[0], addr->u8[1], handshake_version);
+    LOG_INFO("Sending handshake to %02x:%02x (version=%u), retry=%u\n",
+             addr->u8[0], addr->u8[1], handshake_version, (unsigned)retry_count);
 
     RL_ASL_IP_BUF->len = RL_ASL_IPH_LEN + RL_ASL_HANDSHAKEH_LEN;
     RL_ASL_IP_BUF->ttl = 0x40;
@@ -213,19 +242,16 @@ send_handshake_to_parent(const linkaddr_t *addr)
 
     print_ip_header();
 
-    /* Optionally: notify neighbor table to add an RX link / increase priority.
-     * If your platform provides a neighbor update callback, call it with the parent address.
-     * Protect with an #ifdef if not available. */
 #ifdef NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK
     NETSTACK_CONF_DS6_NEIGHBOR_UPDATED_CALLBACK(&parent_addr, 1);
 #endif
 
     TSCH_CALLBACK_ACTIVATE_RX_LINK();
 
-    /* Always send explicitly to the parent address */
+    /* Send broadcast to parent (we assume parent is always reachable) */
     rl_asl_ip_output(NULL);
 
-    LOG_INFO("Handshake sent to %02x:%02x\n", addr->u8[0], addr->u8[1]);
+    LOG_INFO("Handshake send attempted to %02x:%02x\n", addr->u8[0], addr->u8[1]);
 }
 /***************************************************************/
 /* Event handler executed in process context */
@@ -242,13 +268,12 @@ eventhandler(process_event_t ev, process_data_t data)
 
             /* Reset ack flag and start handshake send + retry timer */
             ack_received = 0;
+            retry_count = 0;
+            handshake_version = (uint16_t)(handshake_version + 1); /* bump version for this round */
             send_handshake_to_parent(&parent_addr);
 
-            /* increment version (wrap-around mod 65536) */
-            handshake_version = (uint16_t)(handshake_version + 1);
-
-            /* Arm resend timer: if no ACK arrives within timeout, we can resend or take other action.
-             * We use 1 second here (tune to your needs). */
+            /* Arm resend timer: if no ACK arrives within timeout, we will handle resend.
+             * initial timeout = 1 second (tunable) */
             etimer_set(&resend_timer, CLOCK_SECOND);
         }
         else
@@ -258,35 +283,69 @@ eventhandler(process_event_t ev, process_data_t data)
         break;
 
     case HANDSHAKE_EVENT_RESEND:
-        /* Either stop timer on ACK or handle timeout (resend) */
+        /* Called when handshake succeeded (ACK) or when process_post requested a resend action.
+           We'll use ack_received to disambiguate. */
         if (ack_received)
         {
-            if (etimer_expired(&resend_timer) || etimer_expired(&resend_timer) == 0)
-            {
-                /* stop the timer if it was running */
+            /* ACK arrived, ensure timers are stopped */
+            if (etimer_expired(&resend_timer) == 0)
                 etimer_stop(&resend_timer);
-            }
+
+            ctimer_stop(&ack_params.ack_timer);
             LOG_INFO("Handshake ACK received — stopped resend timer\n");
-            ack_received = 0; /* clear for next handshake */
+            ack_received = 0;
+            retry_count = 0;
         }
         else
         {
-            /* Timeout without ACK -> perform resend (or backoff) */
-            LOG_WARN("Handshake ACK not received — resending handshake\n");
-            /* Resend handshake with possibly exponential backoff in production. */
-            send_handshake_to_parent(&parent_addr);
-            etimer_set(&resend_timer, CLOCK_SECOND * 2); /* next timeout longer */
+            /* This path may be used to force a resend from other parts of code */
+            if (retry_count < max_retries)
+            {
+                retry_count++;
+                LOG_WARN("Forced resend (retry %u) for handshake\n", (unsigned)retry_count);
+                handshake_version = (uint16_t)(handshake_version + 1);
+                send_handshake_to_parent(&parent_addr);
+                /* backoff: double timeout each retry (capped) */
+                etimer_set(&resend_timer, CLOCK_SECOND * (1 << (retry_count > 4 ? 4 : retry_count)));
+            }
+            else
+            {
+                LOG_WARN("Max handshake retries reached (%u); giving up this round\n", (unsigned)max_retries);
+                retry_count = 0;
+            }
         }
         break;
 
     case PROCESS_EVENT_TIMER:
         if (data == &resend_timer)
         {
-            /* Timeout without ACK -> perform resend (or backoff) */
-            LOG_WARN("Handshake ACK not received (timer event) - resending handshake\n");
-            /* Resend handshake with possibly exponential backoff in production. */
-            send_handshake_to_parent(&parent_addr);
-            etimer_set(&resend_timer, CLOCK_SECOND * 2); /* next timeout longer */
+            /* This is the resend timeout firing */
+            if (ack_received)
+            {
+                /* If ack was already processed we simply stop timer */
+                etimer_stop(&resend_timer);
+                ctimer_stop(&ack_params.ack_timer);
+                ack_received = 0;
+                retry_count = 0;
+                LOG_INFO("Resend timer fired but ack_received was already set. Cleaning up.\n");
+            }
+            else
+            {
+                /* Timeout without ACK -> perform resend (or give up after retries) */
+                if (retry_count < max_retries)
+                {
+                    retry_count++;
+                    LOG_WARN("Handshake timeout — resending handshake (retry %u)\n", (unsigned)retry_count);
+                    handshake_version = (uint16_t)(handshake_version + 1);
+                    send_handshake_to_parent(&parent_addr);
+                    etimer_set(&resend_timer, CLOCK_SECOND * (1 << (retry_count > 4 ? 4 : retry_count)));
+                }
+                else
+                {
+                    LOG_ERR("Handshake timeout — max retries reached (%u). Giving up.\n", (unsigned)max_retries);
+                    retry_count = 0;
+                }
+            }
         }
         break;
 
@@ -304,8 +363,10 @@ PROCESS_THREAD(rl_asl_handshake_process, ev, data)
 
     /* Initialize parent to null */
     linkaddr_copy(&parent_addr, &linkaddr_null);
-    /* Clear ack params initially */
+
+    /* Clear ack params initially and ctimer not armed */
     memset(&ack_params, 0, sizeof(ack_params));
+    ctimer_stop(&ack_params.ack_timer);
 
     while (1)
     {
