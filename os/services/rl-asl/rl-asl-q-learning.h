@@ -14,9 +14,24 @@
 #define RL_ASL_Q_LEARNING_GAMMA 0.9
 #define RL_ASL_Q_LEARNING_EPSILON 0.8
 #define RL_ASL_Q_LEARNING_MIN_EPSILON 0.01
-#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.99
+#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.999
 
 #define RL_ASL_B_INTERARRIVAL 10
+
+/* Maximum neighbors to consider when building aggregated features.
+   Increase if you expect more simultaneous neighbors (but that increases #states). */
+#ifndef RL_ASL_MAX_NEIGHBORS
+#define RL_ASL_MAX_NEIGHBORS 3
+#endif
+
+/* We encode: state = avg_bin + count_short * RL_ASL_B_INTERARRIVAL
+   count_short ranges 0..RL_ASL_MAX_NEIGHBORS => (RL_ASL_MAX_NEIGHBORS + 1) possibilities */
+#define RL_ASL_NUM_STATES (RL_ASL_B_INTERARRIVAL * (RL_ASL_MAX_NEIGHBORS + 1))
+
+/* Short threshold for "short interarrival" counting (bin index) */
+#ifndef RL_ASL_SHORT_BIN_THRESHOLD
+#define RL_ASL_SHORT_BIN_THRESHOLD 2
+#endif
 
 #define REWARD_RX_TX 1.0
 #define REWARD_SKIP_RX_NO_TX 0.5
@@ -29,8 +44,6 @@
 
 // episode window averages
 #define RL_ASL_EPISODE_AVG_WINDOW 100
-
-#define RL_ASL_NUM_STATES RL_ASL_B_INTERARRIVAL
 
 // enum actions
 enum
@@ -66,7 +79,8 @@ extern rl_asl_q_table_t rl_asl_q_table;
 void rl_asl_q_learning_init(void);
 void rl_asl_q_learning_update(const int, const int, const float, const int);
 int rl_asl_q_learning_select_action(int state);
-int rl_asl_q_learning_get_state(int interarrival);
+int rl_asl_q_learning_get_state(int interarrival_bin);
+int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bins);
 void rl_asl_q_learning_decay_epsilon(float decay_rate);
 float rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);

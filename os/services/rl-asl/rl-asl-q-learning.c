@@ -65,6 +65,66 @@ int rl_asl_q_learning_select_action(int state)
     }
 }
 /***************************************************************/
+int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bins)
+{
+    if (bins == NULL || num_bins <= 0)
+    {
+        LOG_ERR("Invalid bins pointer or zero num_bins\n");
+        return -1;
+    }
+
+    /* Clip num_bins to RL_ASL_MAX_NEIGHBORS for the encoding */
+    if (num_bins > RL_ASL_MAX_NEIGHBORS)
+    {
+        num_bins = RL_ASL_MAX_NEIGHBORS;
+    }
+
+    int sum = 0;
+    int min_bin = RL_ASL_B_INTERARRIVAL - 1;
+    int max_bin = 0;
+    int count_short = 0;
+
+    for (int i = 0; i < num_bins; i++)
+    {
+        int b = bins[i];
+        if (b < 0)
+            b = 0;
+        if (b >= RL_ASL_B_INTERARRIVAL)
+            b = RL_ASL_B_INTERARRIVAL - 1;
+
+        sum += b;
+        if (b < min_bin)
+            min_bin = b;
+        if (b > max_bin)
+            max_bin = b;
+        if (b < RL_ASL_SHORT_BIN_THRESHOLD)
+            count_short++;
+    }
+
+    /* average bin (rounded) */
+    int avg_bin = (int)((float)sum / num_bins + 0.5f);
+    if (avg_bin < 0)
+        avg_bin = 0;
+    if (avg_bin >= RL_ASL_B_INTERARRIVAL)
+        avg_bin = RL_ASL_B_INTERARRIVAL - 1;
+
+    /* Clip count_short so it fits in 0..RL_ASL_MAX_NEIGHBORS */
+    if (count_short < 0)
+        count_short = 0;
+    if (count_short > RL_ASL_MAX_NEIGHBORS)
+        count_short = RL_ASL_MAX_NEIGHBORS;
+
+    /* state encoding: avg_bin + count_short * RL_ASL_B_INTERARRIVAL */
+    int state = avg_bin + count_short * RL_ASL_B_INTERARRIVAL;
+    if (state < 0 || state >= RL_ASL_NUM_STATES)
+    {
+        LOG_ERR("Aggregated state out of range: %d\n", state);
+        return -1;
+    }
+
+    return state;
+}
+/***************************************************************/
 int rl_asl_q_learning_get_state(int interarrival)
 {
     // Ensure inputs are within bounds

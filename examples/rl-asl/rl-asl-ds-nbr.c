@@ -124,6 +124,16 @@ bool rl_asl_ds_nbr_is_there_a_non_paired_child(void)
     return false;
 }
 /***********************************************************************/
+rl_asl_ds_nbr_t *rl_asl_ds_nbr_head(void)
+{
+    return nbr_table_head(rl_asl_ds_nbr_table);
+}
+/***********************************************************************/
+rl_asl_ds_nbr_t *rl_asl_ds_nbr_next(rl_asl_ds_nbr_t *nbr)
+{
+    return nbr_table_next(rl_asl_ds_nbr_table, nbr);
+}
+/***********************************************************************/
 int rl_asl_ds_nbr_child_count(void)
 {
     int child_count = 0;

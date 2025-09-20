@@ -4,7 +4,7 @@
 #include "rl-asl-q-learning.h"
 #include "rl-asl-ds-nbr.h"
 #include "rl-asl-decision-buffer.h"
-#include "os/services/orchestra/orchestra.h" // For ORCHESTRA_UNICAST_PERIOD
+#include "os/services/orchestra/orchestra.h"
 #include <math.h>                            // For expf()
 
 /* log */
@@ -106,44 +106,64 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         return;
     }
 
-    rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_get_any();
-    if (nbr == NULL)
-    {
-        *skip_rx = false;
-        return;
-    }
+    int bins[RL_ASL_MAX_NEIGHBORS];
+    int nb_count = 0;
 
-    uint64_t last_heard_asn = nbr->last_heard_asn;
-    uint32_t asn_diff_ewma = nbr->asn_diff_ewma;
-    if (last_heard_asn == 0 || asn_diff_ewma == 0)
-    {
-        *skip_rx = false;
-        return;
-    }
+    float avg_asn_diff_ewma;
+    float sum_asn_diff_ewma = 0.0f;
+    float avg_estimated_asn = 0.0f;
+    float sum_estimated_asn = 0.0f;
 
     uint64_t curr_asn64 = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
-    uint64_t est_diff64 = curr_asn64 >= last_heard_asn ? curr_asn64 - last_heard_asn : 0;
-    uint32_t estimated_neighbor_asn = (est_diff64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)est_diff64;
 
-    int interarrival_bin = rl_asl_q_bin_interarrival(estimated_neighbor_asn, asn_diff_ewma);
-    if (interarrival_bin < 0)
-        interarrival_bin = 0;
-    if (interarrival_bin >= RL_ASL_B_INTERARRIVAL)
-        interarrival_bin = RL_ASL_B_INTERARRIVAL - 1;
-
-    int current_state = rl_asl_q_learning_get_state(interarrival_bin);
-    if (current_state == -1)
+    rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_head();
+    while (nbr != NULL && nb_count < RL_ASL_MAX_NEIGHBORS)
     {
-        *skip_rx = RL_ASL_ACTION_DO_NOT_SKIP_RX;
+
+        if (nbr->is_child && nbr->last_heard_asn != 0 && nbr->asn_diff_ewma != 0)
+        {
+            uint64_t est_diff64 = curr_asn64 >= nbr->last_heard_asn ? curr_asn64 - nbr->last_heard_asn : 0;
+            uint32_t estimated_neighbor_asn = (est_diff64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)est_diff64;
+
+            sum_estimated_asn += (float)estimated_neighbor_asn;
+            sum_asn_diff_ewma += (float)nbr->asn_diff_ewma;
+
+            int interarrival_bin = rl_asl_q_bin_interarrival(estimated_neighbor_asn, nbr->asn_diff_ewma);
+            if (interarrival_bin < 0)
+                interarrival_bin = 0;
+            if (interarrival_bin >= RL_ASL_B_INTERARRIVAL)
+                interarrival_bin = RL_ASL_B_INTERARRIVAL - 1;
+
+            bins[nb_count] = interarrival_bin;
+            nb_count++;
+        }
+        nbr = rl_asl_ds_nbr_next(nbr);
+    }
+
+    if (nb_count == 0)
+    {
+        *skip_rx = false;
         return;
     }
 
-    int chosen_action = rl_asl_q_learning_select_action(current_state);
+    avg_asn_diff_ewma = sum_asn_diff_ewma / (float)nb_count;
+    avg_estimated_asn = sum_estimated_asn / (float)nb_count;
+    uint32_t asn_diff_ewma = (uint32_t)avg_asn_diff_ewma;
+    uint32_t estimated_neighbor_asn = (uint32_t)avg_estimated_asn;
+    /* Build aggregated state from bins */
+    int aggregated_state = rl_asl_q_learning_get_aggregated_state_from_bins(bins, nb_count);
+    if (aggregated_state < 0)
+    {
+        *skip_rx = false;
+        return;
+    }
+
+    int chosen_action = rl_asl_q_learning_select_action(aggregated_state);
 
     uint32_t asn_low32 = (uint32_t)curr_asn64;
-    rl_asl_decision_buffer_add(asn_low32, current_state, chosen_action);
+    rl_asl_decision_buffer_add(asn_low32, aggregated_state, chosen_action);
 
-    rl_asl_q_table.state = current_state;
+    rl_asl_q_table.state = aggregated_state;
     rl_asl_q_table.action = chosen_action;
 
     // Decision log (before outcome known)
@@ -168,7 +188,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                  asn_low32,
                  pkt ? 0 : 1);
 
-        rl_asl_q_learning_update(current_state, chosen_action, expected_reward, current_state);
+        rl_asl_q_learning_update(aggregated_state, chosen_action, expected_reward, aggregated_state);
     }
 
     *skip_rx = (chosen_action == RL_ASL_ACTION_SKIP_RX);
