@@ -198,7 +198,7 @@ void rl_asl_ip_process(void)
 #endif /* BUILD_WITH_RL_ASL */
         case RL_ASL_PROTO_HANDSHAKE_ACK:
 #if BUILD_WITH_RL_ASL
-            if (rl_asl_handshake_ack_input(&scr))
+            if (rl_asl_handshake_ack_input(&scr, &dest))
             {
                 goto drop; // Handshake ACK processed, drop the packet
             }

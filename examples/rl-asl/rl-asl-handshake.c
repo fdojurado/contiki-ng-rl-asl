@@ -116,12 +116,12 @@ send_ack(uint8_t version, const linkaddr_t *dest)
 /***************************************************************/
 /* Called when we receive a handshake ACK packet from the network.
  * Returns 1 if the ACK is intended for this node and was accepted. */
-int rl_asl_handshake_ack_input(linkaddr_t *scr)
+int rl_asl_handshake_ack_input(linkaddr_t *scr, linkaddr_t *dest)
 {
     LOG_INFO("Received handshake ACK packet (from %02x:%02x)\n", scr->u8[0], scr->u8[1]);
 
     /* Check destination in IP header matches us */
-    if (linkaddr_cmp(&RL_ASL_IP_BUF->dest, &linkaddr_node_addr))
+    if (linkaddr_cmp(dest, &linkaddr_node_addr))
     {
         uint16_t version = rl_asl_ip_htons(RL_ASL_HANDSHAKE_ACK_BUF->version);
         /* We expected handshake_version-1 */
