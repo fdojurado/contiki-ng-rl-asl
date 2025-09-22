@@ -59,11 +59,15 @@ ifeq (${ROOT}, 1)
 else ifeq (${RELAY}, 1)
  MODULES += $(CONTIKI_NG_SERVICES_DIR)/simple-energest
  CFLAGS += -DRELAY
- PROJECT_SOURCEFILES += ../rl-asl-handshake.c
+ ifeq ($(MAKE_WITH_RL_ASL),1)
+  PROJECT_SOURCEFILES += ../rl-asl-handshake.c
+ endif
 else ifeq (${LEAF}, 1)
  MODULES += $(CONTIKI_NG_SERVICES_DIR)/simple-energest
  CFLAGS += -DLEAF
- PROJECT_SOURCEFILES += ../rl-asl-handshake.c
+ ifeq ($(MAKE_WITH_RL_ASL),1)
+  PROJECT_SOURCEFILES += ../rl-asl-handshake.c
+ endif
 endif
 
 include $(CONTIKI)/Makefile.dir-variables
