@@ -43,7 +43,8 @@ rl_asl_compute_p(const uint64_t *curr_asn64)
             uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
 
             float lambda = (float)nbr->asn_diff_ewma; /* expected period */
-            float jitter_sigma = 0.1f * lambda;       /* tune: 0.05–0.2 of λ */
+            float jitter_sigma = sqrtf((float)nbr->asn_diff_var_ewma);
+            // float jitter_sigma = 0.1f * lambda;       /* tune: 0.05–0.2 of λ */
 
             /* ---- choose k: nearest vs. future-biased ---- */
             float k = ceilf((float)elapsed_asn / lambda);
