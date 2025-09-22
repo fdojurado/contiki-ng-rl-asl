@@ -65,7 +65,7 @@ int rl_asl_q_learning_select_action(int state)
     }
 }
 /***************************************************************/
-int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bins)
+int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bins, int dist_nearest_bin)
 {
     if (bins == NULL || num_bins <= 0)
     {
@@ -108,20 +108,24 @@ int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bi
     if (avg_bin >= RL_ASL_B_INTERARRIVAL)
         avg_bin = RL_ASL_B_INTERARRIVAL - 1;
 
-    /* Clip count_short so it fits in 0..RL_ASL_MAX_NEIGHBORS */
+    /* Clip count_short */
     if (count_short < 0)
         count_short = 0;
     if (count_short > RL_ASL_MAX_NEIGHBORS)
         count_short = RL_ASL_MAX_NEIGHBORS;
 
-    /* state encoding: avg_bin + count_short * RL_ASL_B_INTERARRIVAL */
-    int state = avg_bin + count_short * RL_ASL_B_INTERARRIVAL;
+    if (dist_nearest_bin < 0)
+        dist_nearest_bin = 0;
+
+    /* Encode 3D state: avg_bin + B_INTERARRIVAL * count_short + ... */
+    int state = avg_bin + RL_ASL_B_INTERARRIVAL * count_short + RL_ASL_B_INTERARRIVAL * (RL_ASL_MAX_NEIGHBORS + 1) * dist_nearest_bin;
+
     if (state < 0 || state >= RL_ASL_NUM_STATES)
     {
-        LOG_ERR("Aggregated state out of range: %d\n", state);
+        LOG_ERR("Aggregated state out of range: %d (avg=%d count_short=%d dist_bin=%d)\n",
+                state, avg_bin, count_short, dist_nearest_bin);
         return -1;
     }
-
     return state;
 }
 /***************************************************************/
@@ -241,6 +245,18 @@ int rl_asl_q_bin_interarrival(uint32_t interarrival, uint32_t asn_diff_ewma)
         }
     }
     return RL_ASL_B_INTERARRIVAL - 1;
+}
+/***************************************************************/
+int rl_asl_q_bin_dist_nearest(float dist_nearest)
+{
+    if (dist_nearest <= 2.0f)
+        return 0; // very close
+    else if (dist_nearest <= 8.0f)
+        return 1; // near
+    else if (dist_nearest <= 32.0f)
+        return 2; // medium
+    else
+        return 3; // far
 }
 /***************************************************************/
 void rl_asl_q_learning_print_table(void)
