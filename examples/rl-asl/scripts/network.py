@@ -14,6 +14,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from pathlib import Path
 from typing import Dict, Tuple, Optional, List, Any, Callable
 
 import logging
@@ -614,16 +615,44 @@ class Network:
                         } for count, sample in episode_samples.items()}
                     }
 
-    def calc_rl_asl_q_table(self, results: Dict[int, Dict[str, Any]]) -> None:
+    def calc_rl_asl_q_table(self, results: Dict[int, Dict[str, Any]], out_dir: Path = Path("pretrained_q")) -> None:
+        """
+            Collect Q-tables per node and also export them to C header files.
+            """
+        out_dir.mkdir(parents=True, exist_ok=True)
         nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+
         for node in nodes_sorted:
             if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values():
-                # check if the node id is already in results
                 if node.id not in results:
                     results[node.id] = {}
+
+                q_table = node.rl_asl_q_table.q_table.tolist()
+                num_states = node.rl_asl_q_table.num_states
+                num_actions = node.rl_asl_q_table.num_actions
+
+                # Save structured info in JSON results
                 results[node.id]['rl_asl_q_table'] = {
-                    'num_states': node.rl_asl_q_table.num_states,
-                    'num_actions': node.rl_asl_q_table.num_actions,
-                    # Convert numpy array to list for JSON serialization
-                    'q_table': node.rl_asl_q_table.q_table.tolist()
+                    'num_states': num_states,
+                    'num_actions': num_actions,
+                    'q_table': q_table,
                 }
+
+                # --- Build C header text ---
+                lines = []
+                for row in q_table:
+                    row_str = ", ".join(f"{v:.6f}f" for v in row)
+                    lines.append(f"    {{{row_str}}},")
+                c_array = (
+                    f"#ifndef RL_ASL_PRETRAINED_Q_NODE{node.id}_H\n"
+                    f"#define RL_ASL_PRETRAINED_Q_NODE{node.id}_H\n\n"
+                    f"static const float rl_asl_pretrained_q[{num_states}][{num_actions}] = {{\n"
+                    + "\n".join(lines)
+                    + "\n};\n\n"
+                    f"#endif /* RL_ASL_PRETRAINED_Q_NODE{node.id}_H */\n"
+                )
+
+                # --- Write to file ---
+                header_path = out_dir / \
+                    f"rl-asl-pretrained-q-node{node.id}.h"
+                header_path.write_text(c_array)
