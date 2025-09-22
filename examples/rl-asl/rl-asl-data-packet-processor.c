@@ -28,7 +28,8 @@
 void rl_asl_data_packet_input(const linkaddr_t *src, const uint16_t seqnum, const int8_t is_for_us)
 {
     uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
-    LOG_INFO("Processing data packet input (is_for_us=%d) at ASN %" PRIu64 "\n", is_for_us, full_asn);
+    LOG_INFO("Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n",
+             is_for_us, seqnum, full_asn, src->u8[0], src->u8[1]);
 #if BUILD_WITH_RL_ASL
     rl_asl_ds_nbr_update(src, seqnum, full_asn, 1);
 #endif /* BUILD_WITH_RL_ASL */
