@@ -10,11 +10,11 @@
 
 #define RL_ASL_EPISODE_LENGTH 150 // Number of slotframes per episode
 
-#define RL_ASL_Q_LEARNING_ALPHA 0.15
-#define RL_ASL_Q_LEARNING_GAMMA 0.85
+#define RL_ASL_Q_LEARNING_ALPHA 0.1
+#define RL_ASL_Q_LEARNING_GAMMA 0.9
 #define RL_ASL_Q_LEARNING_EPSILON 1.0
 #define RL_ASL_Q_LEARNING_MIN_EPSILON 0.05
-#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.9992
+#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.998
 
 #define RL_ASL_B_INTERARRIVAL 10
 
@@ -34,8 +34,8 @@
 #endif
 
 #define REWARD_RX_TX 1.0
-#define REWARD_SKIP_RX_NO_TX 0.8
-#define PENALTY_RX_NO_TX -0.8
+#define REWARD_SKIP_RX_NO_TX 0.5
+#define PENALTY_RX_NO_TX -0.5
 #define PENALTY_SKIP_RX_TX -1.0
 
 // Bonus/Penalty for terminal states
