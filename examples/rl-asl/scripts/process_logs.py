@@ -81,6 +81,14 @@ _RE_EPISODE_END = re.compile(
     r"(?P<steps>\d+),"
     r"(?P<avg_reward>-?\d+\.?\d*)"
 )
+# Q-Learning initialized with 640 states, 2 actions and number of steps per episode 150
+_RE_Q_LEARNING_INIT = re.compile(
+    r"Q-Learning initialized with (?P<num_states>\d+) states, "
+    r"(?P<num_actions>\d+) actions and number of steps per episode (?P<episode_length>\d+)"
+)
+_RE_RL_ASL_Q_TABLE = re.compile(
+    r"^(?P<state>\d+),(?P<action>\d+),(?P<value>-?\d+\.?\d*)$"
+)
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
 
@@ -119,6 +127,8 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     receive_seq = _RE_RX_SEQ.search(msg)
     rl_asl_trace = _RE_RL_ASL_TRACE.search(msg)
     episode_end = _RE_EPISODE_END.search(msg)
+    q_learning_init = _RE_Q_LEARNING_INIT.search(msg)
+    rl_asl_q_table = _RE_RL_ASL_Q_TABLE.search(msg)
 
     if energest_seq:
         node.update_last_power_seq(int(energest_seq.group(1)))
@@ -181,6 +191,32 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             "steps": steps,
             "avg_reward": avg_reward
         }, time=timestamp)
+
+    if q_learning_init:
+        num_states = _safe_int(q_learning_init.group("num_states"))
+        num_actions = _safe_int(q_learning_init.group("num_actions"))
+        episode_length = _safe_int(q_learning_init.group("episode_length"))
+        # print(f"Node {node.id} Q-Learning initialized with {num_states} states, {num_actions} actions and episode length {episode_length}")
+        node.rl_asl_q_table_initialize(
+            num_states=num_states, num_actions=num_actions)
+
+    if rl_asl_q_table:
+        state = _safe_int(rl_asl_q_table.group("state"))
+        action = _safe_int(rl_asl_q_table.group("action"))
+        value = _safe_float(rl_asl_q_table.group("value"))
+        if node.rl_asl_q_table.q_table is None:
+            logger.warning(
+                f"Node {node.id} Q-Table not initialized yet; cannot add entry")
+        else:
+            if state < 0 or state >= node.rl_asl_q_table.num_states:
+                logger.warning(
+                    f"Node {node.id} Q-Table invalid state {state}; must be in [0, {node.rl_asl_q_table.num_states})")
+            elif action < 0 or action >= node.rl_asl_q_table.num_actions:
+                logger.warning(
+                    f"Node {node.id} Q-Table invalid action {action}; must be in [0, {node.rl_asl_q_table.num_actions})")
+            else:
+                node.rl_asl_q_table_set_q_value(
+                    state=state, action=action, value=value)
 
     if send_seq:
         seq = _safe_int(send_seq.group(1))

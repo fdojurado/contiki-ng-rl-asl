@@ -21,6 +21,7 @@ from delay import DelaySamples
 from power_trace import PowerTraceSamples, PowerTrace
 from rl_asl_trace import RLASLTraceSamples, RLASLTrace
 from episode_monitoring import EpisodeSamples, EpisodeSample
+from rl_asl_q_table import RLASLQTable
 
 
 from typing import Any, Optional, Dict
@@ -47,6 +48,7 @@ class Node():
         self.delay = DelaySamples(self)
         self.episode_monitoring = EpisodeSamples(self)
         self.last_power_seq = 0
+        self.rl_asl_q_table = RLASLQTable()
 
     # ---------------------------------------------------------------------------
     def update_last_power_seq(self, seq: int):
@@ -158,6 +160,18 @@ class Node():
             return None
         pdr = num_samples_received / num_samples
         return pdr
+
+    # ---------------------------------------------------------------------------
+
+    def rl_asl_q_table_initialize(self, num_states: int, num_actions: int) -> None:
+        self.rl_asl_q_table.initialize(
+            num_states=num_states, num_actions=num_actions)
+        
+    def rl_asl_q_table_set_q_value(self, state: int, action: int, value: float) -> None:
+        self.rl_asl_q_table.set_q_value(state=state, action=action, value=value)
+        
+    def rl_asl_q_table_get_q_value(self, state: int, action: int) -> float:
+        return self.rl_asl_q_table.get_q_value(state=state, action=action)
 
     # ---------------------------------------------------------------------------
 

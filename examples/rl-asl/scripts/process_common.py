@@ -179,6 +179,8 @@ def calculate_results(network):
     network.calc_rl_asl(results)
     # Calculate the episode monitoring for each node
     network.calc_episode_monitoring(results)
+    # Add the Q-Table for each node
+    network.calc_rl_asl_q_table(results)
     # Clear all performance metrics
     network.nodes_performance_metrics_clear()
 

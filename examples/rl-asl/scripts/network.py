@@ -613,3 +613,17 @@ class Network:
                             'time': sample.time
                         } for count, sample in episode_samples.items()}
                     }
+
+    def calc_rl_asl_q_table(self, results: Dict[int, Dict[str, Any]]) -> None:
+        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+        for node in nodes_sorted:
+            if node.id > 1 and node.rl_asl_q_table.is_initialized():
+                # check if the node id is already in results
+                if node.id not in results:
+                    results[node.id] = {}
+                results[node.id]['rl_asl_q_table'] = {
+                    'num_states': node.rl_asl_q_table.num_states,
+                    'num_actions': node.rl_asl_q_table.num_actions,
+                    # Convert numpy array to list for JSON serialization
+                    'q_table': node.rl_asl_q_table.q_table.tolist()
+                }
