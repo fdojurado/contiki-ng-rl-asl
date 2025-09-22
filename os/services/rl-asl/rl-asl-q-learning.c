@@ -9,6 +9,8 @@
 
 rl_asl_q_table_t rl_asl_q_table;
 
+static float best_rolling_avg = -1e9; // very low initial value
+
 /***************************************************************/
 void rl_asl_q_learning_init(void)
 {
@@ -221,7 +223,17 @@ void rl_asl_q_learning_end_episode(void)
 
     float rolling_avg = (rl_asl_q_table.buffer_filled > 0) ? sum / rl_asl_q_table.buffer_filled : 0.0f;
 
-    // Log episode summary in CSV-like format for easy parsing
+    // --- New: track best rolling average ---
+    if (rolling_avg > best_rolling_avg)
+    {
+        best_rolling_avg = rolling_avg;
+        LOG_INFO("NEW_BEST_AGENT,EPISODE=%lu,ROLLING_AVG=%.3f\n",
+                 rl_asl_q_table.episode_count,
+                 best_rolling_avg);
+        rl_asl_q_learning_print_table();
+    }
+
+    // Log episode summary in CSV-like format
     LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu,%.3f\n",
              rl_asl_q_table.episode_count,
              rl_asl_q_table.episode_return,
@@ -240,7 +252,6 @@ void rl_asl_q_learning_end_episode(void)
         rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
     }
 }
-
 /***************************************************************/
 int rl_asl_q_bin_interarrival(uint32_t interarrival, uint32_t asn_diff_ewma)
 {
@@ -274,14 +285,14 @@ void rl_asl_q_learning_print_table(void)
     LOG_INFO("Q-Learning Table:\n");
     for (int i = 0; i < RL_ASL_NUM_STATES; i++)
     {
-        LOG_INFO("State %d: ", i);
         for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
         {
-            LOG_INFO("Action %d: %.3f ", j, rl_asl_q_table.q_values[i][j]);
+            if (rl_asl_q_table.q_values[i][j] > 0.0f)
+            {
+                LOG_INFO("State %d: Action %d: Q=%.3f \n", i, j, rl_asl_q_table.q_values[i][j]);
+            }
         }
-        LOG_INFO_("\n");
     }
-    LOG_INFO_("\n");
 }
 /***************************************************************/
 void rl_asl_q_learning_reset_table(void)
