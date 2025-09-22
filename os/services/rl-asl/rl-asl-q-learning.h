@@ -8,7 +8,7 @@
  * Q-Learning parameters
  *****************************************************************/
 
-#define RL_ASL_EPISODE_LENGTH (int)(RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S * 1e6 / TSCH_DEFAULT_TIMESLOT_TIMING[tsch_ts_timeslot_length] + 1)
+#define RL_ASL_EPISODE_LENGTH 150 // Number of slotframes per episode
 
 #define RL_ASL_Q_LEARNING_ALPHA 0.15
 #define RL_ASL_Q_LEARNING_GAMMA 0.85
@@ -34,13 +34,13 @@
 #endif
 
 #define REWARD_RX_TX 1.0
-#define REWARD_SKIP_RX_NO_TX 0.5
-#define PENALTY_RX_NO_TX -0.5
+#define REWARD_SKIP_RX_NO_TX 0.8
+#define PENALTY_RX_NO_TX -0.8
 #define PENALTY_SKIP_RX_TX -1.0
 
 // Bonus/Penalty for terminal states
-#define REWARD_SUCCESS 10.0
-#define PENALTY_FAILURE -10.0
+#define REWARD_SUCCESS 5.0
+#define PENALTY_FAILURE -5.0
 
 // episode window averages
 #define RL_ASL_EPISODE_AVG_WINDOW 100
