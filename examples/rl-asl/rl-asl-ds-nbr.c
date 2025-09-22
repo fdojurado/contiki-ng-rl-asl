@@ -66,15 +66,15 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, 
         {
             nbr->asn_diff_ewma = asn_diff;
             nbr->asn_diff_var_ewma = 0;
-            LOG_INFO("Neighbor %02x:%02x ASN diff EWMA initialized to %u\n",
+            LOG_INFO("Neighbor %02x:%02x ASN diff EWMA initialized to %f\n",
                      addr->u8[0], addr->u8[1], nbr->asn_diff_ewma);
         }
         else
         {
-            nbr->asn_diff_ewma = (uint32_t)(EWMA_ALPHA * asn_diff + (1.0f - EWMA_ALPHA) * nbr->asn_diff_ewma);
+            nbr->asn_diff_ewma = (float)(EWMA_ALPHA * asn_diff + (1.0f - EWMA_ALPHA) * nbr->asn_diff_ewma);
             int32_t diff = (int32_t)asn_diff - (int32_t)nbr->asn_diff_ewma;
-            nbr->asn_diff_var_ewma = (uint32_t)(EWMA_ALPHA * (diff * diff) + (1.0f - EWMA_ALPHA) * nbr->asn_diff_var_ewma);
-            LOG_INFO("Neighbor %02x:%02x ASN diff: %d, EWMA updated to %u, Var EWMA updated to %u\n",
+            nbr->asn_diff_var_ewma = (float)(EWMA_ALPHA * (diff * diff) + (1.0f - EWMA_ALPHA) * nbr->asn_diff_var_ewma);
+            LOG_INFO("Neighbor %02x:%02x ASN diff: %d, EWMA updated to %f, Var EWMA updated to %f\n",
                      addr->u8[0], addr->u8[1], asn_diff, nbr->asn_diff_ewma, nbr->asn_diff_var_ewma);
         }
     }

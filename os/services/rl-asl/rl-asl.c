@@ -23,8 +23,7 @@ static float clampf(float v, float lo, float hi)
     return v;
 }
 
-static float
-rl_asl_compute_p(const uint64_t *curr_asn64)
+static float rl_asl_compute_p(const uint64_t *curr_asn64)
 {
     float prod_no_tx = 1.0f;
 
@@ -32,49 +31,68 @@ rl_asl_compute_p(const uint64_t *curr_asn64)
          nbr != NULL;
          nbr = rl_asl_ds_nbr_next(nbr))
     {
-
-        if (nbr->is_child && nbr->asn_diff_ewma != 0)
+        if (!(nbr->is_child) || nbr->asn_diff_ewma == 0)
         {
-
-            /* elapsed slots since last packet from this neighbor */
-            uint64_t elapsed64 = (*curr_asn64 >= nbr->last_heard_asn)
-                                     ? (*curr_asn64 - nbr->last_heard_asn)
-                                     : 0;
-            uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
-
-            float lambda = (float)nbr->asn_diff_ewma; /* expected period */
-            float jitter_sigma = sqrtf((float)nbr->asn_diff_var_ewma);
-            // float jitter_sigma = 0.1f * lambda;       /* tune: 0.05–0.2 of λ */
-
-            /* ---- choose k: nearest vs. future-biased ---- */
-            float k = ceilf((float)elapsed_asn / lambda);
-            float next = k * lambda;
-            float dist = (float)elapsed_asn - next;
-
-            /* Gaussian centered on the next TX */
-            float p_tx = expf(-(dist * dist) / (2.0f * jitter_sigma * jitter_sigma));
-
-            /* joint probability of no transmission = product of (1 - p_tx) */
-            prod_no_tx *= (1.0f - p_tx);
-
-            LOG_DBG("Neighbor %02x:%02x elapsed=%u λ=%.1f k=%.1f dist=%.2f p_tx=%.3f\n",
-                    rl_asl_ds_nbr_get_addr(nbr)->u8[0],
-                    rl_asl_ds_nbr_get_addr(nbr)->u8[1],
-                    elapsed_asn,
-                    lambda,
-                    k,
-                    dist,
-                    p_tx);
+            continue;
         }
+
+        /* elapsed slots since last packet from this neighbor */
+        uint64_t elapsed64 = (*curr_asn64 >= nbr->last_heard_asn)
+                                 ? (*curr_asn64 - nbr->last_heard_asn)
+                                 : 0;
+        uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
+
+        /* Use float EWMA internal representations (recommended). If your struct currently stores
+           uint32_t, consider adding float fields: asn_diff_ewma_f, asn_diff_var_ewma_f.
+           Here I cast from stored integer but you should switch to floats if possible. */
+        float lambda = (float)nbr->asn_diff_ewma; /* expected period (slots) */
+        if (lambda <= 0.0f)
+        {
+            continue;
+        }
+
+        /* Estimate sigma (jitter stddev). Prefer stored float variance if possible. */
+        float var = (float)nbr->asn_diff_var_ewma; /* if stored as uint32_t; better as float */
+        float sigma = sqrtf(var);
+
+        /* --- safety / sensible defaults and clamping --- */
+        /* Minimum sigma: a small fraction of lambda, but at least 1 slot to avoid div-by-zero */
+        const float MIN_SIGMA = 1.0f;
+        const float SIGMA_FRACTION = 0.08f; /* tune: 0.05-0.2 commonly */
+        float sigma_floor = fmaxf(MIN_SIGMA, SIGMA_FRACTION * lambda);
+        if (sigma < sigma_floor)
+            sigma = sigma_floor;
+
+        /* compute phase and distance to next expected tx */
+        float phase = fmodf((float)elapsed_asn, lambda); /* in [0, lambda) */
+        float dist_to_next = lambda - phase;             /* in (0, lambda] */
+        /* If phase==0 meaning just transmitted, dist_to_next == lambda -> low p_tx */
+
+        /* Gaussian-shaped bump around the next expected transmit */
+        float exponent = -0.5f * (dist_to_next * dist_to_next) / (sigma * sigma);
+        float p_tx = expf(exponent);
+
+        /* clamp p_tx into [0,1] (should be in (0,1] already) */
+        p_tx = clampf(p_tx, 0.0f, 1.0f);
+
+        /* combine assuming independence */
+        prod_no_tx *= (1.0f - p_tx);
+
+        LOG_DBG("Neighbor %02x:%02x elapsed=%u λ=%.1f var=%.1f sigma=%.2f phase=%.1f dist_next=%.1f p_tx=%.3f\n",
+                rl_asl_ds_nbr_get_addr(nbr)->u8[0],
+                rl_asl_ds_nbr_get_addr(nbr)->u8[1],
+                elapsed_asn,
+                lambda,
+                var,
+                sigma,
+                phase,
+                dist_to_next,
+                p_tx);
     }
 
-    /* probability that at least one neighbor will TX */
-    float p = 1.0f - prod_no_tx;
-
-    LOG_DBG("Computed p = %.3f\n", p);
-
-    /* clamp to avoid degeneracy */
-    return clampf(p, 0.001f, 0.99f);
+    float p_any = 1.0f - prod_no_tx;
+    LOG_DBG("Computed p_any = %.3f\n", p_any);
+    return clampf(p_any, 0.001f, 0.99f);
 }
 
 static float rl_asl_expected_reward_for_action(int action, float p)
