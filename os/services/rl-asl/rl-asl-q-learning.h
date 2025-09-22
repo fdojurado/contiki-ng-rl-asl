@@ -8,6 +8,35 @@
  * Q-Learning parameters
  *****************************************************************/
 
+#ifndef RL_ASL_CONF_MODE_TRAIN
+#define RL_ASL_CONF_MODE_TRAIN 0
+#endif
+
+#ifndef RL_ASL_CONF_MODE_EVAL
+#define RL_ASL_CONF_MODE_EVAL 0
+#endif
+
+/* Resolve final mode */
+#if (RL_ASL_CONF_MODE_TRAIN && RL_ASL_CONF_MODE_EVAL)
+#warning "Both TRAIN and EVAL mode requested. Falling back to TRAIN."
+#define RL_ASL_MODE_TRAIN 1
+#define RL_ASL_MODE_EVAL 0
+#elif RL_ASL_CONF_MODE_TRAIN
+#define RL_ASL_MODE_TRAIN 1
+#define RL_ASL_MODE_EVAL 0
+#elif RL_ASL_CONF_MODE_EVAL
+#define RL_ASL_MODE_TRAIN 0
+#define RL_ASL_MODE_EVAL 1
+#else
+// #warning "No mode defined. Falling back to TRAIN."
+#define RL_ASL_MODE_TRAIN 1
+#define RL_ASL_MODE_EVAL 0
+#endif
+
+/* Convenience macro: true if training, false if evaluating */
+#define RL_ASL_IS_TRAIN (RL_ASL_MODE_TRAIN)
+#define RL_ASL_IS_EVAL (RL_ASL_MODE_EVAL)
+
 #define RL_ASL_EPISODE_LENGTH 150 // Number of slotframes per episode
 
 #define RL_ASL_Q_LEARNING_ALPHA 0.1

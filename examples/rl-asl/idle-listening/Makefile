@@ -11,6 +11,8 @@ MAKE_WITH_ORCHESTRA ?= 1
 
 MAKE_WITH_RL_ASL ?= 0
 
+MAKE_WITH_RL_ASL_TRAIN ?= 1
+
 # CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
 # CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
 # Lets define a flag that we can use in the code to check if we are using rl_asl_net_driver and rl_asl_routing_driver
@@ -23,6 +25,13 @@ endif
 
 ifeq ($(MAKE_WITH_RL_ASL),1)
   MODULES += $(CONTIKI_NG_SERVICES_DIR)/rl-asl
+  ifeq ($(MAKE_WITH_RL_ASL_TRAIN),1)
+    CFLAGS += -DRL_ASL_CONF_MODE_TRAIN=1
+    CFLAGS += -DRL_ASL_CONF_MODE_EVAL=0
+  else
+    CFLAGS += -DRL_ASL_CONF_MODE_TRAIN=0
+    CFLAGS += -DRL_ASL_CONF_MODE_EVAL=1
+  endif
 endif
 
 ifeq ($(MAKE_WITH_ORCHESTRA),1)

@@ -7,6 +7,10 @@
 #define LOG_MODULE "rl-asl-q-learning"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_Q_LEARNING
 
+#if RL_ASL_IS_EVAL
+#include "rl-asl-pretrained-q.h"
+#endif
+
 rl_asl_q_table_t rl_asl_q_table;
 
 static float best_rolling_avg = -1e9; // very low initial value
@@ -14,12 +18,27 @@ static float best_rolling_avg = -1e9; // very low initial value
 /***************************************************************/
 void rl_asl_q_learning_init(void)
 {
+#if RL_ASL_IS_TRAIN
     // Initialize Q-table with zeros
     rl_asl_q_learning_reset_table();
     rl_asl_decision_buffer_reset();
 
     LOG_INFO("Q-Learning initialized with %d states, %d actions and number of steps per episode %d\n",
              RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS, RL_ASL_EPISODE_LENGTH);
+#elif RL_ASL_IS_EVAL
+    // Load pretrained Q-table
+    for (int i = 0; i < RL_ASL_NUM_STATES; i++)
+    {
+        for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
+        {
+            rl_asl_q_table.q_values[i][j] = rl_asl_pretrained_q[i][j];
+        }
+    }
+    rl_asl_decision_buffer_reset();
+
+    LOG_INFO("Using pretrained Q-table with %d states, %d actions\n",
+             RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS);
+#endif
 }
 /***************************************************************/
 void rl_asl_q_learning_update(const int state, const int action,
@@ -34,6 +53,7 @@ void rl_asl_q_learning_update(const int state, const int action,
         return; // Invalid state, do not update
     }
 
+#if RL_ASL_IS_TRAIN
     // Q-learning update rule
     float old_q_value = rl_asl_q_table.q_values[state][action];
     float max_next_q_value = rl_asl_q_learning_get_max_q_value(next_state);
@@ -45,10 +65,18 @@ void rl_asl_q_learning_update(const int state, const int action,
 
     // LOG_DBG("Step state=%d action=%d reward=%.3f next_state=%d q=%.3f\n",
     //         state, action, reward, next_state, new_q_value);
+#elif RL_ASL_IS_EVAL
+    // In evaluation mode, we do not update the Q-table
+    (void)state;
+    (void)action;
+    (void)reward;
+    (void)next_state;
+#endif
 }
 /***************************************************************/
 int rl_asl_q_learning_select_action(int state)
 {
+#if RL_ASL_IS_TRAIN
     // Epsilon-greedy action selection
     float rand_val = (float)rand() / RAND_MAX;
     if (rand_val < rl_asl_q_table.epsilon)
@@ -65,6 +93,12 @@ int rl_asl_q_learning_select_action(int state)
         LOG_DBG("Exploiting: selected best action %d (epsilon=%.3f)\n", action, rl_asl_q_table.epsilon);
         return action;
     }
+#elif RL_ASL_IS_EVAL
+    // Always exploit in evaluation mode
+    int action = rl_asl_q_learning_get_best_action(state);
+    LOG_DBG("EVAL: selected best action %d\n", action);
+    return action;
+#endif
 }
 /***************************************************************/
 int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins,
