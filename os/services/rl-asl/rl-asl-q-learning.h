@@ -28,11 +28,16 @@
 #define RL_ASL_DIST_NEAREST_BINS 4
 #endif
 
+#ifndef RL_ASL_NEAR_COUNT_MAX
+#define RL_ASL_NEAR_COUNT_MAX 3 // cap near-TX neighbors counted
+#endif
+
 /* We encode: state = avg_bin + count_short * RL_ASL_B_INTERARRIVAL
    count_short ranges 0..RL_ASL_MAX_NEIGHBORS => (RL_ASL_MAX_NEIGHBORS + 1) possibilities */
 #define RL_ASL_NUM_STATES (RL_ASL_B_INTERARRIVAL *      \
                            (RL_ASL_MAX_NEIGHBORS + 1) * \
-                           RL_ASL_DIST_NEAREST_BINS)
+                           RL_ASL_DIST_NEAREST_BINS *   \
+                           (RL_ASL_NEAR_COUNT_MAX + 1))
 
 /* Short threshold for "short interarrival" counting (bin index) */
 #ifndef RL_ASL_SHORT_BIN_THRESHOLD
@@ -88,7 +93,8 @@ int rl_asl_q_learning_select_action(int state);
 int rl_asl_q_learning_get_state(int interarrival_bin);
 int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins,
                                                      int num_bins,
-                                                     int dist_nearest_bin);
+                                                     int dist_nearest_bin,
+                                                     int near_count);
 void rl_asl_q_learning_decay_epsilon(float decay_rate);
 float rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);

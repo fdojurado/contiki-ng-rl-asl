@@ -65,7 +65,10 @@ int rl_asl_q_learning_select_action(int state)
     }
 }
 /***************************************************************/
-int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bins, int dist_nearest_bin)
+int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins,
+                                                     int num_bins,
+                                                     int dist_nearest_bin,
+                                                     int near_count)
 {
     if (bins == NULL || num_bins <= 0)
     {
@@ -73,15 +76,13 @@ int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bi
         return -1;
     }
 
-    /* Clip num_bins to RL_ASL_MAX_NEIGHBORS for the encoding */
+    /* Clip num_bins */
     if (num_bins > RL_ASL_MAX_NEIGHBORS)
     {
         num_bins = RL_ASL_MAX_NEIGHBORS;
     }
 
     int sum = 0;
-    int min_bin = RL_ASL_B_INTERARRIVAL - 1;
-    int max_bin = 0;
     int count_short = 0;
 
     for (int i = 0; i < num_bins; i++)
@@ -93,41 +94,50 @@ int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins, int num_bi
             b = RL_ASL_B_INTERARRIVAL - 1;
 
         sum += b;
-        if (b < min_bin)
-            min_bin = b;
-        if (b > max_bin)
-            max_bin = b;
         if (b < RL_ASL_SHORT_BIN_THRESHOLD)
+        {
             count_short++;
+        }
     }
 
-    /* average bin (rounded) */
+    /* average bin */
     int avg_bin = (int)((float)sum / num_bins + 0.5f);
     if (avg_bin < 0)
         avg_bin = 0;
     if (avg_bin >= RL_ASL_B_INTERARRIVAL)
         avg_bin = RL_ASL_B_INTERARRIVAL - 1;
 
-    /* Clip count_short */
+    /* clip count_short */
     if (count_short < 0)
         count_short = 0;
     if (count_short > RL_ASL_MAX_NEIGHBORS)
         count_short = RL_ASL_MAX_NEIGHBORS;
 
+    /* clip dist_nearest_bin */
     if (dist_nearest_bin < 0)
         dist_nearest_bin = 0;
+    if (dist_nearest_bin >= RL_ASL_DIST_NEAREST_BINS)
+        dist_nearest_bin = RL_ASL_DIST_NEAREST_BINS - 1;
 
-    /* Encode 3D state: avg_bin + B_INTERARRIVAL * count_short + ... */
-    int state = avg_bin + RL_ASL_B_INTERARRIVAL * count_short + RL_ASL_B_INTERARRIVAL * (RL_ASL_MAX_NEIGHBORS + 1) * dist_nearest_bin;
+    /* clip near_count */
+    if (near_count < 0)
+        near_count = 0;
+    if (near_count > RL_ASL_NEAR_COUNT_MAX)
+        near_count = RL_ASL_NEAR_COUNT_MAX;
+
+    /* Encode 4D state */
+    int state = avg_bin + RL_ASL_B_INTERARRIVAL * count_short + RL_ASL_B_INTERARRIVAL * (RL_ASL_MAX_NEIGHBORS + 1) * dist_nearest_bin + RL_ASL_B_INTERARRIVAL * (RL_ASL_MAX_NEIGHBORS + 1) * RL_ASL_DIST_NEAREST_BINS * near_count;
 
     if (state < 0 || state >= RL_ASL_NUM_STATES)
     {
-        LOG_ERR("Aggregated state out of range: %d (avg=%d count_short=%d dist_bin=%d)\n",
-                state, avg_bin, count_short, dist_nearest_bin);
+        LOG_ERR("Aggregated state out of range: %d (avg=%d count_short=%d dist_bin=%d near_count=%d)\n",
+                state, avg_bin, count_short, dist_nearest_bin, near_count);
         return -1;
     }
+
     return state;
 }
+
 /***************************************************************/
 int rl_asl_q_learning_get_state(int interarrival)
 {

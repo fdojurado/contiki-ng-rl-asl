@@ -165,6 +165,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     int nb_count = 0;
     uint64_t curr_asn64 = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
     float best_dist_nearest = FLT_MAX;
+    int near_count = 0;
 
     /* collect per-neighbor estimates for aggregated state encoding */
     for (rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_head(); nbr != NULL && nb_count < RL_ASL_MAX_NEIGHBORS; nbr = rl_asl_ds_nbr_next(nbr))
@@ -183,13 +184,24 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
 
         bins[nb_count++] = interarrival_bin;
 
-        /* --- new: compute dist_nearest --- */
+        /* --- dist_nearest calculation --- */
         float lambda = (float)nbr->asn_diff_ewma;
+        float sigma = sqrtf((float)nbr->asn_diff_var_ewma);
+        float sigma_floor = fmaxf(MIN_SIGMA, SIGMA_FRACTION * lambda);
+        sigma = fmaxf(sigma, sigma_floor);
+        sigma = fminf(sigma, 0.5f * lambda); /* cap */
+
         float phase = fmodf((float)estimated_neighbor_asn, lambda);
         float dist = fminf(phase, lambda - phase);
+
         if (dist < best_dist_nearest)
         {
             best_dist_nearest = dist;
+        }
+
+        if (dist <= sigma)
+        {
+            near_count++;
         }
     }
 
@@ -201,8 +213,12 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
 
     int dist_nearest_bin = rl_asl_q_bin_dist_nearest(best_dist_nearest);
 
+    /* Clip near_count to limit state space growth */
+    if (near_count > RL_ASL_NEAR_COUNT_MAX)
+        near_count = RL_ASL_NEAR_COUNT_MAX;
+
     /* Build aggregated state from bins (feature-engineered state) */
-    int aggregated_state = rl_asl_q_learning_get_aggregated_state_from_bins(bins, nb_count, dist_nearest_bin);
+    int aggregated_state = rl_asl_q_learning_get_aggregated_state_from_bins(bins, nb_count, dist_nearest_bin, near_count);
     if (aggregated_state < 0)
     {
         *skip_rx = false;
