@@ -617,7 +617,7 @@ class Network:
     def calc_rl_asl_q_table(self, results: Dict[int, Dict[str, Any]]) -> None:
         nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
         for node in nodes_sorted:
-            if node.id > 1 and node.rl_asl_q_table.is_initialized():
+            if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values():
                 # check if the node id is already in results
                 if node.id not in results:
                     results[node.id] = {}

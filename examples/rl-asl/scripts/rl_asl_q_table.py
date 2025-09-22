@@ -14,6 +14,12 @@ class RLASLQTable():
         self.num_states = num_states
         self.num_actions = num_actions
         self.q_table = np.zeros((num_states, num_actions))
+        
+    # Function to check whether are non-zero Q-values
+    def has_non_zero_q_values(self) -> bool:
+        if self.q_table is None:
+            return False
+        return np.any(self.q_table != 0)
 
     def set_q_value(self, state: int, action: int, value: float) -> None:
         assert 0 <= state < self.num_states
