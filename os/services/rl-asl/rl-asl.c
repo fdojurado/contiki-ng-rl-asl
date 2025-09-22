@@ -217,91 +217,60 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         float p = rl_asl_compute_p(&curr_asn64);
         float expected_reward = rl_asl_expected_reward_for_action(chosen_action, p);
         int pkt = 0;
-        bool any_terminal = false;
         int near_count = 0;
-
+        int terminal_count = 0;
         for (rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_head(); nbr != NULL; nbr = rl_asl_ds_nbr_next(nbr))
         {
             if (!(nbr->is_child) || nbr->last_heard_asn == 0 || nbr->asn_diff_ewma == 0)
                 continue;
-
             uint64_t ref_asn = (nbr->last_expected_asn > nbr->last_heard_asn) ? nbr->last_expected_asn : nbr->last_heard_asn;
             uint64_t elapsed64 = (curr_asn64 >= ref_asn) ? (curr_asn64 - ref_asn) : 0;
             uint32_t elapsed_asn = (elapsed64 > UINT32_MAX) ? UINT32_MAX : (uint32_t)elapsed64;
-
             float lambda = (float)nbr->asn_diff_ewma;
             if (!(lambda > 0.0f))
                 continue;
-
-            /* robust sigma */
-            float var = (float)nbr->asn_diff_var_ewma;
-            float sigma = sqrtf(var);
+            float sigma = sqrtf((float)nbr->asn_diff_var_ewma);
             float sigma_floor = fmaxf(MIN_SIGMA, SIGMA_FRACTION * lambda);
             sigma = fmaxf(sigma, sigma_floor);
-            sigma = fminf(sigma, 0.5f * lambda);
-
+            sigma = fminf(sigma, 0.5f * lambda); /* cap */
             float phase = fmodf((float)elapsed_asn, lambda);
             float dist_to_next = lambda - phase;
-            float dist_nearest = fminf(phase, dist_to_next);
-
-            /* Missed check (terminal-like reward). Do NOT multiple-apply huge penalties;
-               mark a single terminal occurrence and advance expectation to avoid drift. */
+            float dist_nearest = fminf(phase, dist_to_next); /* terminal (missed) check first: elapsed >> expected + margin */
             float missed_threshold = lambda + MISSED_SIGMA_MULTIPLIER * sigma;
             if ((float)elapsed_asn >= missed_threshold)
             {
-                any_terminal = true;
-                pkt = 1;
-
-                /* advance expectation to avoid drift and record predicted skip */
+                terminal_count++;
+                pkt = 1; /* advance expectation to avoid drift and increment predicted_skips */
                 uint64_t delta = (uint64_t)(lambda + 0.5f);
                 nbr->last_expected_asn += delta;
                 if (nbr->predicted_skips < 255)
                     nbr->predicted_skips++;
-
-                LOG_DBG("Neighbor %02x:%02x missed: elapsed=%u >= %.1f -> terminal mark, last_expected_asn=%" PRIu64 "\n",
-                        rl_asl_ds_nbr_get_addr(nbr)->u8[0],
-                        rl_asl_ds_nbr_get_addr(nbr)->u8[1],
-                        elapsed_asn, missed_threshold, nbr->last_expected_asn);
-                /* continue loop: still count other near neighbors, but the terminal penalty will be applied once */
-                continue;
+                LOG_DBG("Neighbor %02x:%02x missed: elapsed=%u >= %.1f -> failure, last_expected_asn=%" PRIu64 "\n", rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], elapsed_asn, missed_threshold, nbr->last_expected_asn);
             }
-
-            /* Near check (before or after expected moment): use dist_nearest and a multiplier */
-            if (dist_nearest <= NEAR_MULT * sigma)
-            {
-                near_count++;
-                pkt = 1;
-                LOG_DBG("Neighbor %02x:%02x near-TX: dist_nearest=%.1f <= %.1f (NEAR_MULT*sigma)\n",
-                        rl_asl_ds_nbr_get_addr(nbr)->u8[0],
-                        rl_asl_ds_nbr_get_addr(nbr)->u8[1],
-                        dist_nearest, NEAR_MULT * sigma);
+            else
+            { /* near-TX check now uses dist_nearest (before OR after the expected multiple) */
+                if (dist_nearest <= sigma)
+                {
+                    near_count++;
+                    pkt = 1;
+                    LOG_DBG("Neighbor %02x:%02x near-TX: dist_nearest=%.1f <= sigma=%.1f\n", rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], dist_nearest, sigma);
+                }
             }
-        } /* for neighbors */
-
-        /* Apply penalties: single terminal penalty if any terminal occurred.
-           If multiple missed neighbors are realistically possible, you can scale mildly,
-           but avoid exploding the penalty. */
-        if (any_terminal)
-        {
-            expected_reward += PENALTY_FAILURE; /* single application */
-            LOG_DBG("One or more neighbors marked missed -> apply single failure penalty\n");
-        }
-
-        /* Apply near penalties: linear up to cap */
+        } /* for neighbors */ /* scale near penalty by how many neighbors are near their next TX */
         if (near_count > 0)
         {
-            int effective_near = near_count;
-            if (effective_near > MAX_NEAR_COUNT)
-                effective_near = MAX_NEAR_COUNT;
-            expected_reward += (float)effective_near * PENALTY_SKIP_RX_TX;
+            expected_reward += (float)near_count * PENALTY_SKIP_RX_TX;
             if (near_count > 1)
             {
-                LOG_DBG("Multiple (%d) neighbors near-TX -> near penalty applied (%d counted)\n", near_count, effective_near);
+                LOG_DBG("Multiple neighbors (%d) near-TX -> stronger penalty\n", near_count);
             }
+        } /* if any neighbor is terminal (missed), apply failure penalty */
+        if (terminal_count > 0)
+        {
+            expected_reward += (float)terminal_count * PENALTY_FAILURE;
+            LOG_DBG("One or more neighbors (%d) missed -> apply failure penalty\n", terminal_count);
         }
-
         LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=SKIP,SUCCESS=%d\n", asn_low32, pkt ? 0 : 1);
-
         rl_asl_q_learning_update(aggregated_state, chosen_action, expected_reward, aggregated_state);
         rl_asl_q_learning_step_done();
     }
