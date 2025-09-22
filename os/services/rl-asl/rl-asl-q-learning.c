@@ -282,14 +282,16 @@ int rl_asl_q_bin_dist_nearest(float dist_nearest)
 /***************************************************************/
 void rl_asl_q_learning_print_table(void)
 {
-    LOG_INFO("Q-Learning Table:\n");
+    // Print Q-table in a compact CSV format to minimize log overhead
+    // Format: state,action,q_value (only for q_value > 0)
     for (int i = 0; i < RL_ASL_NUM_STATES; i++)
     {
         for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
         {
-            if (rl_asl_q_table.q_values[i][j] > 0.0f)
+            float q = rl_asl_q_table.q_values[i][j];
+            if (q > 0.0f)
             {
-                LOG_INFO("State %d: Action %d: Q=%.3f \n", i, j, rl_asl_q_table.q_values[i][j]);
+                printf("%d,%d,%.3f\n", i, j, q);
             }
         }
     }
