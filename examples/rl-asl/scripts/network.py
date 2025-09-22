@@ -286,51 +286,6 @@ class Network:
                         'samples_us': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
                     }
 
-    def calc_latency_ordered_by_timeslots(self, results: Dict[int, Dict[str, Any]]) -> None:
-
-        def remove_outliers(data, m=2.0):
-            data = np.array(data)
-            if len(data) == 0:
-                return data.tolist()
-            mean = np.mean(data)
-            std = np.std(data)
-            filtered = data[np.abs(data - mean) < m * std]
-            return filtered.tolist()
-
-        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
-        for node in nodes_sorted:
-            if node.id > 1:
-                delay_samples = node.delay.get_samples()
-                # Order samples by timeslot
-                ordered_by_timeslot = sorted(
-                    (sample for sample in delay_samples.values()
-                     if sample.timeslot is not None),
-                    key=lambda x: x.timeslot
-                )
-                # Create a dictionary with timeslot as key and values as array of delays
-                latency_by_timeslot = {}
-                for sample in ordered_by_timeslot:
-                    if sample.timeslot not in latency_by_timeslot:
-                        latency_by_timeslot[sample.timeslot] = []
-                    latency_by_timeslot[sample.timeslot].append(sample.delay)
-                # Remove outliers and calculate average latency per timeslot
-                for timeslot in latency_by_timeslot:
-                    delays = latency_by_timeslot[timeslot]
-                    filtered_delays = remove_outliers(delays)
-                    if filtered_delays:
-                        avg_delay = sum(filtered_delays) / len(filtered_delays)
-                    else:
-                        avg_delay = None
-                    latency_by_timeslot[timeslot] = {
-                        'average_us': avg_delay,
-                        'samples_us': filtered_delays
-                    }
-                if latency_by_timeslot:
-                    # check if the node id is already in results
-                    if node.id not in results:
-                        results[node.id] = {}
-                    results[node.id]['latency_by_timeslot'] = latency_by_timeslot
-
     def calc_avg_packet_loss(self, results: Dict[int, Dict[str, Any]]) -> None:
         plr = {}
         for node in self.nodes.values():

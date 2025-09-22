@@ -35,7 +35,6 @@ class Delay():
         # cycle_seq,
         seq,
         delay,
-        timeslot,
         time_at_tx: Optional[int] = None,
         time_at_rx: Optional[int] = None
     ) -> None:
@@ -45,7 +44,6 @@ class Delay():
         # self.cycle_seq = cycle_seq
         self.seq = seq
         self.delay = delay
-        self.timeslot = timeslot
         self.time_at_tx = time_at_tx
         self.time_at_rx = time_at_rx
 
@@ -145,7 +143,7 @@ class DelaySamples():
 
         return jitter_per_seq
 
-    def add_sample(self, seq, delay, timeslot, time_at_tx: Optional[int] = None) -> Delay:
+    def add_sample(self, seq, delay, time_at_tx: Optional[int] = None) -> Delay:
         sample = self.get_sample(seq)
         if sample:
             if time_at_tx is not None:
@@ -154,7 +152,7 @@ class DelaySamples():
         logger.debug(
             f'Node {self.node.id}: add delay {delay}, seq {seq}')
         delay_sample = Delay(seq=seq, delay=delay,
-                             timeslot=timeslot, time_at_tx=time_at_tx)
+                             time_at_tx=time_at_tx)
         self.samples.update({seq: delay_sample})
         # Fire callback
         if self.callback:

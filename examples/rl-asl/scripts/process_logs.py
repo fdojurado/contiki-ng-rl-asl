@@ -89,6 +89,10 @@ _RE_Q_LEARNING_INIT = re.compile(
 _RE_RL_ASL_Q_TABLE = re.compile(
     r"^(?P<state>\d+),(?P<action>\d+),(?P<value>-?\d+\.?\d*)$"
 )
+# Sending data packet with sequence number 3147 and ASN 4421158
+_RE_DATA_SEND = re.compile(
+    r"Sending data packet with sequence number (?P<seq>\d+) and ASN (?P<asn>\d+)"
+)
 
 _RE_PLATFORM = re.compile(r"(?:.+_)?([A-Za-z0-9-]+)_(?:\d+)\.(?:oml|txt)$")
 
@@ -129,6 +133,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     episode_end = _RE_EPISODE_END.search(msg)
     q_learning_init = _RE_Q_LEARNING_INIT.search(msg)
     rl_asl_q_table = _RE_RL_ASL_Q_TABLE.search(msg)
+    data_send = _RE_DATA_SEND.search(msg)
 
     if energest_seq:
         node.update_last_power_seq(int(energest_seq.group(1)))
@@ -205,8 +210,9 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         action = _safe_int(rl_asl_q_table.group("action"))
         value = _safe_float(rl_asl_q_table.group("value"))
         if node.rl_asl_q_table.q_table is None:
-            logger.warning(
-                f"Node {node.id} Q-Table not initialized yet; cannot add entry")
+            pass
+            # logger.warning(
+            #     f"Node {node.id} Q-Table not initialized yet; cannot add entry")
         else:
             if state < 0 or state >= node.rl_asl_q_table.num_states:
                 logger.warning(
@@ -217,6 +223,12 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             else:
                 node.rl_asl_q_table_set_q_value(
                     state=state, action=action, value=value)
+
+    if data_send:
+        seq = _safe_int(data_send.group("seq"))
+        asn = _safe_int(data_send.group("asn"))
+        node.delay_add(seq=seq, delay=0,
+                       time_at_tx=timestamp)
 
     if send_seq:
         seq = _safe_int(send_seq.group(1))

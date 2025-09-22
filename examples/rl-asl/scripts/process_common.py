@@ -157,8 +157,6 @@ def calculate_results(network):
     network.calc_avg_latency(results)
     # Calculate the latency for each node
     network.calc_latency(results)
-    # Latency for each node ordered by timeslots
-    network.calc_latency_ordered_by_timeslots(results)
     # Calculate the packet loss for the network
     network.calc_avg_packet_loss(results)
     # Calculate the packet loss for each node

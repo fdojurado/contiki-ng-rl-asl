@@ -114,9 +114,9 @@ class Node():
 
     # ---------------------------------------------------------------------------
 
-    def delay_add(self, seq, delay, timeslot, time_at_tx: Optional[int] = None):
+    def delay_add(self, seq, delay, time_at_tx: Optional[int] = None):
         delay = self.delay.add_sample(
-            seq=seq, delay=delay, timeslot=timeslot, time_at_tx=time_at_tx)
+            seq=seq, delay=delay, time_at_tx=time_at_tx)
         return delay
 
     def delay_update_time_at_rx(self, seq, time_at_rx: int):
@@ -166,10 +166,11 @@ class Node():
     def rl_asl_q_table_initialize(self, num_states: int, num_actions: int) -> None:
         self.rl_asl_q_table.initialize(
             num_states=num_states, num_actions=num_actions)
-        
+
     def rl_asl_q_table_set_q_value(self, state: int, action: int, value: float) -> None:
-        self.rl_asl_q_table.set_q_value(state=state, action=action, value=value)
-        
+        self.rl_asl_q_table.set_q_value(
+            state=state, action=action, value=value)
+
     def rl_asl_q_table_get_q_value(self, state: int, action: int) -> float:
         return self.rl_asl_q_table.get_q_value(state=state, action=action)
 
