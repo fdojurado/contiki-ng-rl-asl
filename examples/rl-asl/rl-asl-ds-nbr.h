@@ -14,6 +14,7 @@ typedef struct
     // EWMA of the time difference between the received packet's ASN and the last_heard_asn
     // This can be used to estimate the neighbor's current ASN
     uint32_t asn_diff_ewma;
+    uint32_t asn_diff_var_ewma;
 } rl_asl_ds_nbr_t;
 
 void rl_asl_ds_nbr_init(void);

@@ -47,6 +47,7 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, 
         nbr->is_child = is_child;
         nbr->last_heard_asn = asn;
         nbr->asn_diff_ewma = 0;
+        nbr->asn_diff_var_ewma = 0;
         LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 " is child=%d\n",
                  addr->u8[0], addr->u8[1], seqno, asn, nbr->is_child);
         count_neighbors++;
@@ -64,14 +65,17 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, 
         if (nbr->asn_diff_ewma == 0)
         {
             nbr->asn_diff_ewma = asn_diff;
+            nbr->asn_diff_var_ewma = 0;
             LOG_INFO("Neighbor %02x:%02x ASN diff EWMA initialized to %u\n",
                      addr->u8[0], addr->u8[1], nbr->asn_diff_ewma);
         }
         else
         {
             nbr->asn_diff_ewma = (uint32_t)(EWMA_ALPHA * asn_diff + (1.0f - EWMA_ALPHA) * nbr->asn_diff_ewma);
-            LOG_INFO("Neighbor %02x:%02x ASN diff: %d, EWMA updated to %u\n",
-                     addr->u8[0], addr->u8[1], asn_diff, nbr->asn_diff_ewma);
+            int32_t diff = (int32_t)asn_diff - (int32_t)nbr->asn_diff_ewma;
+            nbr->asn_diff_var_ewma = (uint32_t)(EWMA_ALPHA * (diff * diff) + (1.0f - EWMA_ALPHA) * nbr->asn_diff_var_ewma);
+            LOG_INFO("Neighbor %02x:%02x ASN diff: %d, EWMA updated to %u, Var EWMA updated to %u\n",
+                     addr->u8[0], addr->u8[1], asn_diff, nbr->asn_diff_ewma, nbr->asn_diff_var_ewma);
         }
     }
 
