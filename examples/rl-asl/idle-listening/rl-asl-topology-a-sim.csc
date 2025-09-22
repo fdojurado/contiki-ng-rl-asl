@@ -245,7 +245,7 @@
   <plugin>
     org.contikios.cooja.plugins.ScriptRunner
     <plugin_config>
-      <scriptfile>[CONFIG_DIR]/../script.js</scriptfile>
+      <scriptfile>[CONFIG_DIR]/../script-training.js</scriptfile>
       <active>true</active>
     </plugin_config>
     <width>457</width>

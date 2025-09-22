@@ -1,4 +1,4 @@
-TIMEOUT(3600000); // 60 minutes
+TIMEOUT(7200000); // 2 hours
 
 
 log.log("Starting COOJA logger\n");
