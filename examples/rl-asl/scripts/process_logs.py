@@ -63,10 +63,10 @@ _RE_ENERGEST_RADIO_TOTAL_TIME = re.compile(
 _RE_ENERGEST_ENERGY = re.compile(
     r"\[INFO: Energest\s*\]\s*Total energy\s*\(uJ\)\s*:\s*(\d+)")
 _RE_RADIO_TOTAL = re.compile(r"Radio total\s*:\s*([0-9\.]+)\s*/\s*([0-9\.]+)")
-_RE_SEND_SEQ = re.compile(
-    r"Sending request\s*(\d+)\s*to\s*([0-9a-fA-F:]+)\s* at asn\s*([0-9]+)(?:\s*\(timeslot\s*([0-9]+)\))?")
+# Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n"
 _RE_RX_SEQ = re.compile(
-    r"Received request 'hello\s*([0-9]+)'\s*from\s*([0-9a-fA-F:]+)")
+    r"Processing data packet input \(is_for_us=(?P<is_for_us>\d+)\) with seqnum (?P<seq>\d+) at ASN (?P<asn>\d+), from (?P<ip>[\da-fA-F:]+)"
+)
 _RE_RL_ASL_TRACE = re.compile(
     r".*TRACE_OUTCOME,"
     r"ASN=(?P<asn>\d+),"
@@ -127,7 +127,6 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     energest_radio_uc_idle_ratio = _RE_ENERGEST_RADIO_UC_IDLE_RATIO.search(msg)
     energest_radio_uc_ratio = _RE_ENERGEST_RADIO_UC_RATIO.search(msg)
     energest_radio_total_time = _RE_ENERGEST_RADIO_TOTAL_TIME.search(msg)
-    send_seq = _RE_SEND_SEQ.search(msg)
     receive_seq = _RE_RX_SEQ.search(msg)
     rl_asl_trace = _RE_RL_ASL_TRACE.search(msg)
     episode_end = _RE_EPISODE_END.search(msg)
@@ -228,35 +227,31 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         seq = _safe_int(data_send.group("seq"))
         asn = _safe_int(data_send.group("asn"))
         node.delay_add(seq=seq, delay=0,
-                       time_at_tx=timestamp)
+                       time_at_tx=asn)
 
-    if send_seq:
-        seq = _safe_int(send_seq.group(1))
-        asn = _safe_int(send_seq.group(3))
-        timeslot = _safe_int(send_seq.group(
-            4), -1) if send_seq.group(4) else -1
-        node.delay_add(seq=seq, delay=0, timeslot=timeslot,
-                       time_at_tx=timestamp)
     if receive_seq:
-        seq = _safe_int(receive_seq.group(1))
-        ipaddress = receive_seq.group(2)
-        try:
-            if ipaddress.startswith("fd00::"):
-                ipaddress = ipaddress[6:]
-            ip_parts = ipaddress.split(":")
-            if len(ip_parts) >= 2:
-                node_id_part = ip_parts[-1]  # last part
-                node_id = int(node_id_part, 16)
+        is_for_us = _safe_int(receive_seq.group("is_for_us"))
+        if is_for_us:
+            seq = _safe_int(receive_seq.group("seq"))
+            asn = _safe_int(receive_seq.group("asn"))
+            ipaddress = receive_seq.group("ip")  # 04:00
+            try:
+
+                ip_parts = ipaddress.split(":")
+                if len(ip_parts) >= 2:
+                    node_id_part = ip_parts[0]  # last part
+                    node_id = int(node_id_part, 16)
+                else:
+                    node_id = int(ipaddress, 16)
+            except Exception:
+                node_id = -1
+            src_node = network.nodes_get(node_id)
+            if src_node is None:
+                logger.debug(
+                    "Source node %s (id=%s) not found in network", ipaddress, node_id)
             else:
-                node_id = int(ipaddress, 16)
-        except Exception:
-            node_id = -1
-        src_node = network.nodes_get(node_id)
-        if src_node is None:
-            logger.debug(
-                "Source node %s (id=%s) not found in network", ipaddress, node_id)
-        else:
-            src_node.delay_update_time_at_rx(seq=seq, time_at_rx=timestamp)
+                src_node.delay_update_time_at_rx(seq=seq, time_at_rx=asn)
+
     if "SAGE node joining network" in msg:
         node.joined_set(timestamp)
 
