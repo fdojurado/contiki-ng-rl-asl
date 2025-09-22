@@ -33,14 +33,14 @@
 #define RL_ASL_SHORT_BIN_THRESHOLD 2
 #endif
 
-#define REWARD_RX_TX 1.0
-#define REWARD_SKIP_RX_NO_TX 0.5
-#define PENALTY_RX_NO_TX -0.5
-#define PENALTY_SKIP_RX_TX -1.0
+#define REWARD_RX_TX 1.0f
+#define REWARD_SKIP_RX_NO_TX 0.5f
+#define PENALTY_RX_NO_TX -0.5f
+#define PENALTY_SKIP_RX_TX -1.0f
 
 // Bonus/Penalty for terminal states
-#define REWARD_SUCCESS 5.0
-#define PENALTY_FAILURE -5.0
+#define REWARD_SUCCESS 5.0f
+#define PENALTY_FAILURE -5.0f
 
 // episode window averages
 #define RL_ASL_EPISODE_AVG_WINDOW 100

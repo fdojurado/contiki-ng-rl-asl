@@ -17,10 +17,9 @@
 #define RL_ASL_INVALID_EXPECTED_REWARD -1000.0f
 
 /* Tunables for the "nearest neighbor" checks */
-#define SIGMA_FRACTION 0.08f                      /* fallback fraction of lambda to use as sigma (0.05-0.2 typical) */
-#define MIN_SIGMA 1.0f                            /* minimum sigma (in slots) to avoid divide-by-zero */
-#define MISSED_SIGMA_MULTIPLIER 1.0f              /* elapsed > lambda + MISSED_SIGMA_MULTIPLIER * sigma => treat as missed/failure */
-#define NEAR_TX_WINDOW (ORCHESTRA_UNICAST_PERIOD) /* if next tx within this many slots, skipping likely misses it */
+#define SIGMA_FRACTION 0.05f         /* fallback fraction of lambda to use as sigma (0.05-0.2 typical) */
+#define MIN_SIGMA 1.0f               /* minimum sigma (in slots) to avoid divide-by-zero */
+#define MISSED_SIGMA_MULTIPLIER 1.0f /* elapsed > lambda + MISSED_SIGMA_MULTIPLIER * sigma => treat as missed/failure */
 
 #define NEAR_MULT 1.0f
 #define MAX_NEAR_COUNT 6
