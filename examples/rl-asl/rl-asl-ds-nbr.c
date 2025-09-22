@@ -48,6 +48,8 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, 
         nbr->last_heard_asn = asn;
         nbr->asn_diff_ewma = 0;
         nbr->asn_diff_var_ewma = 0;
+        nbr->last_expected_asn = 0;
+        nbr->predicted_skips = 0;
         LOG_INFO("Added neighbor %02x:%02x with seqno %u and ASN %" PRIu64 " is child=%d\n",
                  addr->u8[0], addr->u8[1], seqno, asn, nbr->is_child);
         count_neighbors++;
@@ -80,6 +82,8 @@ void rl_asl_ds_nbr_update(const linkaddr_t *addr, uint32_t seqno, uint64_t asn, 
     }
 
     nbr->last_heard_asn = asn;
+    nbr->last_expected_asn = asn;
+    nbr->predicted_skips = 0;
 
     LOG_INFO("Updated neighbor %02x:%02x to seqno %u and ASN %" PRIu64 "\n",
              addr->u8[0], addr->u8[1], nbr->last_seqno, asn);

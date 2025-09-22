@@ -15,6 +15,8 @@ typedef struct
     // This can be used to estimate the neighbor's current ASN
     float asn_diff_ewma;
     float asn_diff_var_ewma;
+    uint64_t last_expected_asn;
+    uint8_t predicted_skips;
 } rl_asl_ds_nbr_t;
 
 void rl_asl_ds_nbr_init(void);
