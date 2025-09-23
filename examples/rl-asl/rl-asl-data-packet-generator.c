@@ -14,6 +14,21 @@
 #define LOG_MODULE "data-packet-generator"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_DATA_PACKET_GENERATOR
 
+/* Traffic pattern selection */
+#define TRAFFIC_PATTERN_BASELINE 1
+#define TRAFFIC_PATTERN_HETEROGENEOUS 2
+#define TRAFFIC_PATTERN_SPARSE 3
+#define TRAFFIC_PATTERN_CONCURRENT 4
+
+#ifndef TRAFFIC_PATTERN
+#define TRAFFIC_PATTERN TRAFFIC_PATTERN_BASELINE
+#endif
+
+/* TX interval in seconds (used for baseline pattern) */
+#ifndef RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S
+#define RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S 13
+#endif
+
 static struct tsch_asn_t *asn = &tsch_current_asn;
 
 static int seqnum = 0; // Sequence number for data packets
@@ -63,13 +78,67 @@ void send_data_packet(void)
   seqnum++;
 }
 /*---------------------------------------------------------------------------*/
+/* TX intervals in seconds for patterns */
+static int get_tx_interval(void)
+{
+#if TRAFFIC_PATTERN == TRAFFIC_PATTERN_BASELINE
+  /* Every node sends every ~13s */
+  return 13;
+
+#elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_HETEROGENEOUS
+  /* Assign per-node periods: 5s, 13s, 30s */
+  switch (linkaddr_node_addr.u8[1])
+  { // last byte of node addr
+  case 1:
+  case 2:
+    return 17;
+  case 3:
+  case 4:
+    return 30;
+  case 5:
+  case 6:
+    return 50;
+  default:
+    return 13; // fallback
+  }
+
+#elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_SPARSE
+  /* Assign sparse nodes to 60s or 120s */
+  if (linkaddr_node_addr.u8[1] % 2 == 0)
+  {
+    return 60;
+  }
+  else
+  {
+    return 120;
+  }
+
+#elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_CONCURRENT
+  /* For concurrent flows, only selected nodes send */
+  switch (linkaddr_node_addr.u8[1])
+  {
+  case 2:
+    return 13; // Flow 1
+  case 5:
+    return 13; // Flow 2
+  case 7:
+    return 13; // Flow 3
+  default:
+    return 0; // Non-senders stay silent
+  }
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(data_packet_generator_process, ev, data)
 {
   static struct etimer et;
 
   PROCESS_BEGIN();
 
-  etimer_set(&et, RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S * CLOCK_SECOND + ((rand() % 3) - 1) * CLOCK_SECOND);
+  int tx_interval = get_tx_interval();
+  if (tx_interval > 0)
+    etimer_set(&et, tx_interval * CLOCK_SECOND + ((rand() % 3) - 1) * CLOCK_SECOND);
 
   LOG_INFO("TSCH is associated, starting transmission process\n");
 
