@@ -638,6 +638,15 @@ class Network:
 
         # Perform simple averaging of Q-tables
         aggregated_q_table = np.mean(q_tables, axis=0)
+        
+        # Lets create a dedicated json for the Q-table FL
+        json_q_table = {
+            'num_states': aggregated_q_table.shape[0],
+            'num_actions': aggregated_q_table.shape[1],
+            'q_table': aggregated_q_table.tolist()
+        }
+        json_path = out_dir / f"rl-asl-federated-q.json"
+        json_path.write_text(json.dumps(json_q_table, indent=4))
 
         # --- Build C header text ---
         num_states, num_actions = aggregated_q_table.shape
