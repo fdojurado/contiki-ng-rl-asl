@@ -639,10 +639,13 @@ class Network:
         # Perform simple averaging of Q-tables
         aggregated_q_table = np.mean(q_tables, axis=0)
         
+        episode_count = max([node.rl_asl_q_table_get_episode_count() for node in self.nodes.values() if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values()] or [0])
+        
         # Lets create a dedicated json for the Q-table FL
         json_q_table = {
             'num_states': aggregated_q_table.shape[0],
             'num_actions': aggregated_q_table.shape[1],
+            'episode_count': episode_count,
             'q_table': aggregated_q_table.tolist()
         }
         json_path = out_dir / f"rl-asl-federated-q.json"
