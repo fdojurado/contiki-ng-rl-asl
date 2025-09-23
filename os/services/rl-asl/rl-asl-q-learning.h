@@ -37,7 +37,7 @@
 #define RL_ASL_IS_TRAIN (RL_ASL_MODE_TRAIN)
 #define RL_ASL_IS_EVAL (RL_ASL_MODE_EVAL)
 
-#define RL_ASL_EPISODE_LENGTH 150 // Number of slotframes per episode
+#define RL_ASL_EPISODE_LENGTH 500 // Number of slotframes per episode (150 was good for scenario 1)
 
 #define RL_ASL_Q_LEARNING_ALPHA 0.15
 #define RL_ASL_Q_LEARNING_GAMMA 0.9
