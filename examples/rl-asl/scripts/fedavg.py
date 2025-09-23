@@ -43,11 +43,11 @@ def export_global(agg_q, out_dir: Path, q_infos):
         "num_actions": num_actions,
         "q_table": agg_q.tolist(),
         "episodes_trained_total": sum(q["episode_count"] for q in q_infos),
-        "sources": [
-            {"scenario": q["scenario_id"], "topology": q["topology_id"],
-                "episodes": q["episode_count"]}
-            for q in q_infos
-        ],
+        # "sources": [
+        #     {"scenario": q["scenario_id"], "topology": q["topology_id"],
+        #         "episodes": q["episode_count"]}
+        #     for q in q_infos
+        # ],
         "node_id": "federated_global"
     }
 
