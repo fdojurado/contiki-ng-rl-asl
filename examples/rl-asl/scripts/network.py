@@ -612,7 +612,7 @@ class Network:
                     f"rl-asl-pretrained-q-node{node.id}.h"
                 header_path.write_text(c_array)
 
-    def calc_federated_learning(self, results: Dict[int, Dict[str, Any]]) -> None:
+    def calc_federated_learning(self, results: Dict[int, Dict[str, Any]], out_dir: Path = Path("federated_q")) -> None:
         """
             Perform Federated Learning aggregation of Q-tables if enabled.
             """
@@ -645,7 +645,6 @@ class Network:
             f"#endif /* RL_ASL_FEDERATED_Q_H */\n"
         )
         # --- Write to file ---
-        out_dir = Path("federated_q")
         out_dir.mkdir(parents=True, exist_ok=True)
         header_path = out_dir / "rl-asl-federated-q.h"
         header_path.write_text(c_array)

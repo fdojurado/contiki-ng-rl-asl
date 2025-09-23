@@ -139,7 +139,7 @@ def calc_jitter(network):
     return jitter
 
 
-def calculate_results(network):
+def calculate_results(network, output_folder):
     # The results are stored in a dictionary like this:
     # { node_id: { metric_name: { value: <value>, unit: <unit> } } }
     results = {}
@@ -178,9 +178,9 @@ def calculate_results(network):
     # Calculate the episode monitoring for each node
     network.calc_episode_monitoring(results)
     # Add the Q-Table for each node
-    network.calc_rl_asl_q_table(results)
+    network.calc_rl_asl_q_table(results, output_folder)
     # Do Federated Learning aggregation if enabled
-    network.calc_federated_learning(results)
+    network.calc_federated_learning(results, output_folder)
     # Clear all performance metrics
     network.nodes_performance_metrics_clear()
 

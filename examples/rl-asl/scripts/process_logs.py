@@ -449,7 +449,7 @@ def process_testlog(testlog: Path, args) -> Dict:
                     crow["time"].total_seconds() * 1e6) if "time" in crow else 0)
 
     # Final computation
-    calculation_results = pc.calculate_results(network)
+    calculation_results = pc.calculate_results(network, args.output_folder)
     return calculation_results
 
 
