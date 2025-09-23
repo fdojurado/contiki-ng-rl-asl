@@ -86,6 +86,11 @@ _RE_Q_LEARNING_INIT = re.compile(
     r"Q-Learning initialized with (?P<num_states>\d+) states, "
     r"(?P<num_actions>\d+) actions and number of steps per episode (?P<episode_length>\d+)"
 )
+_RE_NEW_BEST_AGENT = re.compile(
+    r"NEW_BEST_AGENT,"
+    r"EPISODE=(?P<episode>\d+),"
+    r"ROLLING_AVG=(?P<rolling_avg>-?\d+\.?\d*)"
+)
 _RE_RL_ASL_Q_TABLE = re.compile(
     r"^(?P<state>\d+),(?P<action>\d+),(?P<value>-?\d+\.?\d*)$"
 )
@@ -132,6 +137,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
     episode_end = _RE_EPISODE_END.search(msg)
     q_learning_init = _RE_Q_LEARNING_INIT.search(msg)
     rl_asl_q_table = _RE_RL_ASL_Q_TABLE.search(msg)
+    new_best_agent = _RE_NEW_BEST_AGENT.search(msg)
     data_send = _RE_DATA_SEND.search(msg)
 
     if energest_seq:
@@ -222,6 +228,12 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             else:
                 node.rl_asl_q_table_set_q_value(
                     state=state, action=action, value=value)
+                
+    if new_best_agent:
+        episode = _safe_int(new_best_agent.group("episode"))
+        rolling_avg = _safe_float(new_best_agent.group("rolling_avg"))
+        node.rl_asl_q_table_set_episode_count(episode)
+        node.rl_asl_q_table_set_rolling_avg(rolling_avg)
 
     if data_send:
         seq = _safe_int(data_send.group("seq"))

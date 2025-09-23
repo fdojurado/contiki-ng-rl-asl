@@ -6,6 +6,8 @@ class RLASLQTable():
         self.num_states = 0
         self.num_actions = 0
         self.q_table = None
+        self.episode_count = 0
+        self.rolling_avg = 0.0
 
     def is_initialized(self) -> bool:
         return self.q_table is not None
