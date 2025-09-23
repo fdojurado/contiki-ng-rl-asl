@@ -50,16 +50,6 @@
 
 #define RL_ASL_CONF_INIT_ENERGEST 50000L
 
-/* Traffic pattern selection */
-#define TRAFFIC_PATTERN_BASELINE 1
-#define TRAFFIC_PATTERN_HETEROGENEOUS 2
-#define TRAFFIC_PATTERN_SPARSE 3
-#define TRAFFIC_PATTERN_CONCURRENT 4
-
-#ifndef TRAFFIC_PATTERN
-#define TRAFFIC_PATTERN TRAFFIC_PATTERN_BASELINE
-#endif
-
 #define TSCH_CALLBACK_PACKET_READY orchestra_callback_packet_ready
 #define TSCH_CALLBACK_NEW_TIME_SOURCE orchestra_callback_new_time_source
 #define NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK orchestra_callback_child_added
