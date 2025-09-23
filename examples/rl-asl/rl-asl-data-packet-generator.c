@@ -87,7 +87,7 @@ static int get_tx_interval(void)
 
 #elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_HETEROGENEOUS
   /* Assign per-node periods: 5s, 13s, 30s */
-  switch (linkaddr_node_addr.u8[1])
+  switch (linkaddr_node_addr.u8[0])
   { // last byte of node addr
   case 1:
   case 2:
@@ -104,7 +104,7 @@ static int get_tx_interval(void)
 
 #elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_SPARSE
   /* Assign sparse nodes to 60s or 120s */
-  if (linkaddr_node_addr.u8[1] % 2 == 0)
+  if (linkaddr_node_addr.u8[0] % 2 == 0)
   {
     return 60;
   }
@@ -115,7 +115,7 @@ static int get_tx_interval(void)
 
 #elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_CONCURRENT
   /* For concurrent flows, only selected nodes send */
-  switch (linkaddr_node_addr.u8[1])
+  switch (linkaddr_node_addr.u8[0])
   {
   case 2:
     return 13; // Flow 1
