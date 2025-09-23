@@ -21,6 +21,10 @@ else
   CFLAGS += -DTOPOLOGY_A=0
 endif
 
+MAKE_WITH_TRAFFIC_PATTERN ?= 1
+
+CFLAGS += -DTRAFFIC_PATTERN=$(MAKE_WITH_TRAFFIC_PATTERN)
+
 # CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
 # CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
 # Lets define a flag that we can use in the code to check if we are using rl_asl_net_driver and rl_asl_routing_driver
