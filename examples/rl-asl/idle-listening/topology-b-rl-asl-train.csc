@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<simconf>
+<simconf version="2023090101">
   <simulation>
     <title>RPL+TSCH</title>
     <randomseed>123456</randomseed>
@@ -16,9 +16,8 @@
     </events>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>root</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
       $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja ROOT=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
@@ -27,8 +26,7 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiMoteID</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRS232</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiBeeper</moteinterface>
-      <moteinterface>org.contikios.cooja.interfaces.RimeAddress</moteinterface>
-      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiIPAddress</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRadio</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiButton</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiPIR</moteinterface>
@@ -37,12 +35,21 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiCFS</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="0.0" y="0.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>1</id>
+        </interface_config>
+      </mote>
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>relay</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
       $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
@@ -51,8 +58,7 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiMoteID</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRS232</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiBeeper</moteinterface>
-      <moteinterface>org.contikios.cooja.interfaces.RimeAddress</moteinterface>
-      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiIPAddress</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRadio</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiButton</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiPIR</moteinterface>
@@ -61,12 +67,101 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiCFS</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="40.0" y="0.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>2</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-20.0" y="34.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>3</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-20.0" y="-34.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>4</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="74.64" y="-20.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>5</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="74.64" y="20.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>6</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-20.0" y="74.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>7</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-54.64" y="54.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>8</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-54.64" y="-54.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>9</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-20.0" y="-74.64" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>10</id>
+        </interface_config>
+      </mote>
     </motetype>
     <motetype>
       org.contikios.cooja.contikimote.ContikiMoteType
-      <identifier>leaf</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
       $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
@@ -75,8 +170,7 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiMoteID</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRS232</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiBeeper</moteinterface>
-      <moteinterface>org.contikios.cooja.interfaces.RimeAddress</moteinterface>
-      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiIPAddress</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRadio</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiButton</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiPIR</moteinterface>
@@ -85,416 +179,128 @@
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiCFS</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="99.59" y="-39.85" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>11</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="96.75" y="-10.02" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>12</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="96.75" y="10.02" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>13</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="99.59" y="39.85" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>14</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="0.0" y="114.28" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>15</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-39.59" y="96.11" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>16</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-77.58" y="87.41" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>17</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-96.97" y="54.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>18</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-96.97" y="-54.0" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>19</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-77.58" y="-87.41" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>20</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="-26.95" y="-114.03" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>21</id>
+        </interface_config>
+      </mote>
+      <mote>
+        <interface_config>
+          org.contikios.cooja.interfaces.Position
+          <pos x="0.0" y="-109.28" />
+        </interface_config>
+        <interface_config>
+          org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+          <id>22</id>
+        </interface_config>
+      </mote>
     </motetype>
-    <!-- Sink -->
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>0.0</x>
-    <y>0.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>1</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>root</motetype_identifier>
-</mote>
-
-<!-- Level-1 -->
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>40.0</x>
-    <y>0.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>2</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-20.0</x>
-    <y>34.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>3</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-20.0</x>
-    <y>-34.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>4</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<!-- Level-2 -->
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>74.64</x>
-    <y>-20.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>5</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>74.64</x>
-    <y>20.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>6</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-20.0</x>
-    <y>74.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>7</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-54.64</x>
-    <y>54.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>8</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-54.64</x>
-    <y>-54.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>9</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-20.0</x>
-    <y>-74.64</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>10</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>relay</motetype_identifier>
-</mote>
-
-<!-- Level-3 -->
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>99.59</x>
-    <y>-39.85</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>11</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>96.75</x>
-    <y>-10.02</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>12</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>96.75</x>
-    <y>10.02</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>13</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>99.59</x>
-    <y>39.85</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>14</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>0.0</x>
-    <y>114.28</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>15</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-39.59</x>
-    <y>96.11</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>16</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-77.58</x>
-    <y>87.41</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>17</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-96.97</x>
-    <y>54.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>18</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-96.97</x>
-    <y>-54.0</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>19</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-77.58</x>
-    <y>-87.41</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>20</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>-26.95</x>
-    <y>-114.03</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>21</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
-<mote>
-  <interface_config>
-    org.contikios.cooja.interfaces.Position
-    <x>0.0</x>
-    <y>-109.28</y>
-    <z>0.0</z>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-    <id>22</id>
-  </interface_config>
-  <interface_config>
-    org.contikios.cooja.contikimote.interfaces.ContikiRadio
-    <bitrate>250.0</bitrate>
-  </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
-</mote>
-
   </simulation>
-  <plugin>
-    org.contikios.cooja.plugins.SimControl
-    <width>242</width>
-    <z>4</z>
-    <height>160</height>
-    <location_x>11</location_x>
-    <location_y>241</location_y>
-  </plugin>
   <plugin>
     org.contikios.cooja.plugins.Visualizer
     <plugin_config>
@@ -503,13 +309,9 @@
       <skin>org.contikios.cooja.plugins.skins.GridVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.TrafficVisualizerSkin</skin>
       <skin>org.contikios.cooja.plugins.skins.UDGMVisualizerSkin</skin>
-      <viewport>2.0 0.0 0.0 2.0 112.0 8.0</viewport>
+      <viewport>0.7008015417633919 0.0 0.0 0.7008015417633919 111.08194998028995 87.91239980727958</viewport>
     </plugin_config>
-    <width>236</width>
-    <z>3</z>
-    <height>230</height>
-    <location_x>1</location_x>
-    <location_y>1</location_y>
+    <bounds x="1" y="1" height="230" width="236" />
   </plugin>
   <plugin>
     org.contikios.cooja.plugins.LogListener
@@ -518,11 +320,7 @@
       <formatted_time />
       <coloring />
     </plugin_config>
-    <width>1031</width>
-    <z>0</z>
-    <height>394</height>
-    <location_x>273</location_x>
-    <location_y>6</location_y>
+    <bounds x="273" y="6" height="394" width="1031" z="1" />
   </plugin>
   <plugin>
     org.contikios.cooja.plugins.TimeLine
@@ -531,31 +329,38 @@
       <mote>1</mote>
       <mote>2</mote>
       <mote>3</mote>
+      <mote>4</mote>
+      <mote>5</mote>
+      <mote>6</mote>
+      <mote>7</mote>
+      <mote>8</mote>
+      <mote>9</mote>  
+      <mote>10</mote>
+      <mote>11</mote>
+      <mote>12</mote>
+      <mote>13</mote>
+      <mote>14</mote>
+      <mote>15</mote>
+      <mote>16</mote>
+      <mote>17</mote>
+      <mote>18</mote>
+      <mote>19</mote>
+      <mote>20</mote>
       <showRadioRXTX />
       <showRadioHW />
       <showLEDs />
       <zoomfactor>16529.88882215865</zoomfactor>
     </plugin_config>
-    <width>1304</width>
-    <z>2</z>
-    <height>311</height>
-    <location_x>0</location_x>
-    <location_y>412</location_y>
+    <bounds x="0" y="412" height="311" width="1304" z="4" />
   </plugin>
   <plugin>
     org.contikios.cooja.plugins.RadioLogger
     <plugin_config>
       <split>150</split>
       <formatted_time />
-      <showdups>false</showdups>
-      <hidenodests>false</hidenodests>
       <analyzers name="6lowpan-pcap" />
     </plugin_config>
-    <width>500</width>
-    <z>1</z>
-    <height>300</height>
-    <location_x>30</location_x>
-    <location_y>442</location_y>
+    <bounds x="30" y="442" height="300" width="500" z="2" />
   </plugin>
   <plugin>
     org.contikios.cooja.plugins.ScriptRunner
@@ -563,10 +368,6 @@
       <scriptfile>[CONFIG_DIR]/../script-training.js</scriptfile>
       <active>true</active>
     </plugin_config>
-    <width>457</width>
-    <z>2</z>
-    <height>427</height>
-    <location_x>3</location_x>
-    <location_y>404</location_y>
+    <bounds x="3" y="404" height="427" width="457" z="3" />
   </plugin>
 </simconf>
