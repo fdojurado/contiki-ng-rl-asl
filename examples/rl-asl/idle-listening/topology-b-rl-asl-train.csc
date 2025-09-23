@@ -44,7 +44,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 RELAY=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -68,7 +68,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 LEAF=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -121,7 +121,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -139,7 +139,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -157,7 +157,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <!-- Level-2 -->
@@ -176,7 +176,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -194,7 +194,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -212,7 +212,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -230,7 +230,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -248,7 +248,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <mote>
@@ -266,7 +266,7 @@
     org.contikios.cooja.contikimote.interfaces.ContikiRadio
     <bitrate>250.0</bitrate>
   </interface_config>
-  <motetype_identifier>leaf</motetype_identifier>
+  <motetype_identifier>relay</motetype_identifier>
 </mote>
 
 <!-- Level-3 -->

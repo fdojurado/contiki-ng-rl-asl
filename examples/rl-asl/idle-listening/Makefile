@@ -13,6 +13,14 @@ MAKE_WITH_RL_ASL ?= 0
 
 MAKE_WITH_RL_ASL_TRAIN ?= 1
 
+MAKE_WITH_RL_ASL_TOPOLOGY_A ?= 1
+
+ifeq ($(MAKE_WITH_RL_ASL_TOPOLOGY_A),1)
+  CFLAGS += -DTOPOLOGY_A=1
+else
+  CFLAGS += -DTOPOLOGY_A=0
+endif
+
 # CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
 # CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
 # Lets define a flag that we can use in the code to check if we are using rl_asl_net_driver and rl_asl_routing_driver
