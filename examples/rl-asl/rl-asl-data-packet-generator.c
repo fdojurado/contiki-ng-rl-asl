@@ -138,7 +138,16 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
 
   int tx_interval = get_tx_interval();
   if (tx_interval > 0)
+  {
+    LOG_INFO("Node %02x:%02x sending every ~%d seconds\n",
+             linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1], tx_interval);
     etimer_set(&et, tx_interval * CLOCK_SECOND + ((rand() % 3) - 1) * CLOCK_SECOND);
+  }
+  else
+  {
+    LOG_INFO("Node %02x:%02x is not a sender in this traffic pattern\n",
+             linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
+  }
 
   LOG_INFO("TSCH is associated, starting transmission process\n");
 
