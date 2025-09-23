@@ -611,3 +611,41 @@ class Network:
                 header_path = out_dir / \
                     f"rl-asl-pretrained-q-node{node.id}.h"
                 header_path.write_text(c_array)
+
+    def calc_federated_learning(self, results: Dict[int, Dict[str, Any]]) -> None:
+        """
+            Perform Federated Learning aggregation of Q-tables if enabled.
+            """
+        # Collect all Q-tables from nodes
+        q_tables = []
+        for node in self.nodes.values():
+            if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values():
+                q_tables.append(node.rl_asl_q_table.q_table)
+
+        if not q_tables:
+            logger.warning(
+                "No Q-tables found for Federated Learning aggregation")
+            return
+
+        # Perform simple averaging of Q-tables
+        aggregated_q_table = np.mean(q_tables, axis=0)
+
+        # --- Build C header text ---
+        num_states, num_actions = aggregated_q_table.shape
+        lines = []
+        for row in aggregated_q_table:
+            row_str = ", ".join(f"{v:.6f}f" for v in row)
+            lines.append(f"    {{{row_str}}},")
+        c_array = (
+            f"#ifndef RL_ASL_FEDERATED_Q_H\n"
+            f"#define RL_ASL_FEDERATED_Q_H\n\n"
+            f"static const float rl_asl_federated_q[{num_states}][{num_actions}] = {{\n"
+            + "\n".join(lines)
+            + "\n};\n\n"
+            f"#endif /* RL_ASL_FEDERATED_Q_H */\n"
+        )
+        # --- Write to file ---
+        out_dir = Path("federated_q")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        header_path = out_dir / "rl-asl-federated-q.h"
+        header_path.write_text(c_array)

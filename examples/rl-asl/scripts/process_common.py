@@ -179,6 +179,8 @@ def calculate_results(network):
     network.calc_episode_monitoring(results)
     # Add the Q-Table for each node
     network.calc_rl_asl_q_table(results)
+    # Do Federated Learning aggregation if enabled
+    network.calc_federated_learning(results)
     # Clear all performance metrics
     network.nodes_performance_metrics_clear()
 
