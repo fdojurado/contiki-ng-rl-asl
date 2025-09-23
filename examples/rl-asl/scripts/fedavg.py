@@ -22,7 +22,7 @@ def fedavg(q_infos):
     for q in q_infos:
         q_tables.append(np.array(q["q_table"], dtype=np.float32))
         # default weight=1 if missing
-        weights.append(q.get("episodes_trained", 1))
+        weights.append(q.get("episode_count", 1))
 
     if not q_tables:
         raise ValueError("No Q-tables found for aggregation!")
@@ -42,10 +42,10 @@ def export_global(agg_q, out_dir: Path, q_infos):
         "num_states": num_states,
         "num_actions": num_actions,
         "q_table": agg_q.tolist(),
-        "episodes_trained_total": sum(q["episodes_trained"] for q in q_infos),
+        "episodes_trained_total": sum(q["episode_count"] for q in q_infos),
         "sources": [
             {"scenario": q["scenario_id"], "topology": q["topology_id"],
-                "episodes": q["episodes_trained"]}
+                "episodes": q["episode_count"]}
             for q in q_infos
         ],
         "node_id": "federated_global"

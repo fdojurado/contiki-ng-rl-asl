@@ -1,4 +1,4 @@
-TIMEOUT(70000000); // 500 minutes
+TIMEOUT(100000000); // in ms
 
 
 log.log("Starting COOJA logger\n");
