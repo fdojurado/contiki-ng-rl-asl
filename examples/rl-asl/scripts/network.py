@@ -19,6 +19,7 @@ from typing import Dict, Tuple, Optional, List, Any, Callable
 
 import logging
 import numpy as np
+import json
 
 from node import Node
 
@@ -585,13 +586,21 @@ class Network:
                 q_table = node.rl_asl_q_table.q_table.tolist()
                 num_states = node.rl_asl_q_table.num_states
                 num_actions = node.rl_asl_q_table.num_actions
+                episode_count = node.rl_asl_q_table_get_episode_count()
+                rolling_avg = node.rl_asl_q_table_get_rolling_avg()
 
-                # Save structured info in JSON results
-                results[node.id]['rl_asl_q_table'] = {
+                # Lets create a dedicated json for the Q-table
+                json_q_table = {
                     'num_states': num_states,
                     'num_actions': num_actions,
-                    'q_table': q_table,
+                    'episode_count': episode_count,
+                    'rolling_avg': rolling_avg,
+                    'q_table': q_table
                 }
+
+                # --- Write JSON file per node (easy to parse later) ---
+                json_path = out_dir / f"rl-asl-pretrained-q-node{node.id}.json"
+                json_path.write_text(json.dumps(json_q_table, indent=4))
 
                 # --- Build C header text ---
                 lines = []
