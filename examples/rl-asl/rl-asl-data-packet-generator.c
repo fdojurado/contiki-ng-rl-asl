@@ -43,7 +43,6 @@ void send_data_packet(void)
 
   print_ip_header();
 
-  // aligned jitter which is in ticks to seconds
   RL_ASL_DATA_BUF->payload_len = 0; // No payload for now
   RL_ASL_DATA_BUF->seqnum = rl_asl_ip_htons(seqnum);
 
@@ -55,19 +54,11 @@ void send_data_packet(void)
   print_data_header();
 
   print_raw_buffer((uint8_t *)RL_ASL_IP_BUF, rl_asl_len);
-  // print_raw_buffer(SAGE_IP_BUF, sage_len);
 
   LOG_INFO("Sending data packet with sequence number %d and ASN %" PRIu64 "\n",
            seqnum, full_asn);
 
   rl_asl_ip_output(nxthop);
-  /* We need to print a log such that this log can be used to calculate the end-to-end delay
-   * The log should contain the following information:
-   * - Sequence number
-   * - ASN
-   */
-
-  // print_raw_buffer(sage_buf, sage_len);
 
   seqnum++;
 }
