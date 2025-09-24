@@ -24,12 +24,9 @@ rl_asl_ds_nbr_t *rl_asl_ds_nbr_get(const linkaddr_t *addr);
 const linkaddr_t *rl_asl_ds_nbr_get_addr(rl_asl_ds_nbr_t *nbr);
 void rl_asl_ds_nbr_update(const linkaddr_t *addr, const uint32_t seqno, const uint64_t asn, const int8_t is_child);
 void rl_asl_ds_nbr_remove(const linkaddr_t *addr);
-rl_asl_ds_nbr_t *rl_asl_ds_nbr_get_any(void);
-int rl_asl_ds_nbr_is_nbr_paired(const linkaddr_t *addr);
 bool rl_asl_ds_nbr_is_there_a_non_paired_child(void);
 rl_asl_ds_nbr_t *rl_asl_ds_nbr_head(void);
 rl_asl_ds_nbr_t *rl_asl_ds_nbr_next(rl_asl_ds_nbr_t *nbr);
-int rl_asl_ds_nbr_child_count(void);
 int rl_asl_ds_nbr_count(void);
 void rl_asl_ds_nbr_print(void);
 

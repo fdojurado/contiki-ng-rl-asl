@@ -106,21 +106,6 @@ void rl_asl_ds_nbr_remove(const linkaddr_t *addr)
     }
 }
 /***********************************************************************/
-rl_asl_ds_nbr_t *rl_asl_ds_nbr_get_any(void)
-{
-    return nbr_table_head(rl_asl_ds_nbr_table);
-}
-/***********************************************************************/
-int rl_asl_ds_nbr_is_nbr_paired(const linkaddr_t *addr)
-{
-    rl_asl_ds_nbr_t *nbr = rl_asl_ds_nbr_get(addr);
-    if (nbr == NULL)
-    {
-        return 0;
-    }
-    return (nbr->last_seqno - nbr->first_seqno >= 3) ? 1 : 0;
-}
-/***********************************************************************/
 bool rl_asl_ds_nbr_is_there_a_non_paired_child(void)
 {
     rl_asl_ds_nbr_t *nbr = nbr_table_head(rl_asl_ds_nbr_table);
@@ -143,21 +128,6 @@ rl_asl_ds_nbr_t *rl_asl_ds_nbr_head(void)
 rl_asl_ds_nbr_t *rl_asl_ds_nbr_next(rl_asl_ds_nbr_t *nbr)
 {
     return nbr_table_next(rl_asl_ds_nbr_table, nbr);
-}
-/***********************************************************************/
-int rl_asl_ds_nbr_child_count(void)
-{
-    int child_count = 0;
-    rl_asl_ds_nbr_t *nbr = nbr_table_head(rl_asl_ds_nbr_table);
-    while (nbr != NULL)
-    {
-        if (nbr->is_child)
-        {
-            child_count++;
-        }
-        nbr = nbr_table_next(rl_asl_ds_nbr_table, nbr);
-    }
-    return child_count;
 }
 /***********************************************************************/
 int rl_asl_ds_nbr_count(void)
