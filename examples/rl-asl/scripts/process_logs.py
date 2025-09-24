@@ -32,7 +32,7 @@ import fit_iot_lab_conf
 
 logger = logging.getLogger("process_experiments")
 
-START_TIMESTAMP = 0*5*1e6
+START_TIMESTAMP = 5*5*1e6
 
 # --- regex patterns ---
 # Period summary #9 (60 seconds)
