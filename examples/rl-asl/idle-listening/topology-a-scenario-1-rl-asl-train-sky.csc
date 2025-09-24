@@ -19,9 +19,9 @@
       <identifier>root</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=sky clean
-      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky ROOT=1</commands>
-      <firmware>[CONFIG_DIR]/../build/sky/idle-listening.sky</firmware>
+      <commands>$(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky ROOT=1
+      mv build/sky/idle-listening.sky build/sky/idle-listening-root.sky</commands>
+      <firmware>[CONFIG_DIR]/build/sky/idle-listening-root.sky</firmware>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
@@ -42,9 +42,9 @@
       <identifier>relay</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=sky clean
-      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_RL_ASL=1 RELAY=1</commands>
-      <firmware>[CONFIG_DIR]/../build/sky/idle-listening.sky</firmware>
+      <commands>$(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_RL_ASL=1 RELAY=1
+      mv build/sky/idle-listening.sky build/sky/idle-listening-relay.sky</commands>
+      <firmware>[CONFIG_DIR]/build/sky/idle-listening-relay.sky</firmware>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
@@ -65,9 +65,9 @@
       <identifier>leaf</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=sky clean
-      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 LEAF=1</commands>
-      <firmware>[CONFIG_DIR]/../build/sky/idle-listening.sky</firmware>
+      <commands>$(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 LEAF=1
+      mv build/sky/idle-listening.sky build/sky/idle-listening-leaf.sky</commands>
+      <firmware>[CONFIG_DIR]/build/sky/idle-listening-leaf.sky</firmware>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.IPAddress</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
@@ -133,10 +133,6 @@
         org.contikios.cooja.mspmote.interfaces.MspMoteID
         <id>4</id>
       </interface_config>
-      <interface_config>
-        org.contikios.cooja.contikimote.interfaces.ContikiRadio
-        <bitrate>250.0</bitrate>
-      </interface_config>
       <motetype_identifier>leaf</motetype_identifier>
     </mote>
     <mote>
@@ -149,10 +145,6 @@
       <interface_config>
         org.contikios.cooja.mspmote.interfaces.MspMoteID
         <id>5</id>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.contikimote.interfaces.ContikiRadio
-        <bitrate>250.0</bitrate>
       </interface_config>
       <motetype_identifier>leaf</motetype_identifier>
     </mote>
