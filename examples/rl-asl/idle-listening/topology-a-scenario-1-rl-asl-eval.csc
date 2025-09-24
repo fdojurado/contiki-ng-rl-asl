@@ -44,7 +44,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 RELAY=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -68,7 +68,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 LEAF=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
