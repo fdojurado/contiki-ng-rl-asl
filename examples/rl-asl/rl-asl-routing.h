@@ -42,8 +42,6 @@ typedef struct
 } routing_entry_t;
 
 extern linkaddr_t root_node_addr;
-extern const routing_entry_t routing_table[];
-
-linkaddr_t get_next_hop(const linkaddr_t *src, const linkaddr_t *dst);
+extern routing_entry_t routing_table[];
 
 #endif /* RL_ASL_ROUTING_H_ */
