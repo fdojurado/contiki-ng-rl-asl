@@ -125,6 +125,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
     # Collectors
     net_avg_power: List[float] = []   # "avg_mW" across runs
+    net_avg_cpu: List[float] = []    # "avg_cpu" across runs
+    net_avg_radio: List[float] = []  # "avg_radio" across runs
     net_avg_energy: List[float] = []   # "avg_mJ" across runs
     net_avg_latency: List[float] = []  # "avg_latency_us" across runs
     net_avg_plr: List[float] = []      # "avg" across runs
@@ -133,6 +135,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
     net_avg_duty_cycle: List[float] = []  # "avg" across runs
 
     net_per_sample_power: Dict[str, List[float]] = {}
+    net_per_sample_cpu: Dict[str, List[float]] = {}
+    net_per_sample_radio: Dict[str, List[float]] = {}
     net_per_sample_energy: Dict[str, List[float]] = {}
     net_per_sample_latency: Dict[str, List[float]] = {}
     net_per_sample_plr: Dict[str, List[float]] = {}
@@ -151,6 +155,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         # --- Network metrics ---
         network = run.get("network", {})
         power = network.get("power", {})
+        cpu = network.get("cpu_activity", {})
+        radio = network.get("radio_activity", {})
         energy = network.get("energy", {})
         latency = network.get("latency", {})
         packet_loss = network.get("packet_loss", {})
@@ -160,6 +166,12 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
         if "avg_mW" in power:
             net_avg_power.append(float(power["avg_mW"]))
+
+        if "avg" in cpu:
+            net_avg_cpu.append(float(cpu["avg"]))
+
+        if "avg" in radio:
+            net_avg_radio.append(float(radio["avg"]))
 
         if "avg_mJ" in energy:
             net_avg_energy.append(float(energy["avg_mJ"]))
@@ -182,6 +194,14 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         if "per_sample_avg_mW" in power and isinstance(power["per_sample_avg_mW"], dict):
             for seq, val in power["per_sample_avg_mW"].items():
                 net_per_sample_power.setdefault(seq, []).append(float(val))
+
+        if "per_sample_avg" in cpu and isinstance(cpu["per_sample_avg"], dict):
+            for seq, val in cpu["per_sample_avg"].items():
+                net_per_sample_cpu.setdefault(seq, []).append(float(val))
+
+        if "per_sample_avg" in radio and isinstance(radio["per_sample_avg"], dict):
+            for seq, val in radio["per_sample_avg"].items():
+                net_per_sample_radio.setdefault(seq, []).append(float(val))
 
         if "per_sample_avg_mJ" in energy and isinstance(energy["per_sample_avg_mJ"], dict):
             for seq, val in energy["per_sample_avg_mJ"].items():
@@ -216,6 +236,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 continue
 
             pwr = node.get("power")
+            cpu = node.get("cpu_activity")
+            radio = node.get("radio_activity")
             egy = node.get("energy")
             lcy = node.get("latency")
             pkt_loss = node.get("packet_loss")
@@ -226,6 +248,14 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             if isinstance(pwr, dict) and "average_mW" in pwr:
                 node_acc.setdefault(node_id, {}).setdefault(
                     "average_mW", []).append(float(pwr["average_mW"]))
+
+            if isinstance(cpu, dict) and "average" in cpu:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_cpu", []).append(float(cpu["average"]))
+
+            if isinstance(radio, dict) and "average" in radio:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_radio", []).append(float(radio["average"]))
 
             if isinstance(egy, dict) and "energy_mJ" in egy:
                 node_acc.setdefault(node_id, {}).setdefault(
@@ -261,6 +291,26 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                         key = f"samples_mW_{seq}"
                         node_acc.setdefault(node_id, {}).setdefault(
                             key, []).append(float(s["power"]))
+
+            samples = cpu.get("samples") if isinstance(cpu, dict) else None
+            if isinstance(samples, dict):
+                for seq, s in samples.items():
+                    if not isinstance(s, dict):
+                        continue
+                    if "cpu_activity" in s:
+                        key = f"samples_cpu_{seq}"
+                        node_acc.setdefault(node_id, {}).setdefault(
+                            key, []).append(float(s["cpu_activity"]))
+
+            samples = radio.get("samples") if isinstance(radio, dict) else None
+            if isinstance(samples, dict):
+                for seq, s in samples.items():
+                    if not isinstance(s, dict):
+                        continue
+                    if "radio_activity" in s:
+                        key = f"samples_radio_{seq}"
+                        node_acc.setdefault(node_id, {}).setdefault(
+                            key, []).append(float(s["radio_activity"]))
 
             samples = egy.get("samples_mJ") if isinstance(
                 egy, dict) else None
@@ -317,6 +367,16 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
     net_summary["power"]["avg_mW"] = mu
     net_summary["power"]["std_mW"] = su
 
+    mu, su = safe_mean_std(net_avg_cpu)
+    net_summary["cpu"] = {}
+    net_summary["cpu"]["avg"] = mu
+    net_summary["cpu"]["std"] = su
+
+    mu, su = safe_mean_std(net_avg_radio)
+    net_summary["radio"] = {}
+    net_summary["radio"]["avg"] = mu
+    net_summary["radio"]["std"] = su
+
     net_summary["energy"] = {}
     mu, su = safe_mean_std(net_avg_energy)
     net_summary["energy"]["avg_mJ"] = mu
@@ -351,6 +411,16 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
     for seq, vals in net_per_sample_power.items():
         mu, su = safe_mean_std(vals)
         net_summary["power"]["per_sample_avg_mW"][seq] = {"avg": mu, "std": su}
+
+    net_summary["cpu"]["per_sample_avg"] = {}
+    for seq, vals in net_per_sample_cpu.items():
+        mu, su = safe_mean_std(vals)
+        net_summary["cpu"]["per_sample_avg"][seq] = {"avg": mu, "std": su}
+
+    net_summary["radio"]["per_sample_avg"] = {}
+    for seq, vals in net_per_sample_radio.items():
+        mu, su = safe_mean_std(vals)
+        net_summary["radio"]["per_sample_avg"][seq] = {"avg": mu, "std": su}
 
     net_summary["energy"]["per_sample_avg_mJ"] = {}
     for seq, vals in net_per_sample_energy.items():
@@ -397,6 +467,16 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             out.setdefault("power", {})["avg_mW"] = mu
             out["power"]["std_mW"] = su
 
+        if "average_cpu" in metrics:
+            mu, su = safe_mean_std(metrics["average_cpu"])
+            out.setdefault("cpu", {})["avg"] = mu
+            out["cpu"]["std"] = su
+
+        if "average_radio" in metrics:
+            mu, su = safe_mean_std(metrics["average_radio"])
+            out.setdefault("radio", {})["avg"] = mu
+            out["radio"]["std"] = su
+
         if "average_uJ" in metrics:
             mu, su = safe_mean_std(metrics["average_uJ"])
             out.setdefault("energy", {})["avg_uJ"] = mu
@@ -434,6 +514,18 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 mu, su = safe_mean_std(vals)
                 out.setdefault("power", {}).setdefault(
                     "samples_mW", {})[seq] = {"avg": mu, "std": su}
+
+            if k.startswith("samples_cpu_"):
+                seq = k.split("_")[-1]
+                mu, su = safe_mean_std(vals)
+                out.setdefault("cpu", {}).setdefault(
+                    "samples_cpu", {})[seq] = {"avg": mu, "std": su}
+
+            if k.startswith("samples_radio_"):
+                seq = k.split("_")[-1]
+                mu, su = safe_mean_std(vals)
+                out.setdefault("radio", {}).setdefault(
+                    "samples_radio", {})[seq] = {"avg": mu, "std": su}
 
             if k.startswith("samples_mJ_"):
                 seq = k.split("_")[-1]
