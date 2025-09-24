@@ -13,7 +13,7 @@
 
 rl_asl_q_table_t rl_asl_q_table;
 
-static float best_rolling_avg = -1e9; // very low initial value
+static int32_t best_rolling_avg = INT32_MIN; // very low initial value
 
 /***************************************************************/
 void rl_asl_q_learning_init(void)
@@ -41,8 +41,7 @@ void rl_asl_q_learning_init(void)
 #endif
 }
 /***************************************************************/
-void rl_asl_q_learning_update(const int state, const int action,
-                              const float reward, const int next_state)
+void rl_asl_q_learning_update(int state, int action, int reward, int next_state)
 {
     if (state < 0 || state >= RL_ASL_NUM_STATES ||
         action < 0 || action >= RL_ASL_NUM_ACTIONS ||
@@ -199,18 +198,18 @@ int rl_asl_q_learning_get_state(int interarrival)
     return state;
 }
 /***************************************************************/
-void rl_asl_q_learning_decay_epsilon(float decay_rate)
+void rl_asl_q_learning_decay_epsilon(void)
 {
     rl_asl_q_table.epsilon = (rl_asl_q_table.epsilon * RL_ASL_Q_LEARNING_EPSILON_DECAY) / 1000;
     if (rl_asl_q_table.epsilon < RL_ASL_Q_LEARNING_MIN_EPSILON)
         rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
 
-    LOG_DBG("Decayed epsilon to %.3f\n", (double)rl_asl_q_table.epsilon);
+    LOG_DBG("Decayed epsilon to %d\n", rl_asl_q_table.epsilon);
 }
 /***************************************************************/
-float rl_asl_q_learning_get_max_q_value(int state)
+int rl_asl_q_learning_get_max_q_value(int state)
 {
-    float max_q_value = rl_asl_q_table.q_values[state][0];
+    int max_q_value = rl_asl_q_table.q_values[state][0];
     for (int a = 1; a < RL_ASL_NUM_ACTIONS; a++)
     {
         if (rl_asl_q_table.q_values[state][a] > max_q_value)
@@ -264,22 +263,22 @@ void rl_asl_q_learning_end_episode(void)
     if (rolling_avg > best_rolling_avg)
     {
         best_rolling_avg = rolling_avg;
-        LOG_INFO("NEW_BEST_AGENT,EPISODE=%lu,ROLLING_AVG=%.3f\n",
+        LOG_INFO("NEW_BEST_AGENT,EPISODE=%" PRIu64 ",ROLLING_AVG=%.3f\n",
                  rl_asl_q_table.episode_count,
                  (double)best_rolling_avg);
         rl_asl_q_learning_print_table();
     }
 
     // Log episode summary in CSV-like format
-    LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu,%.3f\n",
+    LOG_INFO("EPISODE_END,%" PRIu64 ",%" PRIi32 ",%d,%" PRIu64 ",%.3f\n",
              rl_asl_q_table.episode_count,
-             (double)rl_asl_q_table.episode_return,
-             (double)rl_asl_q_table.epsilon,
+             rl_asl_q_table.episode_return,
+             rl_asl_q_table.epsilon,
              rl_asl_q_table.step_count,
              (double)rolling_avg);
 
     // Reset episode accumulator
-    rl_asl_q_table.episode_return = 0.0f;
+    rl_asl_q_table.episode_return = 0;
     rl_asl_q_table.step_count = 0;
 
     // Decay epsilon
@@ -340,7 +339,7 @@ void rl_asl_q_learning_reset_table(void)
     {
         for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
         {
-            rl_asl_q_table.q_values[i][j] = 0.0;
+            rl_asl_q_table.q_values[i][j] = 0;
         }
     }
     rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_EPSILON;
@@ -348,7 +347,7 @@ void rl_asl_q_learning_reset_table(void)
     rl_asl_q_table.action = -1;
     rl_asl_q_table.step_count = 0;
     rl_asl_q_table.episode_count = 0;
-    rl_asl_q_table.episode_return = 0.0f;
+    rl_asl_q_table.episode_return = 0;
     rl_asl_q_table.buffer_index = 0;
     rl_asl_q_table.buffer_filled = 0;
     memset(rl_asl_q_table.episode_returns_buffer, 0, sizeof(rl_asl_q_table.episode_returns_buffer));

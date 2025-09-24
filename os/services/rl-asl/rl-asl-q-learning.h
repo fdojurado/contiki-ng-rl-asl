@@ -102,11 +102,11 @@ typedef struct
     uint16_t epsilon; // store epsilon scaled (e.g., 0–1000 for 0.0–1.0)
     int state;
     int action;
-    unsigned long step_count;
-    unsigned long episode_count;
+    uint64_t step_count;
+    uint64_t episode_count;
     int32_t episode_return; // store scaled reward sum
 
-    int16_t episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
+    int32_t episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
     int buffer_index;
     int buffer_filled;
 } rl_asl_q_table_t;
@@ -118,15 +118,15 @@ extern rl_asl_q_table_t rl_asl_q_table;
  *****************************************************************/
 
 void rl_asl_q_learning_init(void);
-void rl_asl_q_learning_update(const int, const int, const float, const int);
+void rl_asl_q_learning_update(int state, int action, int reward, int next_state);
 int rl_asl_q_learning_select_action(int state);
 int rl_asl_q_learning_get_state(int interarrival_bin);
 int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins,
                                                      int num_bins,
                                                      int dist_nearest_bin,
                                                      int near_count);
-void rl_asl_q_learning_decay_epsilon(float decay_rate);
-float rl_asl_q_learning_get_max_q_value(int state);
+void rl_asl_q_learning_decay_epsilon(void);
+int rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);
 void rl_asl_q_learning_step_done(void);
 void rl_asl_q_learning_end_episode(void);
