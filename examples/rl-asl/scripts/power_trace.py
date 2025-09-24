@@ -64,6 +64,8 @@ class PowerTrace():
         uc_power=None,
         energy=None,
         rdc=None,
+        cpu_activity=None,
+        radio_activity=None,
         time=None
     ) -> None:
         assert isinstance(seq, int)
@@ -87,6 +89,10 @@ class PowerTrace():
             assert isinstance(uc_ratio, float)
         if radio_total is not None:
             assert isinstance(radio_total, int)
+        if cpu_activity is not None:
+            assert isinstance(cpu_activity, float)
+        if radio_activity is not None:
+            assert isinstance(radio_activity, float)
         self.seq = seq
         self.cpu = cpu
         self.lpm = lpm
@@ -104,6 +110,8 @@ class PowerTrace():
         self.uc_power = uc_power
         self.energy = energy
         self.rdc = rdc
+        self.cpu_activity = cpu_activity
+        self.radio_activity = radio_activity
         self.time = time
 
     # __str__
@@ -112,7 +120,7 @@ class PowerTrace():
                 f"deep_lpm={self.deep_lpm}, tx={self.tx}, rx={self.rx}, "
                 f"uc_rx={self.uc_rx}, uc_idle_rx={self.uc_idle_rx}, uc_idle_ratio={self.uc_idle_ratio}, uc_ratio={self.uc_ratio}, "
                 f"radio_total={self.radio_total}, total_time_secs={self.total_time_secs}, "
-                f"total_time_ticks={self.total_time_ticks}, power={self.power}, energy={self.energy}, RDC={self.rdc}, time={self.time})")
+                f"total_time_ticks={self.total_time_ticks}, power={self.power}, energy={self.energy}, RDC={self.rdc}, cpu_activity={self.cpu_activity}, radio_activity={self.radio_activity}, time={self.time})")
 
 
 class PowerTraceSamples():
@@ -180,6 +188,38 @@ class PowerTraceSamples():
             'average_rdc': average_rdc,
         }
 
+    def get_cpu_activity_average(self, joined_time=None) -> float:
+        if not self.samples:
+            return None
+        # Calculate the average cpu activity of samples with time greater than joined_time
+        total_cpu_activity = 0
+        count = 0
+        for sample in self.samples.values():
+            if sample.cpu_activity is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_cpu_activity += sample.cpu_activity
+                    count += 1
+        if count == 0:
+            return None
+        average_cpu_activity = total_cpu_activity / count
+        return average_cpu_activity
+
+    def get_radio_activity_average(self, joined_time=None) -> float:
+        if not self.samples:
+            return None
+        # Calculate the average radio activity of samples with time greater than joined_time
+        total_radio_activity = 0
+        count = 0
+        for sample in self.samples.values():
+            if sample.radio_activity is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_radio_activity += sample.radio_activity
+                    count += 1
+        if count == 0:
+            return None
+        average_radio_activity = total_radio_activity / count
+        return average_radio_activity
+
     def get_sample_last(self):
         if self.samples:
             return self.get_sample(self.last_seq)
@@ -219,6 +259,12 @@ class PowerTraceSamples():
             power = total_energy * VOLTAGE / total_time_ticks  # mW
             uc_power = uc_energy * VOLTAGE / total_time_ticks  # mW
             energy_mj = power * total_time_secs
+
+            cpu_activity = cpu_time / total_time_ticks
+            power_trace.cpu_activity = cpu_activity
+
+            radio_activity = (tx_time + rx_time) / total_time_ticks
+            power_trace.radio_activity = radio_activity
 
             power_trace.power = power
             power_trace.uc_power = uc_power

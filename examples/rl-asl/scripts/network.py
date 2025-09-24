@@ -159,6 +159,123 @@ class Network:
                                 'time': sample.time
                             }
 
+    def calc_cpu_radio_activity(self, results: Dict[int, Dict[str, Any]]) -> None:
+        cpu_activity = {}
+        radio_activity = {}
+        for node in self.nodes.values():
+            if node.id > 1:
+                samples = node.power_trace.get_samples()
+                avg_cpu = node.power_trace_get_cpu_activity_average()
+                avg_radio = node.power_trace_get_radio_activity_average()
+                if avg_cpu is not None:
+                    cpu_activity[node.id] = {
+                        'average': avg_cpu,
+                        'samples': {seq: sample.cpu_activity for seq, sample in samples.items() if sample.cpu_activity is not None}
+                    }
+                if avg_radio is not None:
+                    radio_activity[node.id] = {
+                        'average': avg_radio,
+                        'samples': {seq: sample.radio_activity for seq, sample in samples.items() if sample.radio_activity is not None}
+                    }
+
+        if not cpu_activity and not radio_activity:
+            logger.warning("No cpu or radio activity values found")
+            return
+
+        if cpu_activity:
+            # --- Per-node averages ---
+            node_avgs = [cpu_activity[node_id]['average']
+                         for node_id in cpu_activity]
+
+            # --- Per-sample averages across nodes ---
+            per_sample_avgs = {}
+            # get union of all sample keys
+            all_seqs = set().union(
+                *[set(cpu_activity[node_id]['samples'].keys()) for node_id in cpu_activity])
+            for seq in sorted(all_seqs):
+                values = [cpu_activity[node_id]['samples'][seq]
+                          for node_id in cpu_activity if seq in cpu_activity[node_id]['samples']]
+                if values:
+                    per_sample_avgs[seq] = float(np.mean(values))
+
+            # --- Network-wide stats ---
+            network_avg_cpu = float(np.mean(node_avgs))
+            network_std_cpu = float(np.std(node_avgs))
+
+            # Store results
+            if 'network' not in results:
+                results['network'] = {}
+            if 'cpu_activity' not in results['network']:
+                results['network']['cpu_activity'] = {}
+
+            results['network']['cpu_activity']['avg'] = network_avg_cpu
+            results['network']['cpu_activity']['std'] = network_std_cpu
+            results['network']['cpu_activity']['per_sample_avg'] = per_sample_avgs
+
+        if radio_activity:
+            # --- Per-node averages ---
+            node_avgs = [radio_activity[node_id]['average']
+                         for node_id in radio_activity]
+
+            # --- Per-sample averages across nodes ---
+            per_sample_avgs = {}
+            # get union of all sample keys
+            all_seqs = set().union(
+                *[set(radio_activity[node_id]['samples'].keys()) for node_id in radio_activity])
+            for seq in sorted(all_seqs):
+                values = [radio_activity[node_id]['samples'][seq]
+                          for node_id in radio_activity if seq in radio_activity[node_id]['samples']]
+                if values:
+                    per_sample_avgs[seq] = float(np.mean(values))
+
+            # --- Network-wide stats ---
+            network_avg_radio = float(np.mean(node_avgs))
+            network_std_radio = float(np.std(node_avgs))
+
+            # Store results
+            if 'network' not in results:
+                results['network'] = {}
+            if 'radio_activity' not in results['network']:
+                results['network']['radio_activity'] = {}
+
+            results['network']['radio_activity']['avg'] = network_avg_radio
+            results['network']['radio_activity']['std'] = network_std_radio
+            results['network']['radio_activity']['per_sample_avg'] = per_sample_avgs
+
+    def calc_cpu_radio_activity_per_node(self, results: Dict[int, Dict[str, Any]]) -> None:
+        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+        for node in nodes_sorted:
+            if node.id > 1:
+                samples = node.power_trace.get_samples()
+                avg_cpu = node.power_trace_get_cpu_activity_average()
+                avg_radio = node.power_trace_get_radio_activity_average()
+                if avg_cpu is not None:
+                    if node.id not in results:
+                        results[node.id] = {}
+                    results[node.id]['cpu_activity'] = {
+                        'joined_time': node.joined_time,
+                        'average': avg_cpu,
+                    }
+                    for seq, sample in samples.items():
+                        if sample.cpu_activity is not None:
+                            results[node.id]['cpu_activity'].setdefault('samples', {})[seq] = {
+                                'cpu_activity': sample.cpu_activity,
+                                'time': sample.time
+                            }
+                if avg_radio is not None:
+                    if node.id not in results:
+                        results[node.id] = {}
+                    results[node.id]['radio_activity'] = {
+                        'joined_time': node.joined_time,
+                        'average': avg_radio,
+                    }
+                    for seq, sample in samples.items():
+                        if sample.radio_activity is not None:
+                            results[node.id]['radio_activity'].setdefault('samples', {})[seq] = {
+                                'radio_activity': sample.radio_activity,
+                                'time': sample.time
+                            }
+
     def calc_avg_energy_trace_consumption(self, results: Dict[int, Dict[str, Any]]) -> None:
         energy_trace = {}
         for node in self.nodes.values():
@@ -638,9 +755,10 @@ class Network:
 
         # Perform simple averaging of Q-tables
         aggregated_q_table = np.mean(q_tables, axis=0)
-        
-        episode_count = max([node.rl_asl_q_table_get_episode_count() for node in self.nodes.values() if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values()] or [0])
-        
+
+        episode_count = max([node.rl_asl_q_table_get_episode_count() for node in self.nodes.values(
+        ) if node.id > 1 and node.rl_asl_q_table.is_initialized() and node.rl_asl_q_table.has_non_zero_q_values()] or [0])
+
         # Lets create a dedicated json for the Q-table FL
         json_q_table = {
             'num_states': aggregated_q_table.shape[0],

@@ -75,6 +75,12 @@ class Node():
     def power_trace_get_average(self):
         return self.power_trace.get_average(self.joined_time)
 
+    def power_trace_get_cpu_activity_average(self):
+        return self.power_trace.get_cpu_activity_average(self.joined_time)
+
+    def power_trace_get_radio_activity_average(self):
+        return self.power_trace.get_radio_activity_average(self.joined_time)
+
     def power_trace_get_last(self):
         return self.power_trace.get_sample_last()
 
@@ -173,16 +179,16 @@ class Node():
 
     def rl_asl_q_table_get_q_value(self, state: int, action: int) -> float:
         return self.rl_asl_q_table.get_q_value(state=state, action=action)
-    
+
     def rl_asl_q_table_set_episode_count(self, episode: int) -> None:
         self.rl_asl_q_table.episode_count = episode
-        
+
     def rl_asl_q_table_get_episode_count(self) -> int:
         return self.rl_asl_q_table.episode_count
-    
+
     def rl_asl_q_table_set_rolling_avg(self, rolling_avg: float) -> None:
         self.rl_asl_q_table.rolling_avg = rolling_avg
-        
+
     def rl_asl_q_table_get_rolling_avg(self) -> float:
         return self.rl_asl_q_table.rolling_avg
 
