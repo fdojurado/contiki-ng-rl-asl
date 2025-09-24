@@ -39,11 +39,14 @@
 
 #define RL_ASL_EPISODE_LENGTH 500 // Number of slotframes per episode (150 was good for scenario 1)
 
-#define RL_ASL_Q_LEARNING_ALPHA 0.15
-#define RL_ASL_Q_LEARNING_GAMMA 0.9
-#define RL_ASL_Q_LEARNING_EPSILON 1.0
-#define RL_ASL_Q_LEARNING_MIN_EPSILON 0.05
-#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.997
+#define Q_SCALE 100      // 1.0 -> 100
+#define REWARD_SCALE 100 // keep rewards consistent
+
+#define RL_ASL_Q_LEARNING_ALPHA 15
+#define RL_ASL_Q_LEARNING_GAMMA 90
+#define RL_ASL_Q_LEARNING_EPSILON 1000
+#define RL_ASL_Q_LEARNING_MIN_EPSILON 50
+#define RL_ASL_Q_LEARNING_EPSILON_DECAY 997
 
 #define RL_ASL_B_INTERARRIVAL 10
 
@@ -73,14 +76,13 @@
 #define RL_ASL_SHORT_BIN_THRESHOLD 2
 #endif
 
-#define REWARD_RX_TX 1.0f
-#define REWARD_SKIP_RX_NO_TX 0.5f
-#define PENALTY_RX_NO_TX -0.5f
-#define PENALTY_SKIP_RX_TX -1.0f
+#define REWARD_RX_TX (1 * REWARD_SCALE)
+#define REWARD_SKIP_RX_NO_TX (50) // 0.5 * 100
+#define PENALTY_RX_NO_TX (-50)    // -0.5 * 100
+#define PENALTY_SKIP_RX_TX (-100) // -1.0 * 100
 
-// Bonus/Penalty for terminal states
-#define REWARD_SUCCESS 5.0f
-#define PENALTY_FAILURE -5.0f
+#define REWARD_SUCCESS (500)   // 5.0 * 100
+#define PENALTY_FAILURE (-500) // -5.0 * 100
 
 // episode window averages
 #define RL_ASL_EPISODE_AVG_WINDOW 100
@@ -96,16 +98,15 @@ enum
 // Q-Learning table
 typedef struct
 {
-    float q_values[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS];
-    float epsilon;
+    uint16_t q_values[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS];
+    uint16_t epsilon; // store epsilon scaled (e.g., 0–1000 for 0.0–1.0)
     int state;
     int action;
-    unsigned long step_count;    // total steps in current episode
-    unsigned long episode_count; // total episodes completed
-    float episode_return;
+    unsigned long step_count;
+    unsigned long episode_count;
+    int32_t episode_return; // store scaled reward sum
 
-    /* episode window averages */
-    float episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
+    int16_t episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
     int buffer_index;
     int buffer_filled;
 } rl_asl_q_table_t;

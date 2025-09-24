@@ -55,10 +55,14 @@ void rl_asl_q_learning_update(const int state, const int action,
 
 #if RL_ASL_IS_TRAIN
     // Q-learning update rule
-    float old_q_value = rl_asl_q_table.q_values[state][action];
-    float max_next_q_value = rl_asl_q_learning_get_max_q_value(next_state);
-    float new_q_value = old_q_value + RL_ASL_Q_LEARNING_ALPHA * (reward + RL_ASL_Q_LEARNING_GAMMA * max_next_q_value - old_q_value);
-    rl_asl_q_table.q_values[state][action] = new_q_value;
+    int old_q = rl_asl_q_table.q_values[state][action];
+    int max_next_q = rl_asl_q_learning_get_max_q_value(next_state);
+
+    int target = reward + (RL_ASL_Q_LEARNING_GAMMA * max_next_q) / Q_SCALE;
+    int new_q = old_q + (RL_ASL_Q_LEARNING_ALPHA * (target - old_q)) / Q_SCALE;
+
+    rl_asl_q_table.q_values[state][action] = (uint16_t)new_q;
+
     rl_asl_q_table.state = next_state;
 
     rl_asl_q_table.episode_return += reward;
@@ -78,19 +82,19 @@ int rl_asl_q_learning_select_action(int state)
 {
 #if RL_ASL_IS_TRAIN
     // Epsilon-greedy action selection
-    float rand_val = (float)rand() / RAND_MAX;
+    int rand_val = rand() % 1000; // 0..999
     if (rand_val < rl_asl_q_table.epsilon)
     {
         // Explore: select a random action
         int action = rand() % RL_ASL_NUM_ACTIONS;
-        LOG_DBG("Exploring: selected random action %d (epsilon=%.3f)\n", action, rl_asl_q_table.epsilon);
+        LOG_DBG("Exploring: selected random action %d (epsilon=%d)\n", action, rl_asl_q_table.epsilon);
         return action;
     }
     else
     {
         // Exploit: select the action with the highest Q-value
         int action = rl_asl_q_learning_get_best_action(state);
-        LOG_DBG("Exploiting: selected best action %d (epsilon=%.3f)\n", action, rl_asl_q_table.epsilon);
+        LOG_DBG("Exploiting: selected best action %d (epsilon=%d)\n", action, rl_asl_q_table.epsilon);
         return action;
     }
 #elif RL_ASL_IS_EVAL
@@ -197,11 +201,10 @@ int rl_asl_q_learning_get_state(int interarrival)
 /***************************************************************/
 void rl_asl_q_learning_decay_epsilon(float decay_rate)
 {
-    rl_asl_q_table.epsilon *= decay_rate;
+    rl_asl_q_table.epsilon = (rl_asl_q_table.epsilon * RL_ASL_Q_LEARNING_EPSILON_DECAY) / 1000;
     if (rl_asl_q_table.epsilon < RL_ASL_Q_LEARNING_MIN_EPSILON)
-    {
         rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
-    }
+
     LOG_DBG("Decayed epsilon to %.3f\n", (double)rl_asl_q_table.epsilon);
 }
 /***************************************************************/
@@ -322,10 +325,10 @@ void rl_asl_q_learning_print_table(void)
     {
         for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
         {
-            float q = rl_asl_q_table.q_values[i][j];
-            if (q > 0.0f)
+            uint16_t q = rl_asl_q_table.q_values[i][j];
+            if (q > 0)
             {
-                printf("%d,%d,%.3f\n", i, j, (double)q);
+                printf("%d,%d,%d\n", i, j, q);
             }
         }
     }
