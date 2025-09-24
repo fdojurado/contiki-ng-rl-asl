@@ -18,7 +18,7 @@ void rl_asl_decision_buffer_add(uint32_t asn_low32, int state, int action)
 
     decision_buffer_index = (decision_buffer_index + 1) % RL_ASL_DECISION_BUFFER_SIZE;
 
-    LOG_DBG("Added decision to buffer: ASN low32=%u, state=%d, action=%d\n",
+    LOG_DBG("Added decision to buffer: ASN low32=%" PRIu32 ", state=%d, action=%d\n",
             asn_low32, state, action);
 }
 /***************************************************************/

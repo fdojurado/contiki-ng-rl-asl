@@ -15,12 +15,12 @@
       <logoutput>40000</logoutput>
     </events>
     <motetype>
-      org.contikios.cooja.contikimote.ContikiMoteType
+      org.contikios.cooja.mspmote.SkyMoteType
       <identifier>root</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja ROOT=1</commands>
+      <commands>$(MAKE) TARGET=sky clean
+      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky ROOT=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -39,12 +39,12 @@
       <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
     </motetype>
     <motetype>
-      org.contikios.cooja.contikimote.ContikiMoteType
+      org.contikios.cooja.mspmote.SkyMoteType
       <identifier>relay</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a RELAY=1</commands>
+      <commands>$(MAKE) TARGET=sky clean
+      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -63,12 +63,12 @@
       <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
     </motetype>
     <motetype>
-      org.contikios.cooja.contikimote.ContikiMoteType
+      org.contikios.cooja.mspmote.SkyMoteType
       <identifier>leaf</identifier>
       <description>RPL/TSCH Node</description>
       <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
-      <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a LEAF=1</commands>
+      <commands>$(MAKE) TARGET=sky clean
+      $(MAKE) -j$(CPUS) TARGET=sky idle-listening.sky MAKE_WITH_TRAFFIC_PATTERN=1 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>

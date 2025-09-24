@@ -202,7 +202,7 @@ void rl_asl_q_learning_decay_epsilon(float decay_rate)
     {
         rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
     }
-    LOG_DBG("Decayed epsilon to %.3f\n", rl_asl_q_table.epsilon);
+    LOG_DBG("Decayed epsilon to %.3f\n", (double)rl_asl_q_table.epsilon);
 }
 /***************************************************************/
 float rl_asl_q_learning_get_max_q_value(int state)
@@ -263,17 +263,17 @@ void rl_asl_q_learning_end_episode(void)
         best_rolling_avg = rolling_avg;
         LOG_INFO("NEW_BEST_AGENT,EPISODE=%lu,ROLLING_AVG=%.3f\n",
                  rl_asl_q_table.episode_count,
-                 best_rolling_avg);
+                 (double)best_rolling_avg);
         rl_asl_q_learning_print_table();
     }
 
     // Log episode summary in CSV-like format
     LOG_INFO("EPISODE_END,%lu,%.3f,%.3f,%lu,%.3f\n",
              rl_asl_q_table.episode_count,
-             rl_asl_q_table.episode_return,
-             rl_asl_q_table.epsilon,
+             (double)rl_asl_q_table.episode_return,
+             (double)rl_asl_q_table.epsilon,
              rl_asl_q_table.step_count,
-             rolling_avg);
+             (double)rolling_avg);
 
     // Reset episode accumulator
     rl_asl_q_table.episode_return = 0.0f;
@@ -325,7 +325,7 @@ void rl_asl_q_learning_print_table(void)
             float q = rl_asl_q_table.q_values[i][j];
             if (q > 0.0f)
             {
-                printf("%d,%d,%.3f\n", i, j, q);
+                printf("%d,%d,%.3f\n", i, j, (double)q);
             }
         }
     }

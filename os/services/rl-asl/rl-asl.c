@@ -5,7 +5,7 @@
 #include "rl-asl-ds-nbr.h"
 #include "rl-asl-decision-buffer.h"
 #include "os/services/orchestra/orchestra.h"
-#include <math.h>  // expf(), sqrtf(), fmodf(), ceilf()
+#include <math.h>
 #include <float.h> // FLT_MAX
 #include <stdint.h>
 
@@ -23,6 +23,9 @@
 
 #define NEAR_MULT 1.0f
 #define MAX_NEAR_COUNT 6
+
+#define fmaxf(a, b) (((a) > (b)) ? (a) : (b))
+#define fminf(a, b) (((a) < (b)) ? (a) : (b))
 
 /* clamp helper */
 static float clampf_local(float v, float lo, float hi)
@@ -73,16 +76,16 @@ static float rl_asl_compute_p(const uint64_t *curr_asn64)
         p_tx = clampf_local(p_tx, 0.0f, 1.0f);
         prod_no_tx *= (1.0f - p_tx);
 
-        LOG_DBG("Neighbor %02x:%02x elapsed=%u λ=%.1f var=%.1f sigma=%.2f phase=%.1f dist_nearest=%.1f p_tx=%.3f\n",
+        LOG_DBG("Neighbor %02x:%02x elapsed=%" PRIu32 " λ=%.1f var=%.1f sigma=%.2f phase=%.1f dist_nearest=%.1f p_tx=%.3f\n",
                 rl_asl_ds_nbr_get_addr(nbr)->u8[0],
                 rl_asl_ds_nbr_get_addr(nbr)->u8[1],
                 elapsed_asn,
-                lambda,
-                var,
-                sigma,
-                phase,
-                dist_nearest,
-                p_tx);
+                (double)lambda,
+                (double)var,
+                (double)sigma,
+                (double)phase,
+                (double)dist_nearest,
+                (double)p_tx);
     }
 
     float p_any = 1.0f - prod_no_tx;
@@ -130,7 +133,7 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         actual_reward += REWARD_SUCCESS; // success bonus inside horizon
     }
 
-    LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=LISTEN,SUCCESS=%d\n",
+    LOG_INFO("TRACE_OUTCOME,ASN=%" PRIu32 ",ACTION=LISTEN,SUCCESS=%d\n",
              asn_low32, packet_received ? 1 : 0);
 
     int next_state = prev_state;
@@ -234,7 +237,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
     rl_asl_q_table.action = chosen_action;
 
     /* Decision log (before outcome known) */
-    LOG_INFO("TRACE_ACTION,ASN=%u,ACTION=%s\n",
+    LOG_INFO("TRACE_ACTION,ASN=%" PRIu32 ",ACTION=%s\n",
              asn_low32,
              (chosen_action == RL_ASL_ACTION_SKIP_RX ? "SKIP" : "LISTEN"));
 
@@ -271,7 +274,8 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                 nbr->last_expected_asn += delta;
                 if (nbr->predicted_skips < 255)
                     nbr->predicted_skips++;
-                LOG_DBG("Neighbor %02x:%02x missed: elapsed=%u >= %.1f -> failure, last_expected_asn=%" PRIu64 "\n", rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], elapsed_asn, missed_threshold, nbr->last_expected_asn);
+                LOG_DBG("Neighbor %02x:%02x missed: elapsed=%" PRIu32 " >= %.1f -> failure, last_expected_asn=%" PRIu64 "\n",
+                        rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], elapsed_asn, (double)missed_threshold, nbr->last_expected_asn);
             }
             else
             { /* near-TX check now uses dist_nearest (before OR after the expected multiple) */
@@ -279,7 +283,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
                 {
                     near_count++;
                     pkt = 1;
-                    LOG_DBG("Neighbor %02x:%02x near-TX: dist_nearest=%.1f <= sigma=%.1f\n", rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], dist_nearest, sigma);
+                    LOG_DBG("Neighbor %02x:%02x near-TX: dist_nearest=%.1f <= sigma=%.1f\n", rl_asl_ds_nbr_get_addr(nbr)->u8[0], rl_asl_ds_nbr_get_addr(nbr)->u8[1], (double)dist_nearest, (double)sigma);
                 }
             }
         } /* for neighbors */ /* scale near penalty by how many neighbors are near their next TX */
@@ -296,7 +300,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
             expected_reward += (float)terminal_count * PENALTY_FAILURE;
             LOG_DBG("One or more neighbors (%d) missed -> apply failure penalty\n", terminal_count);
         }
-        LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=SKIP,SUCCESS=%d\n", asn_low32, pkt ? 0 : 1);
+        LOG_INFO("TRACE_OUTCOME,ASN=%" PRIu32 ",ACTION=SKIP,SUCCESS=%d\n", asn_low32, pkt ? 0 : 1);
         rl_asl_q_learning_update(aggregated_state, chosen_action, expected_reward, aggregated_state);
         rl_asl_q_learning_step_done();
     }
