@@ -8,7 +8,7 @@
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_Q_LEARNING
 
 #if RL_ASL_IS_EVAL
-#include "rl-asl-pretrained-q.h"
+#include "rl-asl-federated-q-global.h"
 #endif
 
 rl_asl_q_table_t rl_asl_q_table;
@@ -36,8 +36,8 @@ void rl_asl_q_learning_init(void)
     }
     rl_asl_decision_buffer_reset();
 
-    LOG_INFO("Using pretrained Q-table with %d states, %d actions\n",
-             RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS);
+    LOG_INFO("Using model from %s with %d states, %d actions\n",
+             RL_ASL_MODEL_SCENARIO, RL_ASL_NUM_STATES, RL_ASL_NUM_ACTIONS);
 #endif
 }
 /***************************************************************/
