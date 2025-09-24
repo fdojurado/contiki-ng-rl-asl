@@ -1,9 +1,9 @@
-#ifndef RL_ASL_PRETRAINED_Q_H
-#define RL_ASL_PRETRAINED_Q_H
+#ifndef RL_ASL_FEDERATED_Q_GLOBAL_H
+#define RL_ASL_FEDERATED_Q_GLOBAL_H
 
 #include "rl-asl-q-learning.h"
 
-static const float rl_asl_pretrained_q[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS] = {
+static const float rl_asl_federated_q_global[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS] = {
     {0.000000f, 0.000000f},
     {0.000000f, 0.000000f},
     {0.000000f, 0.000000f},
@@ -646,4 +646,4 @@ static const float rl_asl_pretrained_q[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS] = 
     {0.000000f, 0.000000f},
 };
 
-#endif /* RL_ASL_PRETRAINED_Q_H */
+#endif /* RL_ASL_FEDERATED_Q_GLOBAL_H */

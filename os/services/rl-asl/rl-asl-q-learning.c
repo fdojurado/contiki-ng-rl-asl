@@ -31,7 +31,7 @@ void rl_asl_q_learning_init(void)
     {
         for (int j = 0; j < RL_ASL_NUM_ACTIONS; j++)
         {
-            rl_asl_q_table.q_values[i][j] = rl_asl_pretrained_q[i][j];
+            rl_asl_q_table.q_values[i][j] = rl_asl_federated_q_global[i][j];
         }
     }
     rl_asl_decision_buffer_reset();
