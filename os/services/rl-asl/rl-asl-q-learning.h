@@ -39,14 +39,11 @@
 
 #define RL_ASL_EPISODE_LENGTH 500 // Number of slotframes per episode (150 was good for scenario 1)
 
-#define Q_SCALE 100      // 1.0 -> 100
-#define REWARD_SCALE 100 // keep rewards consistent
-
-#define RL_ASL_Q_LEARNING_ALPHA 15
-#define RL_ASL_Q_LEARNING_GAMMA 90
-#define RL_ASL_Q_LEARNING_EPSILON 1000
-#define RL_ASL_Q_LEARNING_MIN_EPSILON 50
-#define RL_ASL_Q_LEARNING_EPSILON_DECAY 997
+#define RL_ASL_Q_LEARNING_ALPHA 0.15
+#define RL_ASL_Q_LEARNING_GAMMA 0.9
+#define RL_ASL_Q_LEARNING_EPSILON 1.0
+#define RL_ASL_Q_LEARNING_MIN_EPSILON 0.05
+#define RL_ASL_Q_LEARNING_EPSILON_DECAY 0.997
 
 #define RL_ASL_B_INTERARRIVAL 10
 
@@ -76,13 +73,14 @@
 #define RL_ASL_SHORT_BIN_THRESHOLD 2
 #endif
 
-#define REWARD_RX_TX (1 * REWARD_SCALE)
-#define REWARD_SKIP_RX_NO_TX (50) // 0.5 * 100
-#define PENALTY_RX_NO_TX (-50)    // -0.5 * 100
-#define PENALTY_SKIP_RX_TX (-100) // -1.0 * 100
+#define REWARD_RX_TX 1.0f
+#define REWARD_SKIP_RX_NO_TX 0.5f
+#define PENALTY_RX_NO_TX -0.5f
+#define PENALTY_SKIP_RX_TX -1.0f
 
-#define REWARD_SUCCESS (500)   // 5.0 * 100
-#define PENALTY_FAILURE (-500) // -5.0 * 100
+// Bonus/Penalty for terminal states
+#define REWARD_SUCCESS 5.0f
+#define PENALTY_FAILURE -5.0f
 
 // episode window averages
 #define RL_ASL_EPISODE_AVG_WINDOW 100
@@ -98,15 +96,16 @@ enum
 // Q-Learning table
 typedef struct
 {
-    uint16_t q_values[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS];
-    uint16_t epsilon; // store epsilon scaled (e.g., 0–1000 for 0.0–1.0)
+    float q_values[RL_ASL_NUM_STATES][RL_ASL_NUM_ACTIONS];
+    float epsilon;
     int state;
     int action;
-    uint64_t step_count;
-    uint64_t episode_count;
-    int32_t episode_return; // store scaled reward sum
+    unsigned long step_count;    // total steps in current episode
+    unsigned long episode_count; // total episodes completed
+    float episode_return;
 
-    int32_t episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
+    /* episode window averages */
+    float episode_returns_buffer[RL_ASL_EPISODE_AVG_WINDOW];
     int buffer_index;
     int buffer_filled;
 } rl_asl_q_table_t;
@@ -118,15 +117,15 @@ extern rl_asl_q_table_t rl_asl_q_table;
  *****************************************************************/
 
 void rl_asl_q_learning_init(void);
-void rl_asl_q_learning_update(int state, int action, int reward, int next_state);
+void rl_asl_q_learning_update(const int, const int, const float, const int);
 int rl_asl_q_learning_select_action(int state);
 int rl_asl_q_learning_get_state(int interarrival_bin);
 int rl_asl_q_learning_get_aggregated_state_from_bins(const int *bins,
                                                      int num_bins,
                                                      int dist_nearest_bin,
                                                      int near_count);
-void rl_asl_q_learning_decay_epsilon(void);
-int rl_asl_q_learning_get_max_q_value(int state);
+void rl_asl_q_learning_decay_epsilon(float decay_rate);
+float rl_asl_q_learning_get_max_q_value(int state);
 int rl_asl_q_learning_get_best_action(int state);
 void rl_asl_q_learning_step_done(void);
 void rl_asl_q_learning_end_episode(void);
