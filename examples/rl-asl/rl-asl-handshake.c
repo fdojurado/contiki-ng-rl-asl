@@ -16,6 +16,8 @@
 #define LOG_MODULE "rl-asl-handshake"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_NET_PROCESSOR
 
+#define MAX_RETRIES 4
+
 PROCESS(rl_asl_handshake_process, "RL ASL Handshake Process");
 
 /* Current handshake protocol version (wraps at 65535) */
@@ -32,7 +34,6 @@ static struct etimer resend_timer;
 
 /* retry/backoff parameters */
 static uint8_t retry_count = 0;
-static const uint8_t max_retries = 4;
 
 /* ack parameters structure passed to ctimer callback */
 struct ack_parameters
@@ -301,7 +302,7 @@ eventhandler(process_event_t ev, process_data_t data)
         else
         {
             /* This path may be used to force a resend from other parts of code */
-            if (retry_count < max_retries)
+            if (retry_count < MAX_RETRIES)
             {
                 retry_count++;
                 LOG_WARN("Forced resend (retry %u) for handshake\n", (unsigned)retry_count);
@@ -312,7 +313,7 @@ eventhandler(process_event_t ev, process_data_t data)
             }
             else
             {
-                LOG_WARN("Max handshake retries reached (%u); giving up this round\n", (unsigned)max_retries);
+                LOG_WARN("Max handshake retries reached (%u) — giving up\n", (unsigned)MAX_RETRIES);
                 retry_count = 0;
             }
         }
@@ -334,7 +335,7 @@ eventhandler(process_event_t ev, process_data_t data)
             else
             {
                 /* Timeout without ACK -> perform resend (or give up after retries) */
-                if (retry_count < max_retries)
+                if (retry_count < MAX_RETRIES)
                 {
                     retry_count++;
                     LOG_WARN("Handshake timeout — resending handshake (retry %u)\n", (unsigned)retry_count);
@@ -344,7 +345,7 @@ eventhandler(process_event_t ev, process_data_t data)
                 }
                 else
                 {
-                    LOG_ERR("Handshake timeout — max retries reached (%u). Giving up.\n", (unsigned)max_retries);
+                    LOG_ERR("Handshake timeout — max retries reached (%u). Giving up.\n", (unsigned)MAX_RETRIES);
                     retry_count = 0;
                 }
             }

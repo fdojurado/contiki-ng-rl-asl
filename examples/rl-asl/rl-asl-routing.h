@@ -42,6 +42,6 @@ typedef struct
 } routing_entry_t;
 
 extern linkaddr_t root_node_addr;
-extern routing_entry_t routing_table[];
+extern const routing_entry_t routing_table[];
 
 #endif /* RL_ASL_ROUTING_H_ */
