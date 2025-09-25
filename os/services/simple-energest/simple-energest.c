@@ -61,7 +61,7 @@ static uint64_t last_uc_idle_rx;
 
 PROCESS(simple_energest_process, "Simple Energest");
 /*---------------------------------------------------------------------------*/
-static uint64_t
+static inline uint64_t
 to_permil(uint64_t delta_metric, uint64_t delta_time)
 {
   return (1000ul * delta_metric) / delta_time;
@@ -77,7 +77,7 @@ log_energest(const char *name, uint64_t delta, uint64_t delta_time)
 static void
 simple_energest_step(void)
 {
-  static unsigned count = 0;
+  static uint16_t count = 0;
   uint64_t curr_tx, curr_rx, curr_time, curr_cpu, curr_lpm, curr_deep_lpm;
 #if WITH_RL_ASL_NET
   uint64_t curr_uc_rx;
@@ -114,22 +114,9 @@ simple_energest_step(void)
   log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
                delta_time);
 
-#if WITH_RL_ASL_NET
-  uint64_t delta_uc_rx = curr_uc_rx - last_uc_rx;
-  uint64_t delta_uc_idle_rx = curr_uc_idle_rx - last_uc_idle_rx;
-  
-  log_energest("UC Radio Rx",  delta_uc_rx,       delta_time);
-  log_energest("UC Idle Rx",   delta_uc_idle_rx,  delta_time);
-
-  if(delta_uc_rx > 0) {
-    float uc_idle_ratio = (float)delta_uc_idle_rx / (float)delta_uc_rx;
-    log_energest("UC Idle ratio", (uint64_t)(uc_idle_ratio * 1000), 1000);
-  }
-  /* Lets calculate the ratio of unicast rx over total rx */
-  if(delta_rx > 0) {
-    float uc_ratio = (float)delta_uc_rx / (float)delta_rx;
-    log_energest("UC ratio", (uint64_t)(uc_ratio * 1000), 1000);
-  }
+#if WITH_RL_ASL_NET  
+  log_energest("UC Radio Rx",   curr_uc_rx - last_uc_rx,       delta_time);
+  log_energest("UC Idle Rx",   curr_uc_idle_rx - last_uc_idle_rx,  delta_time);
 #endif
 
   /* Update last snapshot */
