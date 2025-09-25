@@ -73,6 +73,7 @@ _RE_RL_ASL_TRACE = re.compile(
     r"ACTION=(?P<action>LISTEN|SKIP),"
     r"SUCCESS=(?P<success>-?\d+)"
 )
+# EPISODE_END,4,-48508,35144,500,-69616.750
 _RE_EPISODE_END = re.compile(
     r"EPISODE_END,"
     r"(?P<episode_count>\d+),"
