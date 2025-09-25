@@ -282,11 +282,7 @@ void rl_asl_q_learning_end_episode(void)
     rl_asl_q_table.step_count = 0;
 
     // Decay epsilon
-    rl_asl_q_table.epsilon *= RL_ASL_Q_LEARNING_EPSILON_DECAY;
-    if (rl_asl_q_table.epsilon < RL_ASL_Q_LEARNING_MIN_EPSILON)
-    {
-        rl_asl_q_table.epsilon = RL_ASL_Q_LEARNING_MIN_EPSILON;
-    }
+    rl_asl_q_learning_decay_epsilon();
 }
 /***************************************************************/
 int rl_asl_q_bin_interarrival(uint32_t interarrival, uint32_t asn_diff_ewma)

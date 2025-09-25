@@ -78,7 +78,7 @@ _RE_EPISODE_END = re.compile(
     r"EPISODE_END,"
     r"(?P<episode_count>\d+),"
     r"(?P<episode_reward>-?\d+\.?\d*),"
-    r"(?P<epsilon>0\.?\d*),"
+    r"(?P<epsilon>-?\d+\.?\d*),"
     r"(?P<steps>\d+),"
     r"(?P<avg_reward>-?\d+\.?\d*)"
 )
