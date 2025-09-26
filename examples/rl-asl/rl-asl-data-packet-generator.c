@@ -94,13 +94,26 @@ static int get_tx_interval(void)
   { // last byte of node addr
   case 1:
   case 2:
-    return 17;
   case 3:
+  case 11:
+  case 15:
+  case 19:
+    return 17;
   case 4:
+  case 12:
+  case 16:
+  case 20:
     return 30;
   case 5:
   case 6:
+  case 13:
+  case 17:
+  case 21:
     return 50;
+  case 14:
+  case 18:
+  case 22:
+    return 73;
   default:
     return 13; // fallback
   }
