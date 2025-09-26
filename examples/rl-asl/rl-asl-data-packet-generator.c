@@ -110,7 +110,7 @@ static int get_tx_interval(void)
   }
   else
   {
-    return 120;
+    return 73;
   }
 
 #elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_CONCURRENT
