@@ -86,6 +86,7 @@ static float rl_asl_compute_p(const uint64_t *curr_asn64)
     }
 
     float p_any = 1.0f - prod_no_tx;
+    LOG_DBG("Computed p_any=%.3f (prod_no_tx=%.3f)\n", p_any, prod_no_tx);
     return clampf_local(p_any, 0.001f, 0.99f);
 }
 
@@ -93,8 +94,13 @@ static float rl_asl_expected_reward_for_action(int action, float p)
 {
     if (action == RL_ASL_ACTION_SKIP_RX)
     {
-        return p * PENALTY_SKIP_RX_TX + (1.0f - p) * REWARD_SKIP_RX_NO_TX;
+        return p * PENALTY_FAILURE + (1.0f - p) * REWARD_SKIP_RX_NO_TX;
     }
+    if (action == RL_ASL_ACTION_DO_NOT_SKIP_RX)
+    {
+        return p * REWARD_SUCCESS + (1.0f - p) * PENALTY_RX_NO_TX;
+    }
+
     return RL_ASL_INVALID_EXPECTED_REWARD;
 }
 
@@ -123,12 +129,25 @@ void rl_asl_on_slot_outcome(uint32_t asn_low32, bool packet_received)
         return;
     }
 
-    float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
+    float actual_reward = 0.0f;
 
     if (packet_received)
     {
-        actual_reward += REWARD_SUCCESS; // success bonus inside horizon
+        actual_reward = REWARD_SUCCESS; // success bonus
     }
+    else
+    {
+        uint64_t curr_asn64 = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
+        float p = rl_asl_compute_p(&curr_asn64);
+        actual_reward = rl_asl_expected_reward_for_action(prev_action, p);
+    }
+
+    // float actual_reward = packet_received ? REWARD_RX_TX : PENALTY_RX_NO_TX;
+
+    // if (packet_received)
+    // {
+    //     actual_reward += REWARD_SUCCESS; // success bonus inside horizon
+    // }
 
     LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=LISTEN,SUCCESS=%d\n",
              asn_low32, packet_received ? 1 : 0);
@@ -285,7 +304,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         } /* for neighbors */ /* scale near penalty by how many neighbors are near their next TX */
         if (near_count > 0)
         {
-            expected_reward += (float)near_count * PENALTY_SKIP_RX_TX;
+            // expected_reward += PENALTY_SKIP_RX_TX;
             if (near_count > 1)
             {
                 LOG_DBG("Multiple neighbors (%d) near-TX -> stronger penalty\n", near_count);
@@ -293,7 +312,7 @@ void rl_asl_check_skip_rx(const struct tsch_link *link, bool *skip_rx)
         } /* if any neighbor is terminal (missed), apply failure penalty */
         if (terminal_count > 0)
         {
-            expected_reward += (float)terminal_count * PENALTY_FAILURE;
+            expected_reward += PENALTY_FAILURE;
             LOG_DBG("One or more neighbors (%d) missed -> apply failure penalty\n", terminal_count);
         }
         LOG_INFO("TRACE_OUTCOME,ASN=%u,ACTION=SKIP,SUCCESS=%d\n", asn_low32, pkt ? 0 : 1);
