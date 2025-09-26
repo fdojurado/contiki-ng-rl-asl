@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = orchestra
+CONTIKI_PROJECT = orchestra-rl-asl-net
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = ../../..
