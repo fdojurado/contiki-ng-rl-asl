@@ -32,7 +32,7 @@ import fit_iot_lab_conf
 
 logger = logging.getLogger("process_experiments")
 
-START_TIMESTAMP = 5*5*1e6
+START_TIMESTAMP_SECS = 5*60  # default start time to ignore initial logs
 
 # --- regex patterns ---
 # Period summary #9 (60 seconds)
@@ -346,7 +346,9 @@ def process_testlog(testlog: Path, args) -> Dict:
     except Exception:
         logger.exception("Could not read testlog %s", testlog)
         return {}
-
+    
+    # Get args. start timestamp in microseconds
+    start_time_usec = args.start_timestamp * 1e6
     # if "ERR" in raw_text:
     #     logger.warning("Skipping file %s due to ERR in contents", testlog)
     #     return {}
@@ -376,7 +378,7 @@ def process_testlog(testlog: Path, args) -> Dict:
             logger.debug("Failed to get time for line: %s", ln)
             continue
 
-        if timestamp < START_TIMESTAMP:
+        if timestamp < start_time_usec:
             continue
 
         node_id = pc.get_node_id(tokens, is_testbed)
@@ -493,6 +495,8 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
     parser.add_argument("-o", "--output-folder", type=Path,
                         default=None, help="Folder to store logs and outputs")
+    parser.add_argument("-s", "--start-timestamp", type=float, default=START_TIMESTAMP_SECS,
+                        help="Ignore log entries before this timestamp (in seconds)")
     parser.add_argument("--testbed", action="store_true",
                         help="Indicates the logs are from the FIT IoT-LAB testbed")
     parser.add_argument("--oml-power-scale", type=float, default=1.0,
