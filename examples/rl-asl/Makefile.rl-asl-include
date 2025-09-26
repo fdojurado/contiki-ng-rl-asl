@@ -1,11 +1,7 @@
-CONTIKI_PROJECT = idle-listening
-all: $(CONTIKI_PROJECT)
-
-CONTIKI = ../../..
-
 MAKE_MAC = MAKE_MAC_TSCH
 MAKE_ROUTING = MAKE_ROUTING_OTHER
 MAKE_NET = MAKE_NET_OTHER
+
 
 MAKE_WITH_ORCHESTRA ?= 1
 
@@ -71,7 +67,6 @@ MODULES_SOURCES_EXCLUDES += slip.c
 CONTIKI_SOURCES_EXCLUDES_COOJA += slip-arch.c
 
 PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-utils.c ../rl-asl-ds-nbr.c ../rl-asl-data-packet-processor.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-routing.c
-# PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c ../rl-asl-packets.c ../rl-asl-routing.c
 CFLAGS += -I../../rl-asl
 
 ifeq (${ROOT}, 1)
@@ -89,9 +84,3 @@ else ifeq (${LEAF}, 1)
   PROJECT_SOURCEFILES += ../rl-asl-handshake.c
  endif
 endif
-
-include $(CONTIKI)/Makefile.dir-variables
-include $(CONTIKI)/Makefile.include
-
-# Run headless example:
-# ./gradlew run --args='--no-gui ../../examples/sage-project/orchestra/topology-a.csc --logdir=../../examples/sage-project/orchestra/ --random-seed=1234' --stacktrace
