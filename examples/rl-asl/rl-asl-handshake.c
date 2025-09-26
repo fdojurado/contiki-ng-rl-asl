@@ -90,7 +90,7 @@ do_ack(void *ptr)
     print_ip_header();
 
     /* Set some MAC attribute if you want (e.g. retry limit) */
-    rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 3);
+    rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 4);
 
     /* Send explicitly to the destination */
     rl_asl_ip_output(&params->dest);
