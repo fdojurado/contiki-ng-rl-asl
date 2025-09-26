@@ -48,9 +48,11 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
 
-#if WITH_RL_ASL
+#if BUILD_WITH_RL_ASL
 #include "rl-asl-packets.h"
-#endif /* WITH_RL_ASL */
+#include "rl-asl-buf.h"
+#endif /* BUILD_WITH_RL_ASL */
+
 
 #include "sys/log.h"
 #define LOG_MODULE "Orchestra"
@@ -74,6 +76,14 @@ const struct orchestra_rule *all_rules[] = ORCHESTRA_RULES;
 static void
 orchestra_packet_received(void)
 {
+#if BUILD_WITH_RL_ASL
+  /* Check if our parent just sent us a handshake */
+  if(rl_asl_buf_get_attr(RL_ASL_BUF_ATTR_NETWORK_ID) == RL_ASL_PROTO_HANDSHAKE_ACK
+     && !linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
+     && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_SENDER))) {
+    orchestra_parent_knows_us = 1;
+  }
+#endif /* BUILD_WITH_RL_ASL */
 }
 /*---------------------------------------------------------------------------*/
 static void

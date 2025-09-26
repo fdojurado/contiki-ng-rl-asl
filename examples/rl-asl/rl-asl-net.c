@@ -31,7 +31,7 @@ static void
 set_packet_attrs(void)
 {
     /* set protocol in NETWORK_ID */
-    rl_asl_buf_set_attr(PACKETBUF_ATTR_NETWORK_ID, RL_ASL_IP_BUF->proto);
+    rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_NETWORK_ID, RL_ASL_IP_BUF->proto);
 }
 
 /*--------------------------------------------------------------------*/

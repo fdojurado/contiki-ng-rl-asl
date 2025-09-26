@@ -168,6 +168,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
   if(new != old) {
     const linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
     const linkaddr_t *new_addr = tsch_queue_get_nbr_address(new);
+    if(new_addr != NULL) {
+      linkaddr_copy(&orchestra_parent_linkaddr, new_addr);
+    } else {
+      linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
+    }
     remove_uc_link(old_addr);
     add_uc_link(new_addr);
     /* Here we need to make sure that our parent knows that we exist, so we send

@@ -9,6 +9,9 @@
 #include "rl-asl-routing.h"
 #include "net/linkaddr.h"
 #include "stdlib.h"
+#if BUILD_WITH_RL_ASL
+#include "orchestra.h"
+#endif /* BUILD_WITH_RL_ASL */
 #include "os/sys/log.h"
 
 #define LOG_MODULE "data-packet-generator"
@@ -161,6 +164,14 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
     }
     else if (etimer_expired(&et))
     {
+#if BUILD_WITH_RL_ASL
+      if (orchestra_parent_knows_us == 0)
+      {
+        LOG_WARN("Parent does not know us yet, skipping data packet\n");
+        etimer_reset(&et);
+        continue;
+      }
+#endif
       LOG_DBG("Timer expired, sending data packet\n");
       send_data_packet();
       etimer_reset(&et);
