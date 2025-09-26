@@ -41,11 +41,6 @@
 #include "tsch.h"
 #include "rl-asl-net-processor.h"
 
-// #if (ROOT || RELAY) && !WITH_RL_ASL_ORCHESTRA
-// #include "sage-broadcast-schedule.h"
-// #include "sage.h"
-// #endif /* SAGE_ROOT || SAGE_RELAY */
-
 #ifdef LEAF
 #include "rl-asl-data-packet-generator.h"
 #endif /* LEAF */
@@ -70,11 +65,6 @@ PROCESS_THREAD(rl_asl_idle_listening_process, ev, data)
   NETSTACK_MAC.on();
 
   process_start(&rl_asl_net_processor_process, NULL);
-
-#if (ROOT || RELAY)
-  // process_start(&sage_broadcast_schedule_process, NULL);
-  // process_start(&sage_process, NULL);
-#endif /* ROOT || RELAY */
 
 #ifdef LEAF
   LOG_INFO("Starting data packet generator process\n"); 
