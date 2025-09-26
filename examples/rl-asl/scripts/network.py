@@ -82,6 +82,8 @@ class Network:
                 if node_avg_power is not None:
                     power[node.id] = {
                         'average_mW': node_avg_power['average_mW'],
+                        'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
                         'samples_mW': {seq: sample.power for seq, sample in power_samples.items() if sample.power is not None},
                     }
 
@@ -91,6 +93,8 @@ class Network:
 
         # -- Per-node averages ---
         node_avgs = [power[node_id]['average_mW'] for node_id in power]
+        node_rx_avgs = [power[node_id]['average_rx_mW'] for node_id in power]
+        node_rx_uc_avgs = [power[node_id]['average_rx_uc_mW'] for node_id in power]
 
         # --- Per-sample averages across nodes ---
         per_sample_avgs = {}
@@ -106,6 +110,10 @@ class Network:
         # --- Network-wide stats ---
         network_avg_power = float(np.mean(node_avgs))
         network_std_power = float(np.std(node_avgs))
+        network_avg_rx_power = float(np.mean(node_rx_avgs))
+        network_std_rx_power = float(np.std(node_rx_avgs))
+        network_avg_rx_uc_power = float(np.mean(node_rx_uc_avgs))
+        network_std_rx_uc_power = float(np.std(node_rx_uc_avgs))
 
         # Store results
         if 'network' not in results:
@@ -115,6 +123,10 @@ class Network:
 
         results['network']['power']['avg_mW'] = network_avg_power
         results['network']['power']['std_mW'] = network_std_power
+        results['network']['power']['avg_rx_mW'] = network_avg_rx_power
+        results['network']['power']['std_rx_mW'] = network_std_rx_power
+        results['network']['power']['avg_rx_uc_mW'] = network_avg_rx_uc_power
+        results['network']['power']['std_rx_uc_mW'] = network_std_rx_uc_power
         results['network']['power']['per_sample_avg_mW'] = per_sample_avgs
 
     def calc_power_trace(self, results: Dict[int, Dict[str, Any]]) -> None:
@@ -130,6 +142,8 @@ class Network:
                     results[node.id]['power'] = {
                         'joined_time': node.joined_time,
                         'average_mW': node_avg_power['average_mW'],
+                        'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
                     }
                     for seq, sample in power_trace.items():
                         if sample.power is not None:
@@ -138,26 +152,26 @@ class Network:
                                 'time': sample.time
                             }
 
-    def calc_uc_power_trace(self, results: Dict[int, Dict[str, Any]]) -> None:
-        nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
-        for node in nodes_sorted:
-            if node.id > 1:
-                power_trace = node.power_trace.get_samples()
-                node_avg_power = node.power_trace_get_average()
-                if node_avg_power is not None:
-                    # check if the node id is already in results
-                    if node.id not in results:
-                        results[node.id] = {}
-                    results[node.id]['uc_power'] = {
-                        'joined_time': node.joined_time,
-                        'average_mW': node_avg_power['average_uc_mW'],
-                    }
-                    for seq, sample in power_trace.items():
-                        if sample.uc_power is not None:
-                            results[node.id]['uc_power'].setdefault('samples_mW', {})[seq] = {
-                                'uc_power': sample.uc_power,
-                                'time': sample.time
-                            }
+    # def calc_uc_power_trace(self, results: Dict[int, Dict[str, Any]]) -> None:
+    #     nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
+    #     for node in nodes_sorted:
+    #         if node.id > 1:
+    #             power_trace = node.power_trace.get_samples()
+    #             node_avg_power = node.power_trace_get_average()
+    #             if node_avg_power is not None:
+    #                 # check if the node id is already in results
+    #                 if node.id not in results:
+    #                     results[node.id] = {}
+    #                 results[node.id]['uc_power'] = {
+    #                     'joined_time': node.joined_time,
+    #                     'average_mW': node_avg_power['average_rx_uc_mW'],
+    #                 }
+    #                 for seq, sample in power_trace.items():
+    #                     if sample.uc_power is not None:
+    #                         results[node.id]['uc_power'].setdefault('samples_mW', {})[seq] = {
+    #                             'uc_power': sample.uc_power,
+    #                             'time': sample.time
+    #                         }
 
     def calc_cpu_radio_activity(self, results: Dict[int, Dict[str, Any]]) -> None:
         cpu_activity = {}

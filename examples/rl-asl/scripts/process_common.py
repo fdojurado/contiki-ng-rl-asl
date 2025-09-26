@@ -148,7 +148,7 @@ def calculate_results(network, output_folder):
     # Calculate the power consumption for each node using power trace
     network.calc_power_trace(results)
     # Calculate the power consumption due to uc_rx for each node using power trace
-    network.calc_uc_power_trace(results)
+    # network.calc_uc_power_trace(results)
     # Calculate cpu and radio activity of the network
     network.calc_cpu_radio_activity(results)
     # Calculate cpu and radio activity for each node
