@@ -128,6 +128,7 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
     net_avg_radio_power: List[float] = []   # "avg_radio_mW" across runs
     net_avg_tx_power: List[float] = []   # "avg_tx_mW" across runs
     net_avg_rx_power: List[float] = []   # "avg_mW" across runs
+    net_avg_rx_non_uc_total_power: List[float] = []   # "avg_mW" across runs
     net_avg_rx_uc_total_power: List[float] = []   # "avg_mW" across runs
     net_avg_rx_uc_power: List[float] = []   # "avg_mW" across runs
     net_avg_rx_uc_idle_power: List[float] = []   # "avg_mW" across runs
@@ -181,6 +182,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
         if "avg_rx_mW" in power:
             net_avg_rx_power.append(float(power["avg_rx_mW"]))
+
+        if "avg_rx_non_uc_total_mW" in power:
+            net_avg_rx_non_uc_total_power.append(
+                float(power["avg_rx_non_uc_total_mW"]))
 
         if "avg_rx_uc_total_mW" in power:
             net_avg_rx_uc_total_power.append(
@@ -412,6 +417,13 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         mu, su = safe_mean_std(net_avg_rx_power)
         net_summary["power"]["avg_rx_mW"] = mu
         net_summary["power"]["std_rx_mW"] = su
+        
+    net_summary["power"]["avg_rx_non_uc_total_mW"] = 0.0
+    net_summary["power"]["std_rx_non_uc_total_mW"] = 0.0
+    if net_avg_rx_non_uc_total_power:
+        mu, su = safe_mean_std(net_avg_rx_non_uc_total_power)
+        net_summary["power"]["avg_rx_non_uc_total_mW"] = mu
+        net_summary["power"]["std_rx_non_uc_total_mW"] = su
 
     net_summary["power"]["avg_rx_uc_total_mW"] = 0.0
     net_summary["power"]["std_rx_uc_total_mW"] = 0.0

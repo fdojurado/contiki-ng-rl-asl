@@ -85,6 +85,7 @@ class Network:
                         'average_radio_mW': node_avg_power['average_radio_mW'],
                         'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_non_uc_total_mW': node_avg_power['average_rx_non_uc_total_mW'],
                         'average_rx_uc_total_mW': node_avg_power['average_rx_uc_total_mW'],
                         'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
                         'average_rx_uc_idle_mW': node_avg_power['average_rx_uc_idle_mW'],
@@ -100,6 +101,7 @@ class Network:
         node_radio_avgs = [power[node_id]['average_radio_mW'] for node_id in power]
         node_tx_avgs = [power[node_id]['average_tx_mW'] for node_id in power]
         node_rx_avgs = [power[node_id]['average_rx_mW'] for node_id in power]
+        node_rx_non_uc_total_avgs = [power[node_id]['average_rx_non_uc_total_mW'] for node_id in power]
         node_rx_uc_total_avgs = [power[node_id]['average_rx_uc_total_mW'] for node_id in power]
         node_rx_uc_avgs = [power[node_id]['average_rx_uc_mW'] for node_id in power]
         node_rx_uc_idle_avgs = [power[node_id]['average_rx_uc_idle_mW'] for node_id in power]
@@ -124,6 +126,8 @@ class Network:
         network_std_tx_power = float(np.std(node_tx_avgs))
         network_avg_rx_power = float(np.mean(node_rx_avgs))
         network_std_rx_power = float(np.std(node_rx_avgs))
+        network_avg_rx_non_uc_total_power = float(np.mean(node_rx_non_uc_total_avgs))
+        network_std_rx_non_uc_total_power = float(np.std(node_rx_non_uc_total_avgs))
         network_avg_rx_uc_total_power = float(np.mean(node_rx_uc_total_avgs))
         network_std_rx_uc_total_power = float(np.std(node_rx_uc_total_avgs))
         network_avg_rx_uc_power = float(np.mean(node_rx_uc_avgs))
@@ -144,6 +148,8 @@ class Network:
         results['network']['power']['std_tx_mW'] = network_std_tx_power
         results['network']['power']['avg_rx_mW'] = network_avg_rx_power
         results['network']['power']['std_rx_mW'] = network_std_rx_power
+        results['network']['power']['avg_rx_non_uc_total_mW'] = network_avg_rx_non_uc_total_power
+        results['network']['power']['std_rx_non_uc_total_mW'] = network_std_rx_non_uc_total_power
         results['network']['power']['avg_rx_uc_total_mW'] = network_avg_rx_uc_total_power
         results['network']['power']['std_rx_uc_total_mW'] = network_std_rx_uc_total_power
         results['network']['power']['avg_rx_uc_mW'] = network_avg_rx_uc_power
@@ -168,6 +174,7 @@ class Network:
                         'average_radio_mW': node_avg_power['average_radio_mW'],
                         'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_non_uc_total_mW': node_avg_power['average_rx_non_uc_total_mW'],
                         'average_rx_uc_total_mW': node_avg_power['average_rx_uc_total_mW'],
                         'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
                         'average_rx_uc_idle_mW': node_avg_power['average_rx_uc_idle_mW'],

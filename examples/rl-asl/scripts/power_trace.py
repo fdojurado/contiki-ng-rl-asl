@@ -64,6 +64,7 @@ class PowerTrace():
         radio_power=None,
         tx_power=None,
         rx_power=None,
+        rx_non_uc_total_power=None,
         rx_uc_total_power=None,
         rx_uc_power=None,
         rx_uc_idle_power=None,
@@ -115,6 +116,7 @@ class PowerTrace():
         self.radio_power = radio_power
         self.tx_power = tx_power
         self.rx_power = rx_power
+        self.rx_non_uc_total_power = rx_non_uc_total_power
         self.rx_uc_total_power = rx_uc_total_power
         self.rx_uc_power = rx_uc_power
         self.rx_uc_idle_power = rx_uc_idle_power
@@ -166,6 +168,7 @@ class PowerTraceSamples():
         total_radio_power = 0
         total_tx_power = 0
         total_rx_power = 0
+        total_rx_non_uc_total_power = 0
         total_rx_uc_total_power = 0
         total_rx_uc_power = 0
         total_rx_uc_idle_power = 0
@@ -173,6 +176,7 @@ class PowerTraceSamples():
         radio_power_count = 0
         tx_power_count = 0
         rx_power_count = 0
+        rx_non_uc_total_power_count = 0
         rx_uc_total_power_count = 0
         rx_uc_power_count = 0
         rx_uc_idle_power_count = 0
@@ -193,6 +197,10 @@ class PowerTraceSamples():
                 if joined_time is None or sample.time >= joined_time:
                     total_rx_power += sample.rx_power
                     rx_power_count += 1
+            if sample.rx_non_uc_total_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_rx_non_uc_total_power += sample.rx_non_uc_total_power
+                    rx_non_uc_total_power_count += 1
             if sample.rx_uc_total_power is not None:
                 if joined_time is None or sample.time >= joined_time:
                     total_rx_uc_total_power += sample.rx_uc_total_power
@@ -211,6 +219,8 @@ class PowerTraceSamples():
             return None
         if tx_power_count == 0:
             return None
+        if rx_non_uc_total_power_count == 0:
+            return None
         if rx_uc_total_power_count == 0:
             return None
         if rx_power_count == 0:
@@ -223,6 +233,7 @@ class PowerTraceSamples():
         average_radio_power = total_radio_power / radio_power_count
         average_tx_power = total_tx_power / tx_power_count
         average_rx_power = total_rx_power / rx_power_count
+        average_rx_non_uc_total_power = total_rx_non_uc_total_power / rx_non_uc_total_power_count
         average_rx_uc_total_power = total_rx_uc_total_power / rx_uc_total_power_count
         average_rx_uc_power = total_rx_uc_power / rx_uc_power_count
         average_rx_uc_idle_power = total_rx_uc_idle_power / rx_uc_idle_power_count
@@ -241,6 +252,7 @@ class PowerTraceSamples():
             'average_radio_mW': average_radio_power,
             'average_tx_mW': average_tx_power,
             'average_rx_mW': average_rx_power,
+            'average_rx_non_uc_total_mW': average_rx_non_uc_total_power,
             'average_rx_uc_total_mW': average_rx_uc_total_power,
             'average_rx_uc_mW': average_rx_uc_power,
             'average_rx_uc_idle_mW': average_rx_uc_idle_power,
@@ -343,6 +355,7 @@ class PowerTraceSamples():
             power_trace.rx_uc_total_power = rx_uc_total_power
             power_trace.rx_uc_idle_power = rx_uc_idle_power
             power_trace.rx_uc_power = rx_uc_total_power - rx_uc_idle_power
+            power_trace.rx_non_uc_total_power = rx_power - rx_uc_total_power
 
             power_trace.rdc = radio_total_time / \
                 total_time_ticks if total_time_ticks > 0 else 0
