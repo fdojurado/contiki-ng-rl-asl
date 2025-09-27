@@ -51,7 +51,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TOPOLOGY_A=0 RELAY=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a MAKE_WITH_RL_ASL_TOPOLOGY_A=0 RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -163,7 +163,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=3 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TOPOLOGY_A=0 LEAF=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=3 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 MAKE_WITH_RL_ASL_MODEL=results/topology-a MAKE_WITH_RL_ASL_TOPOLOGY_A=0 LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -365,7 +365,7 @@
   <plugin>
     org.contikios.cooja.plugins.ScriptRunner
     <plugin_config>
-      <scriptfile>[CONFIG_DIR]/../script-training.js</scriptfile>
+      <scriptfile>[CONFIG_DIR]/../script-eval.js</scriptfile>
       <active>true</active>
     </plugin_config>
     <bounds x="3" y="404" height="427" width="457" z="3" />
