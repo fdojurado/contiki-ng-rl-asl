@@ -51,7 +51,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 RELAY=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TOPOLOGY_A=0 RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -163,7 +163,7 @@
       <description>RPL/TSCH Node</description>
       <source>[CONFIG_DIR]/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_RL_ASL_TOPOLOGY_A=0 MAKE_WITH_RL_ASL=1 LEAF=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja idle-listening.cooja MAKE_WITH_TRAFFIC_PATTERN=3 MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TOPOLOGY_A=0 LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
