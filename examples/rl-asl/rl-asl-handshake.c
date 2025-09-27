@@ -11,6 +11,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Contiki timing/random helpers */
+#include "lib/random.h"
+#include "sys/etimer.h"
+#include "sys/ctimer.h"
+
 /* Log configuration */
 #include "os/sys/log.h"
 #define LOG_MODULE "rl-asl-handshake"
@@ -57,6 +62,24 @@ static void do_ack(void *ptr);
 static void send_ack(uint16_t version, const linkaddr_t *dest);
 static void send_handshake_to_parent(const linkaddr_t *addr);
 static void eventhandler(process_event_t ev, process_data_t data);
+
+/* Compute backoff (in clock ticks) for a given retry_count.
+ * base = CLOCK_SECOND (1s), exponential backoff 2^retry (capped at 2^4),
+ * and add up to +50% random jitter to desynchronize retries. */
+static clock_time_t
+compute_backoff_ticks(uint8_t retry)
+{
+    uint8_t capped = (retry > 4) ? 4 : retry;
+    /* base backoff */
+    clock_time_t base = CLOCK_SECOND * (1u << capped);
+
+    /* jitter up to 50% of base */
+    uint32_t jitter_max = (uint32_t)base / 2u;
+    uint32_t r = random_rand(); /* 0..65535 */
+    uint32_t jitter = (jitter_max == 0) ? 0 : (r % (jitter_max + 1));
+
+    return base + (clock_time_t)jitter;
+}
 
 /***************************************************************/
 /* ctimer callback that actually sends the ACK (calls IP output) */
@@ -115,10 +138,24 @@ send_ack(uint16_t version, const linkaddr_t *dest)
     ack_params.version = version;
     linkaddr_copy(&ack_params.dest, dest);
 
-    ctimer_set(&ack_params.ack_timer, 0, do_ack, &ack_params);
-
-    LOG_DBG("ACK scheduled in %lu ticks for %02x:%02x (version=%u)\n",
-            (unsigned long)0, dest->u8[0], dest->u8[1], ack_params.version);
+    /* Small randomized delay window to avoid ACK collisions.
+     * Use up to 1/4 second random delay (tunable). */
+    clock_time_t max_ack_jitter = CLOCK_SECOND / 4u;
+    if (max_ack_jitter == 0)
+    {
+        /* If CLOCK_SECOND is small (unlikely), fall back to 1 tick */
+        ctimer_set(&ack_params.ack_timer, 1, do_ack, &ack_params);
+        LOG_DBG("ACK scheduled in %lu ticks (fallback 1) for %02x:%02x (version=%u)\n",
+                (unsigned long)1, dest->u8[0], dest->u8[1], ack_params.version);
+    }
+    else
+    {
+        uint32_t r = random_rand();
+        clock_time_t delay = (clock_time_t)(r % (max_ack_jitter + 1));
+        ctimer_set(&ack_params.ack_timer, delay, do_ack, &ack_params);
+        LOG_DBG("ACK scheduled in %lu ticks for %02x:%02x (version=%u)\n",
+                (unsigned long)delay, dest->u8[0], dest->u8[1], ack_params.version);
+    }
 }
 /***************************************************************/
 /* Called when we receive a handshake ACK packet from the network.
@@ -275,8 +312,8 @@ eventhandler(process_event_t ev, process_data_t data)
             send_handshake_to_parent(&parent_addr);
 
             /* Arm resend timer: if no ACK arrives within timeout, we will handle resend.
-             * initial timeout = 1 second (tunable) */
-            etimer_set(&resend_timer, CLOCK_SECOND);
+             * initial timeout = randomized around 1 second (compute_backoff_ticks with retry_count=0) */
+            etimer_set(&resend_timer, compute_backoff_ticks(0));
         }
         else
         {
@@ -307,8 +344,8 @@ eventhandler(process_event_t ev, process_data_t data)
                 LOG_WARN("Forced resend (retry %u) for handshake\n", (unsigned)retry_count);
                 handshake_version = (uint16_t)(handshake_version + 1);
                 send_handshake_to_parent(&parent_addr);
-                /* backoff: double timeout each retry (capped) */
-                etimer_set(&resend_timer, CLOCK_SECOND * (1 << (retry_count > 4 ? 4 : retry_count)));
+                /* backoff: exponential with jitter */
+                etimer_set(&resend_timer, compute_backoff_ticks(retry_count));
             }
             else
             {
@@ -340,7 +377,7 @@ eventhandler(process_event_t ev, process_data_t data)
                     LOG_WARN("Handshake timeout — resending handshake (retry %u)\n", (unsigned)retry_count);
                     handshake_version = (uint16_t)(handshake_version + 1);
                     send_handshake_to_parent(&parent_addr);
-                    etimer_set(&resend_timer, CLOCK_SECOND * (1 << (retry_count > 4 ? 4 : retry_count)));
+                    etimer_set(&resend_timer, compute_backoff_ticks(retry_count));
                 }
                 else
                 {
@@ -362,6 +399,10 @@ PROCESS_THREAD(rl_asl_handshake_process, ev, data)
     PROCESS_BEGIN();
 
     LOG_INFO("RL ASL Handshake process started\n");
+
+    /* Seed PRNG to make randomized backoff effective.
+     * Good seeds include node address + clock time. */
+    random_init((unsigned short)(linkaddr_node_addr.u8[0] + linkaddr_node_addr.u8[1] + (unsigned)clock_time()));
 
     /* Initialize parent to null */
     linkaddr_copy(&parent_addr, &linkaddr_null);
