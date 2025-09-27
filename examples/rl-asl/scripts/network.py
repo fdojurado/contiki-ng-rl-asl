@@ -366,8 +366,8 @@ class Network:
                 node_avg_latency = node.delay_get_average()
                 if node_avg_latency is not None:
                     latency[node.id] = {
-                        'average_us': node_avg_latency['microseconds'],
-                        'samples_us': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
+                        'average_ms': node_avg_latency['milliseconds'],
+                        'samples_s': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
                     }
 
         if not latency:
@@ -375,16 +375,16 @@ class Network:
             return {}
 
         # --- Per-node averages ---
-        node_avgs = [latency[node_id]['average_us'] for node_id in latency]
+        node_avgs = [latency[node_id]['average_ms'] for node_id in latency]
 
         # --- Per-sample averages across nodes ---
         per_sample_avgs = {}
         # get union of all sample keys
         all_seqs = set().union(
-            *[set(latency[node_id]['samples_us'].keys()) for node_id in latency])
+            *[set(latency[node_id]['samples_s'].keys()) for node_id in latency])
         for seq in sorted(all_seqs):
-            values = [latency[node_id]['samples_us'][seq]
-                      for node_id in latency if seq in latency[node_id]['samples_us']]
+            values = [latency[node_id]['samples_s'][seq]
+                      for node_id in latency if seq in latency[node_id]['samples_s']]
             if values:
                 per_sample_avgs[seq] = float(np.mean(values))
 
@@ -398,9 +398,9 @@ class Network:
         if 'latency' not in results['network']:
             results['network']['latency'] = {}
 
-        results['network']['latency']['avg_latency_us'] = network_avg_latency
-        results['network']['latency']['std_latency_us'] = network_std_latency
-        results['network']['latency']['per_sample_avg_us'] = per_sample_avgs
+        results['network']['latency']['avg_latency_ms'] = network_avg_latency
+        results['network']['latency']['std_latency_ms'] = network_std_latency
+        results['network']['latency']['per_sample_avg_s'] = per_sample_avgs
 
     def calc_latency(self, results: Dict[int, Dict[str, Any]]) -> None:
         # Lets loop through the unique node id and sort them first
@@ -414,8 +414,8 @@ class Network:
                     if node.id not in results:
                         results[node.id] = {}
                     results[node.id]['latency'] = {
-                        'average_us': node_avg_latency['microseconds'],
-                        'samples_us': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
+                        'average_ms': node_avg_latency['milliseconds'],
+                        'samples_s': {seq: sample.delay for seq, sample in delay_samples.items() if sample.delay is not None},
                     }
 
     def calc_avg_packet_loss(self, results: Dict[int, Dict[str, Any]]) -> None:

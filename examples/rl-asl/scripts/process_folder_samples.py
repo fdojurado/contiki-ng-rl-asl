@@ -184,8 +184,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         if "avg_mJ" in energy:
             net_avg_energy.append(float(energy["avg_mJ"]))
 
-        if "avg_latency_us" in latency:
-            net_avg_latency.append(float(latency["avg_latency_us"]))
+        if "avg_latency_ms" in latency:
+            net_avg_latency.append(float(latency["avg_latency_ms"]))
 
         if "avg" in packet_loss:
             net_avg_plr.append(float(packet_loss["avg"]))
@@ -215,8 +215,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             for seq, val in energy["per_sample_avg_mJ"].items():
                 net_per_sample_energy.setdefault(seq, []).append(float(val))
 
-        if "per_sample_avg_us" in latency and isinstance(latency["per_sample_avg_us"], dict):
-            for seq, val in latency["per_sample_avg_us"].items():
+        if "per_sample_avg_s" in latency and isinstance(latency["per_sample_avg_s"], dict):
+            for seq, val in latency["per_sample_avg_s"].items():
                 net_per_sample_latency.setdefault(seq, []).append(float(val))
 
         if "samples" in packet_loss and isinstance(packet_loss["samples"], dict):
@@ -406,8 +406,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
     net_summary["latency"] = {}
     mu, su = safe_mean_std(net_avg_latency)
-    net_summary["latency"]["avg_us"] = mu
-    net_summary["latency"]["std_us"] = su
+    net_summary["latency"]["avg_ms"] = mu
+    net_summary["latency"]["std_ms"] = su
 
     net_summary["packet_loss"] = {}
     mu, su = safe_mean_std(net_avg_plr)
@@ -450,10 +450,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         net_summary["energy"]["per_sample_avg_mJ"][seq] = {
             "avg": mu, "std": su}
 
-    net_summary["latency"]["per_sample_avg_us"] = {}
+    net_summary["latency"]["per_sample_avg_s"] = {}
     for seq, vals in net_per_sample_latency.items():
         mu, su = safe_mean_std(vals)
-        net_summary["latency"]["per_sample_avg_us"][seq] = {
+        net_summary["latency"]["per_sample_avg_s"][seq] = {
             "avg": mu, "std": su}
 
     net_summary["packet_loss"]["per_sample_avg"] = {}
@@ -468,10 +468,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         net_summary["packet_delivery_ratio"]["per_sample_avg"][seq] = {
             "avg": mu, "std": su}
 
-    net_summary["jitter"]["per_sample_avg_us"] = {}
+    net_summary["jitter"]["per_sample_avg_s"] = {}
     for seq, vals in net_per_sample_jitter.items():
         mu, su = safe_mean_std(vals)
-        net_summary["jitter"]["per_sample_avg_us"][seq] = {
+        net_summary["jitter"]["per_sample_avg_s"][seq] = {
             "avg": mu, "std": su}
 
     net_summary["rdc"]["per_sample_avg"] = {}

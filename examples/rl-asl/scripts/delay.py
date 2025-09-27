@@ -28,6 +28,8 @@ from typing import Optional
 
 logger = logging.getLogger(f'main.{__name__}')
 
+SLOTFRAME_DURATION_S = 0.01 # in seconds, 10ms
+
 
 class Delay():
     def __init__(
@@ -89,10 +91,9 @@ class DelaySamples():
         avg_delay = sum(
             sample.delay for sample in valid_samples) / len(valid_samples)
         # Calculate the average delay in milliseconds
-        avg_delay_ms = avg_delay / 1000
+        avg_delay_ms = avg_delay * 1e3
         return {
             'milliseconds': avg_delay_ms,
-            'microseconds': avg_delay
         }
 
     def get_jitter_average(self) -> Optional[Dict[str, float]]:
@@ -164,7 +165,7 @@ class DelaySamples():
         if sample:
             sample.time_at_rx = time_at_rx
             # Calculate the delay
-            delay = sample.time_at_rx - sample.time_at_tx
+            delay = (sample.time_at_rx - sample.time_at_tx) * SLOTFRAME_DURATION_S
             sample.delay = delay
         else:
             logger.warning(
