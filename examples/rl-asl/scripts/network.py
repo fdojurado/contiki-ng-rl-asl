@@ -82,6 +82,7 @@ class Network:
                 if node_avg_power is not None:
                     power[node.id] = {
                         'average_mW': node_avg_power['average_mW'],
+                        'average_cpu_mW': node_avg_power['average_cpu_mW'],
                         'average_radio_mW': node_avg_power['average_radio_mW'],
                         'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
@@ -98,6 +99,7 @@ class Network:
 
         # -- Per-node averages ---
         node_avgs = [power[node_id]['average_mW'] for node_id in power]
+        node_cpu_avgs = [power[node_id]['average_cpu_mW'] for node_id in power]
         node_radio_avgs = [power[node_id]['average_radio_mW'] for node_id in power]
         node_tx_avgs = [power[node_id]['average_tx_mW'] for node_id in power]
         node_rx_avgs = [power[node_id]['average_rx_mW'] for node_id in power]
@@ -120,6 +122,8 @@ class Network:
         # --- Network-wide stats ---
         network_avg_power = float(np.mean(node_avgs))
         network_std_power = float(np.std(node_avgs))
+        network_avg_cpu_power = float(np.mean(node_cpu_avgs))
+        network_std_cpu_power = float(np.std(node_cpu_avgs))
         network_avg_radio_power = float(np.mean(node_radio_avgs))
         network_std_radio_power = float(np.std(node_radio_avgs))
         network_avg_tx_power = float(np.mean(node_tx_avgs))
@@ -142,6 +146,8 @@ class Network:
 
         results['network']['power']['avg_mW'] = network_avg_power
         results['network']['power']['std_mW'] = network_std_power
+        results['network']['power']['avg_cpu_mW'] = network_avg_cpu_power
+        results['network']['power']['std_cpu_mW'] = network_std_cpu_power
         results['network']['power']['avg_radio_mW'] = network_avg_radio_power
         results['network']['power']['std_radio_mW'] = network_std_radio_power
         results['network']['power']['avg_tx_mW'] = network_avg_tx_power
@@ -171,6 +177,7 @@ class Network:
                     results[node.id]['power'] = {
                         'joined_time': node.joined_time,
                         'average_mW': node_avg_power['average_mW'],
+                        'average_cpu_mW': node_avg_power['average_cpu_mW'],
                         'average_radio_mW': node_avg_power['average_radio_mW'],
                         'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
