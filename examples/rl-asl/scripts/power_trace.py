@@ -61,8 +61,12 @@ class PowerTrace():
         total_time_secs=None,
         total_time_ticks=None,
         power=None,
+        radio_power=None,
+        tx_power=None,
         rx_power=None,
+        rx_uc_total_power=None,
         rx_uc_power=None,
+        rx_uc_idle_power=None,
         energy=None,
         rdc=None,
         cpu_activity=None,
@@ -108,8 +112,12 @@ class PowerTrace():
         self.total_time_secs = total_time_secs
         self.total_time_ticks = total_time_ticks
         self.power = power
+        self.radio_power = radio_power
+        self.tx_power = tx_power
         self.rx_power = rx_power
+        self.rx_uc_total_power = rx_uc_total_power
         self.rx_uc_power = rx_uc_power
+        self.rx_uc_idle_power = rx_uc_idle_power
         self.energy = energy
         self.rdc = rdc
         self.cpu_activity = cpu_activity
@@ -155,33 +163,69 @@ class PowerTraceSamples():
             return None
         # Calculate the average power consumption of samples with time greater than joined_time
         total_power = 0
+        total_radio_power = 0
+        total_tx_power = 0
         total_rx_power = 0
+        total_rx_uc_total_power = 0
         total_rx_uc_power = 0
+        total_rx_uc_idle_power = 0
         count = 0
+        radio_power_count = 0
+        tx_power_count = 0
         rx_power_count = 0
+        rx_uc_total_power_count = 0
         rx_uc_power_count = 0
+        rx_uc_idle_power_count = 0
         for sample in self.samples.values():
             if sample.power is not None:
                 if joined_time is None or sample.time >= joined_time:
                     total_power += sample.power
                     count += 1
+            if sample.radio_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_radio_power += sample.radio_power
+                    radio_power_count += 1
+            if sample.tx_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_tx_power += sample.tx_power
+                    tx_power_count += 1
             if sample.rx_power is not None:
                 if joined_time is None or sample.time >= joined_time:
                     total_rx_power += sample.rx_power
                     rx_power_count += 1
+            if sample.rx_uc_total_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_rx_uc_total_power += sample.rx_uc_total_power
+                    rx_uc_total_power_count += 1
             if sample.rx_uc_power is not None:
                 if joined_time is None or sample.time >= joined_time:
                     total_rx_uc_power += sample.rx_uc_power
                     rx_uc_power_count += 1
+            if sample.rx_uc_idle_power is not None:
+                if joined_time is None or sample.time >= joined_time:
+                    total_rx_uc_idle_power += sample.rx_uc_idle_power
+                    rx_uc_idle_power_count += 1
         if count == 0:
             return None
-        if rx_uc_power_count == 0:
+        if radio_power_count == 0:
+            return None
+        if tx_power_count == 0:
+            return None
+        if rx_uc_total_power_count == 0:
             return None
         if rx_power_count == 0:
             return None
+        if rx_uc_power_count == 0:
+            return None
+        if rx_uc_idle_power_count == 0:
+            return None
         average_power = total_power / count
+        average_radio_power = total_radio_power / radio_power_count
+        average_tx_power = total_tx_power / tx_power_count
         average_rx_power = total_rx_power / rx_power_count
+        average_rx_uc_total_power = total_rx_uc_total_power / rx_uc_total_power_count
         average_rx_uc_power = total_rx_uc_power / rx_uc_power_count
+        average_rx_uc_idle_power = total_rx_uc_idle_power / rx_uc_idle_power_count
         # Calculate the average RDC of samples with time greater than joined_time
         total_rdc = 0
         rdc_count = 0
@@ -194,8 +238,12 @@ class PowerTraceSamples():
 
         return {
             'average_mW': average_power,
+            'average_radio_mW': average_radio_power,
+            'average_tx_mW': average_tx_power,
             'average_rx_mW': average_rx_power,
+            'average_rx_uc_total_mW': average_rx_uc_total_power,
             'average_rx_uc_mW': average_rx_uc_power,
+            'average_rx_uc_idle_mW': average_rx_uc_idle_power,
             'samples_mW': {seq: sample.power for seq, sample in self.samples.items() if sample.power is not None},
             'average_rdc': average_rdc,
         }
@@ -251,7 +299,7 @@ class PowerTraceSamples():
         # Update the sample with the new data
         setattr(power_trace, data_type, data.get("value"))
         # If we have all the data, we can calculate the total power
-        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "radio_total", "total_time_secs", "total_time_ticks"]]):
+        if all([getattr(power_trace, attr) is not None for attr in ["cpu", "lpm", "deep_lpm", "tx", "rx", "uc_rx", "uc_idle_rx", "radio_total", "total_time_secs", "total_time_ticks"]]):
             # Calculate energy
             cpu_time = int(getattr(power_trace, "cpu", 0))
             lpm_time = int(getattr(power_trace, "lpm", 0))
@@ -259,6 +307,7 @@ class PowerTraceSamples():
             tx_time = int(getattr(power_trace, "tx", 0))
             rx_time = int(getattr(power_trace, "rx", 0))
             uc_rx_time = int(getattr(power_trace, "uc_rx", 0))
+            uc_idle_rx_time = int(getattr(power_trace, "uc_idle_rx", 0))
             radio_total_time = int(getattr(power_trace, "radio_total", 0))
             total_time_ticks = int(getattr(power_trace, "total_time_ticks", 1))
             total_time_secs = int(getattr(power_trace, "total_time_secs", 1))
@@ -267,11 +316,18 @@ class PowerTraceSamples():
                             deep_lpm_time * CURRENT["DEEP_LPM"] +
                             tx_time * CURRENT["TX"] +
                             rx_time * CURRENT["RX"])  # tick × mA
+            radio_energy = (tx_time * CURRENT["TX"] +
+                            rx_time * CURRENT["RX"])  # tick × mA
+            tx_energy = tx_time * CURRENT["TX"]
             rx_energy = rx_time * CURRENT["RX"]
-            rx_uc_energy = uc_rx_time * CURRENT["RX"]
+            rx_uc_total_energy = uc_rx_time * CURRENT["RX"]
+            rx_uc_idle_energy = uc_idle_rx_time * CURRENT["RX"]
             power = total_energy * VOLTAGE / total_time_ticks  # mW
+            radio_power = radio_energy * VOLTAGE / total_time_ticks  # mW
+            tx_power = tx_energy * VOLTAGE / total_time_ticks  # mW
             rx_power = rx_energy * VOLTAGE / total_time_ticks  # mW
-            rx_uc_power = rx_uc_energy * VOLTAGE / total_time_ticks  # mW
+            rx_uc_total_power = rx_uc_total_energy * VOLTAGE / total_time_ticks  # mW
+            rx_uc_idle_power = rx_uc_idle_energy * VOLTAGE / total_time_ticks  # mW
             energy_mj = power * total_time_secs
 
             cpu_activity = cpu_time / total_time_ticks
@@ -281,8 +337,12 @@ class PowerTraceSamples():
             power_trace.radio_activity = radio_activity
 
             power_trace.power = power
+            power_trace.radio_power = radio_power
+            power_trace.tx_power = tx_power
             power_trace.rx_power = rx_power
-            power_trace.rx_uc_power = rx_uc_power
+            power_trace.rx_uc_total_power = rx_uc_total_power
+            power_trace.rx_uc_idle_power = rx_uc_idle_power
+            power_trace.rx_uc_power = rx_uc_total_power - rx_uc_idle_power
 
             power_trace.rdc = radio_total_time / \
                 total_time_ticks if total_time_ticks > 0 else 0

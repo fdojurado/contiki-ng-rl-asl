@@ -82,8 +82,12 @@ class Network:
                 if node_avg_power is not None:
                     power[node.id] = {
                         'average_mW': node_avg_power['average_mW'],
+                        'average_radio_mW': node_avg_power['average_radio_mW'],
+                        'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_uc_total_mW': node_avg_power['average_rx_uc_total_mW'],
                         'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
+                        'average_rx_uc_idle_mW': node_avg_power['average_rx_uc_idle_mW'],
                         'samples_mW': {seq: sample.power for seq, sample in power_samples.items() if sample.power is not None},
                     }
 
@@ -93,8 +97,12 @@ class Network:
 
         # -- Per-node averages ---
         node_avgs = [power[node_id]['average_mW'] for node_id in power]
+        node_radio_avgs = [power[node_id]['average_radio_mW'] for node_id in power]
+        node_tx_avgs = [power[node_id]['average_tx_mW'] for node_id in power]
         node_rx_avgs = [power[node_id]['average_rx_mW'] for node_id in power]
+        node_rx_uc_total_avgs = [power[node_id]['average_rx_uc_total_mW'] for node_id in power]
         node_rx_uc_avgs = [power[node_id]['average_rx_uc_mW'] for node_id in power]
+        node_rx_uc_idle_avgs = [power[node_id]['average_rx_uc_idle_mW'] for node_id in power]
 
         # --- Per-sample averages across nodes ---
         per_sample_avgs = {}
@@ -110,11 +118,18 @@ class Network:
         # --- Network-wide stats ---
         network_avg_power = float(np.mean(node_avgs))
         network_std_power = float(np.std(node_avgs))
+        network_avg_radio_power = float(np.mean(node_radio_avgs))
+        network_std_radio_power = float(np.std(node_radio_avgs))
+        network_avg_tx_power = float(np.mean(node_tx_avgs))
+        network_std_tx_power = float(np.std(node_tx_avgs))
         network_avg_rx_power = float(np.mean(node_rx_avgs))
         network_std_rx_power = float(np.std(node_rx_avgs))
+        network_avg_rx_uc_total_power = float(np.mean(node_rx_uc_total_avgs))
+        network_std_rx_uc_total_power = float(np.std(node_rx_uc_total_avgs))
         network_avg_rx_uc_power = float(np.mean(node_rx_uc_avgs))
         network_std_rx_uc_power = float(np.std(node_rx_uc_avgs))
-
+        network_avg_rx_uc_idle_power = float(np.mean(node_rx_uc_idle_avgs))
+        network_std_rx_uc_idle_power = float(np.std(node_rx_uc_idle_avgs))
         # Store results
         if 'network' not in results:
             results['network'] = {}
@@ -123,10 +138,18 @@ class Network:
 
         results['network']['power']['avg_mW'] = network_avg_power
         results['network']['power']['std_mW'] = network_std_power
+        results['network']['power']['avg_radio_mW'] = network_avg_radio_power
+        results['network']['power']['std_radio_mW'] = network_std_radio_power
+        results['network']['power']['avg_tx_mW'] = network_avg_tx_power
+        results['network']['power']['std_tx_mW'] = network_std_tx_power
         results['network']['power']['avg_rx_mW'] = network_avg_rx_power
         results['network']['power']['std_rx_mW'] = network_std_rx_power
+        results['network']['power']['avg_rx_uc_total_mW'] = network_avg_rx_uc_total_power
+        results['network']['power']['std_rx_uc_total_mW'] = network_std_rx_uc_total_power
         results['network']['power']['avg_rx_uc_mW'] = network_avg_rx_uc_power
         results['network']['power']['std_rx_uc_mW'] = network_std_rx_uc_power
+        results['network']['power']['avg_rx_uc_idle_mW'] = network_avg_rx_uc_idle_power
+        results['network']['power']['std_rx_uc_idle_mW'] = network_std_rx_uc_idle_power
         results['network']['power']['per_sample_avg_mW'] = per_sample_avgs
 
     def calc_power_trace(self, results: Dict[int, Dict[str, Any]]) -> None:
@@ -142,8 +165,12 @@ class Network:
                     results[node.id]['power'] = {
                         'joined_time': node.joined_time,
                         'average_mW': node_avg_power['average_mW'],
+                        'average_radio_mW': node_avg_power['average_radio_mW'],
+                        'average_tx_mW': node_avg_power['average_tx_mW'],
                         'average_rx_mW': node_avg_power['average_rx_mW'],
+                        'average_rx_uc_total_mW': node_avg_power['average_rx_uc_total_mW'],
                         'average_rx_uc_mW': node_avg_power['average_rx_uc_mW'],
+                        'average_rx_uc_idle_mW': node_avg_power['average_rx_uc_idle_mW'],
                     }
                     for seq, sample in power_trace.items():
                         if sample.power is not None:

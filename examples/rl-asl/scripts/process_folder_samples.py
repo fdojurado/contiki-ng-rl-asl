@@ -125,8 +125,12 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
     # Collectors
     net_avg_power: List[float] = []   # "avg_mW" across runs
+    net_avg_radio_power: List[float] = []   # "avg_radio_mW" across runs
+    net_avg_tx_power: List[float] = []   # "avg_tx_mW" across runs
     net_avg_rx_power: List[float] = []   # "avg_mW" across runs
+    net_avg_rx_uc_total_power: List[float] = []   # "avg_mW" across runs
     net_avg_rx_uc_power: List[float] = []   # "avg_mW" across runs
+    net_avg_rx_uc_idle_power: List[float] = []   # "avg_mW" across runs
     net_avg_cpu: List[float] = []    # "avg_cpu" across runs
     net_avg_radio: List[float] = []  # "avg_radio" across runs
     net_avg_energy: List[float] = []   # "avg_mJ" across runs
@@ -168,12 +172,25 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
         if "avg_mW" in power:
             net_avg_power.append(float(power["avg_mW"]))
-            
+
+        if "avg_radio_mW" in power:
+            net_avg_radio_power.append(float(power["avg_radio_mW"]))
+
+        if "avg_tx_mW" in power:
+            net_avg_tx_power.append(float(power["avg_tx_mW"]))
+
         if "avg_rx_mW" in power:
             net_avg_rx_power.append(float(power["avg_rx_mW"]))
 
+        if "avg_rx_uc_total_mW" in power:
+            net_avg_rx_uc_total_power.append(
+                float(power["avg_rx_uc_total_mW"]))
+
         if "avg_rx_uc_mW" in power:
             net_avg_rx_uc_power.append(float(power["avg_rx_uc_mW"]))
+
+        if "avg_rx_uc_idle_mW" in power:
+            net_avg_rx_uc_idle_power.append(float(power["avg_rx_uc_idle_mW"]))
 
         if "avg" in cpu:
             net_avg_cpu.append(float(cpu["avg"]))
@@ -374,20 +391,45 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
     mu, su = safe_mean_std(net_avg_power)
     net_summary["power"]["avg_mW"] = mu
     net_summary["power"]["std_mW"] = su
-    
+
+    net_summary["power"]["avg_radio_mW"] = 0.0
+    net_summary["power"]["std_radio_mW"] = 0.0
+    if net_avg_radio_power:
+        mu, su = safe_mean_std(net_avg_radio_power)
+        net_summary["power"]["avg_radio_mW"] = mu
+        net_summary["power"]["std_radio_mW"] = su
+
+    net_summary["power"]["avg_tx_mW"] = 0.0
+    net_summary["power"]["std_tx_mW"] = 0.0
+    if net_avg_tx_power:
+        mu, su = safe_mean_std(net_avg_tx_power)
+        net_summary["power"]["avg_tx_mW"] = mu
+        net_summary["power"]["std_tx_mW"] = su
+
     net_summary["power"]["avg_rx_mW"] = 0.0
     net_summary["power"]["std_rx_mW"] = 0.0
     if net_avg_rx_power:
         mu, su = safe_mean_std(net_avg_rx_power)
         net_summary["power"]["avg_rx_mW"] = mu
         net_summary["power"]["std_rx_mW"] = su
-        
+
+    net_summary["power"]["avg_rx_uc_total_mW"] = 0.0
+    net_summary["power"]["std_rx_uc_total_mW"] = 0.0
+    if net_avg_rx_uc_total_power:
+        mu, su = safe_mean_std(net_avg_rx_uc_total_power)
+        net_summary["power"]["avg_rx_uc_total_mW"] = mu
+        net_summary["power"]["std_rx_uc_total_mW"] = su
+
     net_summary["power"]["avg_rx_uc_mW"] = 0.0
     net_summary["power"]["std_rx_uc_mW"] = 0.0
     if net_avg_rx_uc_power:
         mu, su = safe_mean_std(net_avg_rx_uc_power)
         net_summary["power"]["avg_rx_uc_mW"] = mu
         net_summary["power"]["std_rx_uc_mW"] = su
+
+    mu, su = safe_mean_std(net_avg_rx_uc_idle_power)
+    net_summary["power"]["avg_rx_uc_idle_mW"] = mu
+    net_summary["power"]["std_rx_uc_idle_mW"] = su
 
     mu, su = safe_mean_std(net_avg_cpu)
     net_summary["cpu"] = {}
