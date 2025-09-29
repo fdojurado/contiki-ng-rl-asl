@@ -847,6 +847,142 @@ def plot_protocol_metric_heatmap(networks, labels, output_folder):
     plt.close()
 
 
+from matplotlib.patches import Patch
+
+def plot_stacked_bar(networks, labels, metric, output_folder):
+    """
+    Stacked bar chart for power consumption breakdown across protocols.
+    RX is grouped: all subcomponents share the same color (different hatches),
+    and a boundary outline shows the total RX block.
+    """
+
+    info = METRIC_INFO[metric]
+
+    # --- define components in hierarchical order ---
+    components = [
+        "avg_cpu_mW",
+        "avg_tx_mW",
+        "avg_rx_non_uc_total_mW",
+        "avg_rx_uc_mW",
+        "avg_rx_uc_idle_mW",
+    ]
+    labels_comp = [
+        "CPU",
+        "TX",
+        "RX non-UC",
+        "RX UC active",
+        "RX UC idle",
+    ]
+
+    # --- colors & hatches ---
+    base_rx_color = "#C44E52"  # unified RX base color
+    colors = {
+        "avg_cpu_mW": "#4C72B0",         # CPU (blue)
+        "avg_tx_mW": "#55A868",          # TX (green)
+        "avg_rx_non_uc_total_mW": base_rx_color,
+        "avg_rx_uc_mW": base_rx_color,
+        "avg_rx_uc_idle_mW": base_rx_color,
+    }
+    hatches = {
+        "avg_cpu_mW": "", 
+        "avg_tx_mW": "//",
+        "avg_rx_non_uc_total_mW": "\\\\",   # dark pattern
+        "avg_rx_uc_mW": "xx",              # medium pattern
+        "avg_rx_uc_idle_mW": "oo",         # light pattern
+    }
+
+    # --- collect data ---
+    data = {comp: [] for comp in components}
+    rx_total = []
+    for net in networks:
+        power = net["network"]["power"]
+        for comp in components:
+            data[comp].append(power.get(comp, 0.0))
+        rx_total.append(power.get("avg_rx_mW", 0.0))
+
+    n = len(labels)
+    ind = np.arange(n)
+    width = 0.6
+
+    fig, ax = plt.subplots(figsize=get_figsize(metric, plot_type="bar"))
+
+    # --- stacked bars ---
+    bottom = np.zeros(n)
+    for comp in components:
+        ax.bar(
+            ind,
+            data[comp],
+            width,
+            bottom=bottom,
+            label=comp,  # temp label (we'll override legend below)
+            color=colors[comp],
+            edgecolor="black",
+            linewidth=1.2,
+            hatch=hatches[comp]
+        )
+        bottom += np.array(data[comp])
+
+    # --- RX total outline ---
+    cpu_tx = np.array(data["avg_cpu_mW"]) + np.array(data["avg_tx_mW"])
+    ax.bar(
+        ind,
+        rx_total,
+        width,
+        bottom=cpu_tx,
+        color="none",
+        edgecolor="red",
+        linewidth=1.5,
+        linestyle="--",
+        label="RX (group)"
+    )
+
+    # --- axis labels ---
+    if show_axis_label(metric, "y", plot_type="bar"):
+        ax.set_ylabel(
+            info["label_with_units"],
+            fontsize=get_fontsize(
+                metric, "ylabel", Y_LABEL_FONT_SIZE, plot_type="bar")
+        )
+    else:
+        ax.set_ylabel("")
+
+    if show_axis_label(metric, "x", plot_type="bar"):
+        ax.set_xlabel("Protocols",
+                      fontsize=get_fontsize(metric, "xlabel", X_LABEL_FONT_SIZE, plot_type="bar"))
+    else:
+        ax.set_xlabel("")
+
+    # --- ticks & labels ---
+    ax.set_xticks(ind)
+    ax.set_xticklabels(labels, rotation=20, ha="right", fontsize=10)
+
+    # --- grid ---
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
+
+    # --- custom legend ---
+    legend_elements = [
+        Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
+        Patch(facecolor="#55A868", edgecolor="black", hatch="//", label="TX"),
+        Patch(facecolor=base_rx_color, edgecolor="black", hatch="\\\\", label="RX non-UC"),
+        Patch(facecolor=base_rx_color, edgecolor="black", hatch="xx", label="RX UC active"),
+        Patch(facecolor=base_rx_color, edgecolor="black", hatch="oo", label="RX UC idle"),
+        Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)")
+    ]
+
+    ax.legend(
+        handles=legend_elements,
+        bbox_to_anchor=(1.01, 1),
+        loc="upper left",
+        frameon=False,
+        fontsize=9
+    )
+
+    fig.tight_layout()
+    output_path = os.path.join(output_folder, f"{metric}_stacked_bar.pdf")
+    fig.savefig(output_path, format="pdf", bbox_inches="tight")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Compare COOJA simulation results from multiple JSON files."
@@ -915,3 +1051,8 @@ if __name__ == "__main__":
 
     # --- Protocol × Metric Heatmap ---
     plot_protocol_metric_heatmap(networks, labels, args.output_folder)
+
+    # Lets plot stacked bar chart for power consumption breakdown
+    metric = "power"
+    info = METRIC_INFO[metric]
+    plot_stacked_bar(networks, labels, metric, args.output_folder)
