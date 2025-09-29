@@ -5,7 +5,20 @@
 /* Log system */
 #include "sys/log.h"
 #define LOG_MODULE "rl-asl-q-learning"
+#if RL_ASL_IS_TRAIN
+#ifndef LOG_CONF_LEVEL_RL_ASL_Q_LEARNING
+// Default to INFO if not defined
+#define LOG_CONF_LEVEL_RL_ASL_Q_LEARNING LOG_LEVEL_INFO
+#endif /* LOG_CONF_LEVEL_RL_ASL_Q_LEARNING */
+// Ensure minimum level INFO during training
+#if LOG_CONF_LEVEL_RL_ASL_Q_LEARNING < LOG_LEVEL_INFO
+#undef LOG_CONF_LEVEL_RL_ASL_Q_LEARNING
+#define LOG_CONF_LEVEL_RL_ASL_Q_LEARNING LOG_LEVEL_INFO
+#endif /* LOG_CONF_LEVEL_RL_ASL_Q_LEARNING */
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_Q_LEARNING
+#elif RL_ASL_IS_EVAL
+#define LOG_LEVEL LOG_LEVEL_NONE
+#endif /* RL_ASL_IS_TRAIN */
 
 #if RL_ASL_IS_EVAL
 #include "rl-asl-federated-q-global.h"

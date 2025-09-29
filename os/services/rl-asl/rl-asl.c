@@ -12,7 +12,20 @@
 /* log */
 #include "sys/log.h"
 #define LOG_MODULE "rl-asl"
+#if RL_ASL_IS_TRAIN
+#ifndef LOG_CONF_LEVEL_RL_ASL
+// Default to INFO if not defined
+#define LOG_CONF_LEVEL_RL_ASL LOG_LEVEL_INFO
+#endif /* LOG_CONF_LEVEL_RL_ASL */
+// Ensure minimum level INFO during training
+#if LOG_CONF_LEVEL_RL_ASL < LOG_LEVEL_INFO
+#undef LOG_CONF_LEVEL_RL_ASL
+#define LOG_CONF_LEVEL_RL_ASL LOG_LEVEL_INFO
+#endif /* LOG_CONF_LEVEL_RL_ASL */
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL
+#elif RL_ASL_IS_EVAL
+#define LOG_LEVEL LOG_LEVEL_NONE
+#endif /* RL_ASL_IS_TRAIN */
 
 #define RL_ASL_INVALID_EXPECTED_REWARD -1000.0f
 
