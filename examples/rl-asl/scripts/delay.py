@@ -118,10 +118,10 @@ class DelaySamples():
         if not differences:
             return None
 
-        avg_jitter = sum(differences) / len(differences)  # in microseconds
+        avg_jitter = sum(differences) / len(differences)  # in seconds
         return {
-            'milliseconds': avg_jitter / 1000,
-            'microseconds': avg_jitter
+            'milliseconds': avg_jitter * 1000,
+            'microseconds': avg_jitter * 1e6
         }
 
     def get_jitter_instantaneous_over_sequence(self) -> Optional[Dict[int, float]]:
@@ -140,7 +140,7 @@ class DelaySamples():
 
             if curr_sample.time_at_rx is not None and prev_sample.time_at_rx is not None:
                 jitter = abs(curr_sample.delay - prev_sample.delay)
-                jitter_per_seq[seq] = jitter
+                jitter_per_seq[seq] = jitter * 1000  # Convert to milliseconds
 
         return jitter_per_seq
 

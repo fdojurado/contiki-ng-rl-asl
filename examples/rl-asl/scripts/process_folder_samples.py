@@ -219,8 +219,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         if "avg" in packet_delivery:
             net_avg_pdr.append(float(packet_delivery["avg"]))
 
-        if "avg" in jitter:
-            net_avg_jitter.append(float(jitter["avg"]))
+        if "avg_ms" in jitter:
+            net_avg_jitter.append(float(jitter["avg_ms"]))
 
         if "avg" in duty_cycle:
             net_avg_duty_cycle.append(float(duty_cycle["avg"]))
@@ -241,8 +241,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             for seq, val in energy["per_sample_avg_mJ"].items():
                 net_per_sample_energy.setdefault(seq, []).append(float(val))
 
-        if "per_sample_avg_s" in latency and isinstance(latency["per_sample_avg_s"], dict):
-            for seq, val in latency["per_sample_avg_s"].items():
+        if "per_sample_avg_ms" in latency and isinstance(latency["per_sample_avg_ms"], dict):
+            for seq, val in latency["per_sample_avg_ms"].items():
                 net_per_sample_latency.setdefault(seq, []).append(float(val))
 
         if "samples" in packet_loss and isinstance(packet_loss["samples"], dict):
@@ -253,8 +253,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             for seq, val in packet_delivery["samples"].items():
                 net_per_sample_pdr.setdefault(seq, []).append(float(val))
 
-        if "samples" in jitter and isinstance(jitter["samples"], dict):
-            for seq, val in jitter["samples"].items():
+        if "per_sample_avg_ms" in jitter and isinstance(jitter["per_sample_avg_ms"], dict):
+            for seq, val in jitter["per_sample_avg_ms"].items():
                 net_per_sample_jitter.setdefault(seq, []).append(float(val))
 
         if "per_sample_avg" in duty_cycle and isinstance(duty_cycle["per_sample_avg"], dict):
@@ -486,8 +486,8 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
 
     net_summary["jitter"] = {}
     mu, su = safe_mean_std(net_avg_jitter)
-    net_summary["jitter"]["avg_us"] = mu
-    net_summary["jitter"]["std_us"] = su
+    net_summary["jitter"]["avg_ms"] = mu
+    net_summary["jitter"]["std_ms"] = su
 
     net_summary["rdc"] = {}
     mu, su = safe_mean_std(net_avg_duty_cycle)
@@ -515,10 +515,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         net_summary["energy"]["per_sample_avg_mJ"][seq] = {
             "avg": mu, "std": su}
 
-    net_summary["latency"]["per_sample_avg_s"] = {}
+    net_summary["latency"]["per_sample_avg_ms"] = {}
     for seq, vals in net_per_sample_latency.items():
         mu, su = safe_mean_std(vals)
-        net_summary["latency"]["per_sample_avg_s"][seq] = {
+        net_summary["latency"]["per_sample_avg_ms"][seq] = {
             "avg": mu, "std": su}
 
     net_summary["packet_loss"]["per_sample_avg"] = {}
@@ -533,10 +533,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
         net_summary["packet_delivery_ratio"]["per_sample_avg"][seq] = {
             "avg": mu, "std": su}
 
-    net_summary["jitter"]["per_sample_avg_s"] = {}
+    net_summary["jitter"]["per_sample_avg_ms"] = {}
     for seq, vals in net_per_sample_jitter.items():
         mu, su = safe_mean_std(vals)
-        net_summary["jitter"]["per_sample_avg_s"][seq] = {
+        net_summary["jitter"]["per_sample_avg_ms"][seq] = {
             "avg": mu, "std": su}
 
     net_summary["rdc"]["per_sample_avg"] = {}

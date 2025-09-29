@@ -100,13 +100,18 @@ class Network:
         # -- Per-node averages ---
         node_avgs = [power[node_id]['average_mW'] for node_id in power]
         node_cpu_avgs = [power[node_id]['average_cpu_mW'] for node_id in power]
-        node_radio_avgs = [power[node_id]['average_radio_mW'] for node_id in power]
+        node_radio_avgs = [power[node_id]['average_radio_mW']
+                           for node_id in power]
         node_tx_avgs = [power[node_id]['average_tx_mW'] for node_id in power]
         node_rx_avgs = [power[node_id]['average_rx_mW'] for node_id in power]
-        node_rx_non_uc_total_avgs = [power[node_id]['average_rx_non_uc_total_mW'] for node_id in power]
-        node_rx_uc_total_avgs = [power[node_id]['average_rx_uc_total_mW'] for node_id in power]
-        node_rx_uc_avgs = [power[node_id]['average_rx_uc_mW'] for node_id in power]
-        node_rx_uc_idle_avgs = [power[node_id]['average_rx_uc_idle_mW'] for node_id in power]
+        node_rx_non_uc_total_avgs = [
+            power[node_id]['average_rx_non_uc_total_mW'] for node_id in power]
+        node_rx_uc_total_avgs = [
+            power[node_id]['average_rx_uc_total_mW'] for node_id in power]
+        node_rx_uc_avgs = [power[node_id]['average_rx_uc_mW']
+                           for node_id in power]
+        node_rx_uc_idle_avgs = [power[node_id]
+                                ['average_rx_uc_idle_mW'] for node_id in power]
 
         # --- Per-sample averages across nodes ---
         per_sample_avgs = {}
@@ -130,8 +135,10 @@ class Network:
         network_std_tx_power = float(np.std(node_tx_avgs))
         network_avg_rx_power = float(np.mean(node_rx_avgs))
         network_std_rx_power = float(np.std(node_rx_avgs))
-        network_avg_rx_non_uc_total_power = float(np.mean(node_rx_non_uc_total_avgs))
-        network_std_rx_non_uc_total_power = float(np.std(node_rx_non_uc_total_avgs))
+        network_avg_rx_non_uc_total_power = float(
+            np.mean(node_rx_non_uc_total_avgs))
+        network_std_rx_non_uc_total_power = float(
+            np.std(node_rx_non_uc_total_avgs))
         network_avg_rx_uc_total_power = float(np.mean(node_rx_uc_total_avgs))
         network_std_rx_uc_total_power = float(np.std(node_rx_uc_total_avgs))
         network_avg_rx_uc_power = float(np.mean(node_rx_uc_avgs))
@@ -427,7 +434,7 @@ class Network:
             values = [latency[node_id]['samples_s'][seq]
                       for node_id in latency if seq in latency[node_id]['samples_s']]
             if values:
-                per_sample_avgs[seq] = float(np.mean(values))
+                per_sample_avgs[seq] = float(np.mean(values)) * 1000  # convert to ms
 
         # --- Network-wide stats ---
         network_avg_latency = float(np.mean(node_avgs))
@@ -441,7 +448,7 @@ class Network:
 
         results['network']['latency']['avg_latency_ms'] = network_avg_latency
         results['network']['latency']['std_latency_ms'] = network_std_latency
-        results['network']['latency']['per_sample_avg_s'] = per_sample_avgs
+        results['network']['latency']['per_sample_avg_ms'] = per_sample_avgs
 
     def calc_latency(self, results: Dict[int, Dict[str, Any]]) -> None:
         # Lets loop through the unique node id and sort them first
@@ -589,7 +596,7 @@ class Network:
                 node_jitter = node.delay.get_jitter_average()
                 if node_jitter is not None:
                     jitter[node.id] = {
-                        'average_us': node_jitter['microseconds'],
+                        'average_ms': node_jitter['milliseconds'],
                         'samples': jitter_over_sequence
                     }
 
@@ -598,7 +605,7 @@ class Network:
             return {}
 
         # --- Per-node averages ---
-        node_avgs = [jitter[node_id]['average_us'] for node_id in jitter]
+        node_avgs = [jitter[node_id]['average_ms'] for node_id in jitter]
 
         # --- Per-sample averages across nodes ---
         per_sample_avgs = {}
@@ -622,23 +629,23 @@ class Network:
         if 'jitter' not in results['network']:
             results['network']['jitter'] = {}
 
-        results['network']['jitter']['avg'] = network_avg_jitter
-        results['network']['jitter']['std'] = network_std_jitter
-        results['network']['jitter']['samples'] = per_sample_avgs
+        results['network']['jitter']['avg_ms'] = network_avg_jitter
+        results['network']['jitter']['std_ms'] = network_std_jitter
+        results['network']['jitter']['per_sample_avg_ms'] = per_sample_avgs
 
     def calc_jitter(self, results: Dict[int, Dict[str, Any]]) -> None:
         nodes_sorted = sorted(self.nodes.values(), key=lambda x: x.id)
         for node in nodes_sorted:
             if node.id > 1:
                 node_jitter = node.delay.get_jitter_average()
-                jitter_samples = node.delay.get_jitter_instantaneous_over_sequence()
+                jitter_samples_ms = node.delay.get_jitter_instantaneous_over_sequence()
                 if node_jitter is not None:
                     # check if the node id is already in results
                     if node.id not in results:
                         results[node.id] = {}
                     results[node.id]['jitter'] = {
-                        'average_us': node_jitter['microseconds'],
-                        'samples': jitter_samples
+                        'average_ms': node_jitter['milliseconds'],
+                        'samples_ms': jitter_samples_ms
                     }
 
     def calc_avg_duty_cycle(self, results: Dict[int, Dict[str, Any]]) -> None:

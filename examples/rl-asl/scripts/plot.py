@@ -24,9 +24,7 @@ STANDARD_FIG_SIZE = (6, 3)
 # Colors & labels per protocol
 DATA_INFO = {
     # Your approaches (SAGE) – strong, consistent blue tones, full opacity
-    "SAGE1": {"color": "#1f77b4", "label": r"$SAGE_1$", "alpha": 1.0, "hatch": ""},
-    "SAGE2": {"color": "#1f77b4", "label": r"$SAGE_2$", "alpha": 0.8, "hatch": ""},
-
+    "RL-ASL": {"color": "#1f77b4", "label": "RL-ASL", "alpha": 1.0, "hatch": ""},
     # Baselines – distinct colors, but with transparency to look less strong
     # green
     "Orchestra": {"color": "#2ca02c", "label": "Orch.-RB", "alpha": 0.6},
@@ -83,7 +81,7 @@ METRIC_INFO = {
         "scale": 1e-3,
         "plot_styles": {
             "bar": {
-                "figsize": (2, 1),
+                "figsize": (6, 4),
                 "fonts": {"xlabel": 20, "ylabel": 9, "xtick": 14, "ytick": 8, "legend": 16},
                 "legend": False,
                 "show_labels": {"x": False, "y": True}
@@ -96,14 +94,14 @@ METRIC_INFO = {
         }
     },
     "latency": {
-        "suffix": "us",
+        "suffix": "ms",
         "label_with_units": "Latency [s]",
         "label_no_units": "Latency",
         "sort": "asc",
-        "scale": 1e-6,
+        "scale": 1e-3,
         "plot_styles": {
             "bar": {
-                "figsize": (2, 1),
+                "figsize": (6, 4),
                 "fonts": {"xlabel": 20, "ylabel": 9, "xtick": 14, "ytick": 8, "legend": 16},
                 "legend": False,
                 "show_labels": {"x": False, "y": True}
@@ -137,11 +135,11 @@ METRIC_INFO = {
         }
     },
     "jitter": {
-        "suffix": "us",
+        "suffix": "ms",
         "label_with_units": "Jitter [s]",
         "label_no_units": "Jitter",
         "sort": "asc",
-        "scale": 1e-6,
+        "scale": 1e-3,
         "plot_styles": {
             "bar": {
                 "figsize": (6, 4),
@@ -257,8 +255,8 @@ METRIC_INFO = {
 def load_json(file):
     with open(file, "r") as f:
         data = json.load(f)
-    label = os.path.splitext(os.path.basename(file))[0]
-    return data["results"], label
+    label = list(data.keys())[0]
+    return data[label], label
 
 
 def show_axis_label(metric, axis, plot_type=None, default=True):
