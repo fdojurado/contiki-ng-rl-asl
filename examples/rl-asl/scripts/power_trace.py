@@ -26,22 +26,22 @@ from rich.table import Table
 
 logger = logging.getLogger(f'main.{__name__}')
 
-VOLTAGE = 3  # V
-CURRENT = {
-    "CPU": 1.8,  # mA
-    "LPM": 0.545,  # mA
-    "DEEP_LPM": 0.545,  # mA
-    "TX": 17.4,  # mA
-    "RX": 20,  # mA
-}
-# VOLTAGE = 3.3  # V
+# VOLTAGE = 3  # V
 # CURRENT = {
-#     "CPU": 14.0,       # mA  (STM32F103 running; IoT-LAB M3 doc)
-#     "LPM": 0.014,      # mA  (≈14 µA, Stop mode typical @ 3.3 V)
-#     "DEEP_LPM": 0.002,  # mA  (≈2 µA, Standby mode typical @ 3.3 V)
-#     "TX": 11.6,        # mA  (AT86RF231 @ +3 dBm)
-#     "RX": 12.3,        # mA  (AT86RF231 RX_ON)
+#     "CPU": 1.8,  # mA
+#     "LPM": 0.545,  # mA
+#     "DEEP_LPM": 0.545,  # mA
+#     "TX": 17.4,  # mA
+#     "RX": 20,  # mA
 # }
+VOLTAGE = 3.3  # V
+CURRENT = {
+    "CPU": 14.0,       # mA  (STM32F103 running; IoT-LAB M3 doc)
+    "LPM": 0.014,      # mA  (≈14 µA, Stop mode typical @ 3.3 V)
+    "DEEP_LPM": 0.002,  # mA  (≈2 µA, Standby mode typical @ 3.3 V)
+    "TX": 11.6,        # mA  (AT86RF231 @ +3 dBm)
+    "RX": 12.3,        # mA  (AT86RF231 RX_ON)
+}
 
 
 class PowerTrace():

@@ -15,80 +15,63 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-nodes = {
+short_topology_orchestra_scenario_1 = {
     "sink": {
         "iotlab_id": "2",   # IoT-LAB platform ID
         "node_id": 1,         # Logical Contiki Node ID
-        "role": "SINK"
+        "role": "SINK",
+        "traffic_pattern": None,
+        "rl_asl_enabled": False,
+        "train_mode": False,
+        "model": None,
+        "topology_a": None,
     },
     "relay1": {
-        "iotlab_id": "48",
+        "iotlab_id": "30",
         "node_id": 2,
-        "role": "RELAY"
-    },
-    "relay2": {
-        "iotlab_id": "40",
-        "node_id": 3,
-        "role": "RELAY"
-    },
-    "relay3": {
-        "iotlab_id": "8",
-        "node_id": 4,
-        "role": "RELAY"
+        "role": "RELAY",
+        "traffic_pattern": None,
+        "rl_asl_enabled": False,
+        "train_mode": False,
+        "model": None,
+        "topology_a": True,
     },
     "leaf1": {
         "iotlab_id": "54",
-        "node_id": 5,
-        "role": "LEAF"
+        "node_id": 3,
+        "role": "LEAF",
+        "traffic_pattern": 1,
+        "rl_asl_enabled": False,
+        "train_mode": False,
+        "model": None,
+        "topology_a": True,
     },
     "leaf2": {
         "iotlab_id": "56",
-        "node_id": 6,
-        "role": "LEAF"
+        "node_id": 4,
+        "role": "LEAF",
+        "traffic_pattern": 1,
+        "rl_asl_enabled": False,
+        "train_mode": False,
+        "model": None,
+        "topology_a": True,
     },
     "leaf3": {
         "iotlab_id": "58",
-        "node_id": 7,
-        "role": "LEAF"
-    },
-    "leaf4": {
-        "iotlab_id": "35",
-        "node_id": 8,
-        "role": "LEAF"
-    },
-    "leaf5": {
-        "iotlab_id": "37",
-        "node_id": 9,
-        "role": "LEAF"
-    },
-    "leaf6": {
-        "iotlab_id": "39",
-        "node_id": 10,
-        "role": "LEAF"
-    },
-    "leaf7": {
-        "iotlab_id": "15",
-        "node_id": 11,
-        "role": "LEAF"
-    },
-    "leaf8": {
-        "iotlab_id": "17",
-        "node_id": 12,
-        "role": "LEAF"
-    },
-    "leaf13": {
-        "iotlab_id": "27",
-        "node_id": 13,
-        "role": "LEAF"
-    },
-    # you can add more nodes (relay, leaf2, etc.)
+        "node_id": 5,
+        "role": "LEAF",
+        "traffic_pattern": 1,
+        "rl_asl_enabled": False,
+        "train_mode": False,
+        "model": None,
+        "topology_a": True,
+    }
 }
-
 # Function that looks up the node configuration by its iotlab_id
 
 
 def get_node_config(iotlab_id):
-    for node_name, config in nodes.items():
+    for node_name, config in short_topology_orchestra_scenario_1.items():
         if config["iotlab_id"] == iotlab_id:
             return config
     return None
