@@ -161,10 +161,11 @@ compute_tx_with_jitter(int tx_interval)
 PROCESS_THREAD(data_packet_generator_process, ev, data)
 {
   static struct etimer et;
+  static int tx_interval;
 
   PROCESS_BEGIN();
 
-  int tx_interval = get_tx_interval();
+  tx_interval = get_tx_interval();
   if (tx_interval > 0)
   {
     LOG_INFO("Node %02x:%02x sending every ~%d seconds\n",
