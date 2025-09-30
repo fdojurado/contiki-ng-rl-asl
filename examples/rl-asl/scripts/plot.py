@@ -931,7 +931,7 @@ def plot_stacked_bar(networks, labels, metric, output_folder):
         bottom=cpu_tx,
         color="none",
         edgecolor="red",
-        linewidth=1.5,
+        linewidth=1.2,
         linestyle="--",
         label="RX (group)"
     )
