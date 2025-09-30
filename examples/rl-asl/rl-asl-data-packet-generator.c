@@ -146,6 +146,18 @@ static int get_tx_interval(void)
 }
 
 /*---------------------------------------------------------------------------*/
+/* Helper to compute tx interval + jitter */
+static clock_time_t
+compute_tx_with_jitter(int tx_interval)
+{
+  // ±5% jitter
+  double jitter_range = tx_interval * 0.05; // seconds
+  double jitter_sec = ((double)rand() / RAND_MAX * 2.0 * jitter_range) - jitter_range;
+  clock_time_t jitter = (clock_time_t)(jitter_sec * CLOCK_SECOND);
+
+  return (clock_time_t)(tx_interval * CLOCK_SECOND + jitter);
+}
+
 PROCESS_THREAD(data_packet_generator_process, ev, data)
 {
   static struct etimer et;
@@ -157,7 +169,8 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
   {
     LOG_INFO("Node %02x:%02x sending every ~%d seconds\n",
              linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1], tx_interval);
-    etimer_set(&et, tx_interval * CLOCK_SECOND + ((rand() % 3) - 1) * CLOCK_SECOND);
+
+    etimer_set(&et, compute_tx_with_jitter(tx_interval));
   }
   else
   {
@@ -187,7 +200,8 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
 #endif
       LOG_DBG("Timer expired, sending data packet\n");
       send_data_packet();
-      etimer_reset(&et);
+
+      etimer_set(&et, compute_tx_with_jitter(tx_interval));
     }
   }
 
