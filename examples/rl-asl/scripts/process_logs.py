@@ -357,6 +357,7 @@ def process_testlog(testlog: Path, args) -> Dict:
 
     network = Network()
     is_testbed = bool(args.testbed)
+    topology = args.topology if args.topology in ("A", "B") else "A"
     start_ts_unix: Optional[float] = None
 
     # Split lines and skip header lines if present
@@ -381,7 +382,7 @@ def process_testlog(testlog: Path, args) -> Dict:
         if timestamp < start_time_usec:
             continue
 
-        node_id = pc.get_node_id(tokens, is_testbed)
+        node_id = pc.get_node_id(tokens, is_testbed, topology=topology)
         node = network.nodes_add(node_id)
 
         # Message content: join remaining tokens
@@ -429,7 +430,7 @@ def process_testlog(testlog: Path, args) -> Dict:
             m = _RE_PLATFORM.match(file.name)
             platform = m.group(1) if m else file.stem.split(
                 "_")[-2] if "_" in file.stem else file.stem
-            node_info = fit_iot_lab_conf.get_node_config(platform)
+            node_info = fit_iot_lab_conf.get_node_config(platform, topology=topology)
             node = network.nodes_add(
                 node_info["node_id"]) if node_info else None
             if node is None:
@@ -499,6 +500,8 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
                         help="Ignore log entries before this timestamp (in seconds)")
     parser.add_argument("--testbed", action="store_true",
                         help="Indicates the logs are from the FIT IoT-LAB testbed")
+    parser.add_argument("--topology", type=str, choices=['A', 'B'], default='A',
+                        help="Topology configuration used in the testbed (A or B); affects node ID resolution")
     parser.add_argument("--oml-power-scale", type=float, default=1.0,
                         help="Multiplier to convert OML power values into Watts (e.g. use 1e-6 if OML reports microWatts)")
     parser.add_argument("-v", "--verbose", action="store_true")

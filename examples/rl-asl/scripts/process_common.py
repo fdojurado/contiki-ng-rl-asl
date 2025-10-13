@@ -19,39 +19,12 @@ def get_time(line, start_ts_unix=None, is_testbed=False):
         return int(line[0]), None
 
 
-def get_node_id(line, is_testbed=False):
+def get_node_id(line, is_testbed=False, topology='A'):
     if is_testbed:
         platform = line[1].split('-')[1]
-        node_info = fit_iot_lab_conf.get_node_config(platform)
+        node_info = fit_iot_lab_conf.get_node_config(platform, topology=topology)
         return node_info["node_id"]
     return int(line[1])
-
-
-def unique_node_ids(testlog):
-    node_ids = []
-    try:
-        with open(testlog, "r") as f:
-            contents = f.read()
-            contents = contents.split('\n')
-            # Skip the first two lines
-            contents = contents[2:]
-            for line in contents:
-                if "Script timed out." in line:
-                    break
-                # if the line is empty, skip it
-                if not line:
-                    continue
-                line = line.split()
-                node_id = get_node_id(line)
-                node_ids.append(int(node_id))
-    except FileNotFoundError:
-        pass
-    except PermissionError as ex:
-        print(f"Cannot read testlog: {ex}")
-        return False
-    # Set to have only unique node ids
-    node_ids = set(node_ids)
-    return node_ids
 
 
 def save_results(results, output_folder, testlog_name):

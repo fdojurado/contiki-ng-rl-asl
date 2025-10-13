@@ -132,8 +132,13 @@ topology_b = {
 }
 
 
-def get_node_config(iotlab_id):
-    for node_name, config in topology_a.items():
-        if config["iotlab_id"] == iotlab_id:
-            return config
+def get_node_config(iotlab_id, topology='A'):
+    if topology == 'A':
+        for _, config in topology_a.items():
+            if config["iotlab_id"] == iotlab_id:
+                return config
+    elif topology == 'B':
+        for _, config in topology_b.items():
+            if config["iotlab_id"] == iotlab_id:
+                return config
     return None
