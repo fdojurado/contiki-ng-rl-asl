@@ -295,9 +295,9 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 node_acc.setdefault(node_id, {}).setdefault(
                     "average_mJ", []).append(float(egy["energy_mJ"]))
 
-            if isinstance(lcy, dict) and "average_us" in lcy:
+            if isinstance(lcy, dict) and "average_ms" in lcy:
                 node_acc.setdefault(node_id, {}).setdefault(
-                    "average_us", []).append(float(lcy["average_us"]))
+                    "average_ms", []).append(float(lcy["average_ms"]))
 
             if isinstance(pkt_loss, dict) and "percentage" in pkt_loss:
                 node_acc.setdefault(node_id, {}).setdefault(
@@ -307,9 +307,9 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 node_acc.setdefault(node_id, {}).setdefault(
                     "average_packet_delivery_ratio", []).append(float(pkt_delivery_ratio["average"]))
 
-            if isinstance(jter, dict) and "average_us" in jter:
+            if isinstance(jter, dict) and "average_ms" in jter:
                 node_acc.setdefault(node_id, {}).setdefault(
-                    "average_jitter", []).append(float(jter["average_us"]))
+                    "average_jitter", []).append(float(jter["average_ms"]))
 
             if isinstance(dty_cycles, dict) and "average_rdc" in dty_cycles:
                 node_acc.setdefault(node_id, {}).setdefault(
@@ -365,10 +365,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                     node_acc.setdefault(node_id, {}).setdefault(
                         key, []).append(float(s["rdc"]))
 
-            samples = lcy.get("samples_us") if isinstance(lcy, dict) else None
+            samples = lcy.get("samples_s") if isinstance(lcy, dict) else None
             if isinstance(samples, dict):
                 for seq, s in samples.items():
-                    key = f"samples_us_{seq}"
+                    key = f"samples_s_{seq}"
                     node_acc.setdefault(node_id, {}).setdefault(
                         key, []).append(float(s))
 
@@ -388,7 +388,7 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                     node_acc.setdefault(node_id, {}).setdefault(
                         key, []).append(float(s))
 
-            samples = jter.get("samples") if isinstance(jter, dict) else None
+            samples = jter.get("samples_ms") if isinstance(jter, dict) else None
             if isinstance(samples, dict):
                 for seq, s in samples.items():
                     key = f"samples_jitter_{seq}"
@@ -569,10 +569,10 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             out.setdefault("energy", {})["avg_uJ"] = mu
             out["energy"]["std_uJ"] = su
 
-        if "average_us" in metrics:
-            mu, su = safe_mean_std(metrics["average_us"])
-            out.setdefault("latency", {})["avg_us"] = mu
-            out["latency"]["std_us"] = su
+        if "average_ms" in metrics:
+            mu, su = safe_mean_std(metrics["average_ms"])
+            out.setdefault("latency", {})["avg_ms"] = mu
+            out["latency"]["std_ms"] = su
 
         if "average_packet_loss" in metrics:
             mu, su = safe_mean_std(metrics["average_packet_loss"])
