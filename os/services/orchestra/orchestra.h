@@ -64,6 +64,9 @@ extern struct orchestra_rule unicast_per_neighbor_rpl_ns;
 extern struct orchestra_rule unicast_per_neighbor_link_based;
 extern struct orchestra_rule special_for_root;
 extern struct orchestra_rule default_common;
+#if WITH_RL_ASL_NET
+extern struct orchestra_rule unicast_per_neighbor_link_based_static;
+#endif /* WITH_RL_ASL_NET */
 #if BUILD_WITH_RL_ASL
 extern struct orchestra_rule unicast_rl_asl;
 #endif

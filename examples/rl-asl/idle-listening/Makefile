@@ -13,6 +13,7 @@ MAKE_WITH_RL_ASL_TRAIN ?= 1
 
 MAKE_WITH_RL_ASL_TOPOLOGY_A ?= 1
 
+MAKE_WITH_LINK_BASED_ORCHESTRA ?= 0
 
 ifeq ($(MAKE_WITH_RL_ASL),1)
 MAKE_WITH_RL_ASL_MODEL ?= ../models/topology-a
@@ -47,8 +48,12 @@ ifeq ($(MAKE_WITH_RL_ASL),1)
 endif
 
 ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_rpl_ns
-ifeq ($(MAKE_WITH_RL_ASL),1)
-ORCHESTRA_EXTRA_RULES = &unicast_rl_asl
+ifeq ($(MAKE_WITH_LINK_BASED_ORCHESTRA),1)
+ ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_link_based_static
+else
+  ifeq ($(MAKE_WITH_RL_ASL),1)
+  ORCHESTRA_EXTRA_RULES = &unicast_rl_asl
+  endif
 endif
 # pass the Orchestra rules to the compiler
 CFLAGS += -DORCHESTRA_CONF_RULES="{&eb_per_time_source,$(ORCHESTRA_EXTRA_RULES),&default_common}"
