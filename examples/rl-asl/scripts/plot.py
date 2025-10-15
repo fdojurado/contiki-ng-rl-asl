@@ -29,9 +29,9 @@ DATA_INFO = {
     # green
     "Orchestra": {"color": "#2ca02c", "label": "Orch.-RB", "alpha": 0.6},
     # orange
-    "Minimal": {"color": "#ff7f0e", "label": "Min-7", "alpha": 0.6},
+    "Orchestra-link-based": {"color": "#ff7f0e", "label": "Min-7", "alpha": 0.6},
     # purple
-    "Link-based": {"color": "#9467bd", "label": "Orch.-LB", "alpha": 0.6}
+    "RL-ASL-link-based": {"color": "#9467bd", "label": "Orch.-LB", "alpha": 0.6}
 }
 
 
