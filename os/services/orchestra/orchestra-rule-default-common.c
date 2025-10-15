@@ -84,6 +84,7 @@ struct orchestra_rule default_common = {
 #if BUILD_WITH_RL_ASL
   NULL,
   NULL,
+  NULL,
 #endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,

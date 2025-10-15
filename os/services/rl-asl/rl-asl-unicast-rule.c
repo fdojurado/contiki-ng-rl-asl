@@ -201,6 +201,7 @@ struct orchestra_rule unicast_rl_asl = {
   NULL,
   activate_rx_link,
   deactivate_rx_link,
+  NULL,
   neighbor_updated,
   NULL,
   "unicast RL ASL", // Updated description

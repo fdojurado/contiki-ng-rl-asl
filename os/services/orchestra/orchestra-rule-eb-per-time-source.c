@@ -150,6 +150,7 @@ struct orchestra_rule eb_per_time_source = {
 #if BUILD_WITH_RL_ASL
   NULL,
   NULL,
+  NULL,
 #endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,

@@ -161,6 +161,22 @@ orchestra_callback_deactivate_rx_link(void)
 }
 #endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
+#if BUILD_WITH_RL_ASL
+int
+orchestra_callback_deactivate_rx_parent_link(const linkaddr_t *parent_addr)
+{
+  int i;
+  for(i = 0; i < NUM_RULES; i++) {
+    if(all_rules[i]->deactivate_rx_parent_link != NULL) {
+      if(all_rules[i]->deactivate_rx_parent_link(parent_addr)) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+#endif /* BUILD_WITH_RL_ASL */
+/*---------------------------------------------------------------------------*/
 void
 orchestra_callback_neighbor_updated(const linkaddr_t *addr, uint8_t is_added)
 {
@@ -201,6 +217,9 @@ orchestra_callback_packet_ready(void)
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, channel_offset);
 #endif
+
+  LOG_DBG("Packet ready, rule %d, slotframe %u, timeslot %u, channel offset %u\n",
+          matched_rule, slotframe, timeslot, channel_offset);
 
   return matched_rule;
 }

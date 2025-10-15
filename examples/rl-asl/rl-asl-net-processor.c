@@ -7,6 +7,10 @@
 #include "rl-asl-packets.h"
 #include "rl-asl-utils.h"
 #include "rl-asl-data-packet-processor.h"
+#if BUILD_WITH_RL_ASL
+#include "orchestra.h"
+#include "rl-asl-conf.h"
+#endif /* BUILD_WITH_RL_ASL */
 
 #if BUILD_WITH_RL_ASL
 #include "rl-asl-handshake.h"
@@ -94,6 +98,13 @@ void rl_asl_callback_joining_network(void)
     if (!linkaddr_cmp(nxthop, &root_node_addr))
     {
         rl_asl_handshake_update_parent(nxthop);
+    }
+    else
+    {
+/* This is the root node, deactivate the rx link to the parent */
+#if BUILD_WITH_RL_ASL
+        TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK(&root_node_addr);
+#endif /* BUILD_WITH_RL_ASL */
     }
 #endif /* BUILD_WITH_RL_ASL */
 }

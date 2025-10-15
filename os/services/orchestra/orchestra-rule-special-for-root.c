@@ -205,6 +205,7 @@ struct orchestra_rule special_for_root = {
 #if BUILD_WITH_RL_ASL
   NULL,
   NULL,
+  NULL,
 #endif /* BUILD_WITH_RL_ASL */
   NULL,
   root_node_updated,

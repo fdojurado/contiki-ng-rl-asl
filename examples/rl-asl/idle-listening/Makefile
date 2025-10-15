@@ -50,6 +50,9 @@ endif
 ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_rpl_ns
 ifeq ($(MAKE_WITH_LINK_BASED_ORCHESTRA),1)
  ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_link_based_static
+ ifeq ($(MAKE_WITH_RL_ASL),1)
+  ORCHESTRA_EXTRA_RULES = &rl_asl_link_based
+ endif
 else
   ifeq ($(MAKE_WITH_RL_ASL),1)
   ORCHESTRA_EXTRA_RULES = &unicast_rl_asl

@@ -198,6 +198,10 @@ int rl_asl_handshake_ack_input(linkaddr_t *scr, linkaddr_t *dest)
         {
             TSCH_CALLBACK_DEACTIVATE_RX_LINK();
         }
+        // For the link-based orchestra + RL-ASL we deactivate the RX link! This is to avoid
+        // unnecessary idle listening. This is for upstream traffic only. if we
+        // want to support downstream traffic we need to reactivate the RX link.
+        TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK(scr);
 
         return 1;
     }

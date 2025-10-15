@@ -43,7 +43,7 @@
 #include "net/packetbuf.h"
 #include "os/sys/log.h"
 
-#define LOG_MODULE "Orchestra Unicast Link-Based Static"
+#define LOG_MODULE "Orchestra RL ASL Link-Based"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
 static uint16_t slotframe_handle = 0;
@@ -110,12 +110,31 @@ add_uc_links(const linkaddr_t *linkaddr)
     uint16_t timeslot_rx = get_node_pair_timeslot(linkaddr, &linkaddr_node_addr);
     uint16_t timeslot_tx = get_node_pair_timeslot(&linkaddr_node_addr, linkaddr);
 
-    /* Add Tx link */
-    tsch_schedule_add_link(sf_unicast, LINK_OPTION_TX | LINK_OPTION_SHARED, LINK_TYPE_NORMAL, &tsch_broadcast_address,
-                           timeslot_tx, local_channel_offset, 0);
-    /* Add Rx link */
-    tsch_schedule_add_link(sf_unicast, LINK_OPTION_RX, LINK_TYPE_NORMAL, &tsch_broadcast_address,
-                           timeslot_rx, local_channel_offset, 0);
+    /* Check if Tx link already exists */
+    struct tsch_link *l = list_head(sf_unicast->links_list);
+    int tx_exists = 0, rx_exists = 0;
+    while (l != NULL) {
+      if (l->timeslot == timeslot_tx && l->channel_offset == local_channel_offset &&
+          (l->link_options & (LINK_OPTION_TX | LINK_OPTION_SHARED)) == (LINK_OPTION_TX | LINK_OPTION_SHARED)) {
+        tx_exists = 1;
+      }
+      if (l->timeslot == timeslot_rx && l->channel_offset == local_channel_offset &&
+          (l->link_options & LINK_OPTION_RX)) {
+        rx_exists = 1;
+      }
+      l = list_item_next(l);
+    }
+
+    /* Add Tx link if it does not exist */
+    if (!tx_exists) {
+      tsch_schedule_add_link(sf_unicast, LINK_OPTION_TX | LINK_OPTION_SHARED, LINK_TYPE_NORMAL, &tsch_broadcast_address,
+                             timeslot_tx, local_channel_offset, 0);
+    }
+    /* Add Rx link if it does not exist */
+    if (!rx_exists) {
+      tsch_schedule_add_link(sf_unicast, LINK_OPTION_RX, LINK_TYPE_NORMAL, &tsch_broadcast_address,
+                             timeslot_rx, local_channel_offset, 0);
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -177,6 +196,94 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+static int
+deactivate_rx_link(void)
+{
+  // Remove all RX links and remove RX options from TX+RX links
+  struct tsch_link *l = list_head(sf_unicast->links_list);
+  while (l != NULL)
+  {
+    // Save next link in case we remove the current one
+    struct tsch_link *next = list_item_next(l);
+
+    if (l->link_options & LINK_OPTION_RX)
+    {
+      if (l->link_options & LINK_OPTION_TX)
+      {
+        // Remove RX option from TX+RX link
+        l->link_options &= ~LINK_OPTION_RX;
+        LOG_DBG("Deactivated RX option from link at timeslot %u and channel offset %u\n",
+                l->timeslot, l->channel_offset);
+      }
+      else
+      {
+        // Remove RX-only link, reset head since list may have changed
+        tsch_schedule_remove_link(sf_unicast, l);
+        LOG_DBG("Removed RX link at timeslot %u and channel offset %u\n",
+                l->timeslot, l->channel_offset);
+        // After removal, restart from head
+        l = list_head(sf_unicast->links_list);
+        continue;
+      }
+    }
+    l = next;
+  }
+  return 1;
+}
+/*---------------------------------------------------------------------------*/
+static int
+deactivate_rx_parent_link(const linkaddr_t *parent_addr)
+{
+  if (parent_addr == NULL || linkaddr_cmp(parent_addr, &linkaddr_null))
+  {
+    return 0;
+  }
+
+  uint16_t timeslot_rx = get_node_pair_timeslot(parent_addr, &linkaddr_node_addr);
+
+  struct tsch_link *l = list_head(sf_unicast->links_list);
+  while (l != NULL)
+  {
+    // Save next link in case we remove the current one
+    struct tsch_link *next = list_item_next(l);
+
+    if (l->timeslot == timeslot_rx && (l->link_options & LINK_OPTION_RX))
+    {
+      if (l->link_options & LINK_OPTION_TX)
+      {
+        // Remove RX option from TX+RX link
+        l->link_options &= ~LINK_OPTION_RX;
+        LOG_DBG("Deactivated RX option from parent link at timeslot %u and channel offset %u\n",
+                l->timeslot, l->channel_offset);
+      }
+      else
+      {
+        // Remove RX-only link, reset head since list may have changed
+        tsch_schedule_remove_link(sf_unicast, l);
+        LOG_DBG("Removed RX parent link at timeslot %u and channel offset %u\n",
+                l->timeslot, l->channel_offset);
+        // After removal, restart from head
+        l = list_head(sf_unicast->links_list);
+        continue;
+      }
+    }
+    l = next;
+  }
+  return 1;
+}
+/*---------------------------------------------------------------------------*/
+static void
+neighbor_updated(const linkaddr_t *linkaddr, uint8_t is_added)
+{
+  if (is_added)
+  {
+    add_uc_links(linkaddr);
+  }
+  else
+  {
+    remove_uc_links(linkaddr);
+  }
+}
 /*---------------------------------------------------------------------------*/
 static void
 new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
@@ -202,50 +309,23 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  LOG_DBG("Initializing unicast link-based static Orchestra rule with slotframe handle %u\n", slotframe_handle);
   local_channel_offset = get_node_channel_offset(&linkaddr_node_addr);
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-  // We need to schedule a link to each of our children and a tx link to the parent
-  const linkaddr_t *parent_addr = NETSTACK_ROUTING.nexthop(&linkaddr_node_addr, &root_node_addr);
-  if (parent_addr)
-  {
-    add_uc_links(parent_addr);
-    LOG_DBG("Added Tx link for parent %02x:%02x at timeslot %u and channel offset %u\n",
-            parent_addr->u8[0], parent_addr->u8[1],
-            get_node_pair_timeslot(&linkaddr_node_addr, parent_addr),
-            local_channel_offset);
-  }
-
-  const routing_entry_t *rt_table = routing_table;
-  while (rt_table->src.u8[0] != 0 || rt_table->src.u8[1] != 0)
-  {
-    if (linkaddr_cmp(&rt_table->next_hop, &linkaddr_node_addr))
-    {
-      add_uc_links(&rt_table->src);
-      LOG_DBG("Added Rx link for neighbor %02x:%02x at timeslot %u and channel offset %u\n",
-              rt_table->src.u8[0], rt_table->src.u8[1],
-              get_node_pair_timeslot(&linkaddr_node_addr, &rt_table->src),
-              local_channel_offset);
-    }
-    rt_table++;
-  }
 }
 
 /*---------------------------------------------------------------------------*/
-struct orchestra_rule unicast_per_neighbor_link_based_static = {
+struct orchestra_rule rl_asl_link_based = {
     init,
     new_time_source,
     select_packet,
     NULL,
     NULL,
-#if BUILD_WITH_RL_ASL
     NULL,
+    deactivate_rx_link,
+    deactivate_rx_parent_link,
+    neighbor_updated,
     NULL,
-    NULL,
-#endif /* BUILD_WITH_RL_ASL */
-    NULL,
-    NULL,
-    "unicast per neighbor link based static",
+    "rl-asl link based",
     ORCHESTRA_UNICAST_PERIOD,
 };

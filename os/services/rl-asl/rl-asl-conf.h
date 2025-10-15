@@ -9,5 +9,6 @@
 
 #define TSCH_CALLBACK_ACTIVATE_RX_LINK orchestra_callback_activate_rx_link
 #define TSCH_CALLBACK_DEACTIVATE_RX_LINK orchestra_callback_deactivate_rx_link
+#define TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK orchestra_callback_deactivate_rx_parent_link
 
 #endif /* RL_ASL_CONF_H */

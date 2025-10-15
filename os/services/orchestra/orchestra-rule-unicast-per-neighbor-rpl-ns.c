@@ -166,6 +166,7 @@ struct orchestra_rule unicast_per_neighbor_rpl_ns = {
 #if BUILD_WITH_RL_ASL
   NULL,
   NULL,
+  NULL,
 #endif /* BUILD_WITH_RL_ASL */
   neighbor_updated,
   NULL,
