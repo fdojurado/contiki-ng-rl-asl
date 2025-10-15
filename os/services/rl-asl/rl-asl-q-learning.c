@@ -277,7 +277,9 @@ void rl_asl_q_learning_end_episode(void)
         LOG_INFO("NEW_BEST_AGENT,EPISODE=%lu,ROLLING_AVG=%.3f\n",
                  rl_asl_q_table.episode_count,
                  best_rolling_avg);
+#if RL_ASL_IS_TRAIN
         rl_asl_q_learning_print_table();
+#endif
     }
 
     // Log episode summary in CSV-like format
