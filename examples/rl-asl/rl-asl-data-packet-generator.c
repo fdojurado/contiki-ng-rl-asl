@@ -22,6 +22,7 @@
 #define TRAFFIC_PATTERN_HETEROGENEOUS 2
 #define TRAFFIC_PATTERN_SPARSE 3
 #define TRAFFIC_PATTERN_CONCURRENT 4
+#define TRAFFIC_PATTERN_PERIODIC 5
 
 #ifndef TRAFFIC_PATTERN
 #define TRAFFIC_PATTERN TRAFFIC_PATTERN_BASELINE
@@ -34,9 +35,13 @@
 
 static struct tsch_asn_t *asn = &tsch_current_asn;
 
-static int seqnum = 0; // Sequence number for data packets
+static int16_t seqnum = 0; // Sequence number for data packets
 
 PROCESS(data_packet_generator_process, "Transmission Process");
+
+// Forward declarations
+static int get_tx_interval(void);
+
 /*---------------------------------------------------------------------------*/
 void send_data_packet(void)
 {
@@ -63,6 +68,21 @@ void send_data_packet(void)
 
   RL_ASL_DATA_BUF->payload_len = 0; // No payload for now
   RL_ASL_DATA_BUF->seqnum = rl_asl_ip_htons(seqnum);
+
+#ifdef BUILD_WITH_PRIL
+  // For PRIL, set sleep_ie and timing_ie
+  // we need to calculate the next asn based on the current asn and the tx interval
+  int tx_interval = get_tx_interval();
+  LOG_DBG("Current ASN: %" PRIu64 ", tx_interval: %d seconds\n", full_asn, tx_interval);
+  // We need to convert the tx_interval in seconds to slots
+  uint32_t slots = tx_interval * 1000000.0 / tsch_timing[tsch_ts_timeslot_length];
+  LOG_DBG("Tx interval in slots: %u\n", slots);
+  struct tsch_asn_t next_asn = *asn;
+  TSCH_ASN_INC(next_asn, slots);
+  LOG_DBG("Next ASN: %" PRIu64 "\n", ((uint64_t)next_asn.ms1b << 32) | next_asn.ls4b);
+  RL_ASL_DATA_BUF->sleep_ie_asn = rl_asl_ip_htonl64(((uint64_t)next_asn.ms1b << 32) | next_asn.ls4b); // Set next wake-up time
+  RL_ASL_DATA_BUF->timing_ie_s = get_tx_interval();                                                   // Set generation period
+#endif /* BUILD_WITH_PRIL */
 
   rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 4); // Set max MAC transmissions
 
@@ -142,10 +162,25 @@ static int get_tx_interval(void)
   default:
     return 0; // Non-senders stay silent
   }
+#elif TRAFFIC_PATTERN == TRAFFIC_PATTERN_PERIODIC
+  switch (linkaddr_node_addr.u8[0])
+  {
+  case 3:
+    return 15; // Flow 1
+  case 4:
+    return 30; // Flow 2
+  case 5:
+    return 45; // Flow 3
+  default:
+    return 0; // Non-senders stay silent
+  }
+#else
+  return RL_ASL_DATA_PACKET_GENERATOR_TX_INTERVAL_S; // Default interval
 #endif
 }
 
 /*---------------------------------------------------------------------------*/
+#if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
 /* Helper to compute tx interval + jitter */
 static clock_time_t
 compute_tx_with_jitter(int tx_interval)
@@ -157,7 +192,8 @@ compute_tx_with_jitter(int tx_interval)
 
   return (clock_time_t)(tx_interval * CLOCK_SECOND + jitter);
 }
-
+#endif /* TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC */
+/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(data_packet_generator_process, ev, data)
 {
   static struct etimer et;
@@ -171,7 +207,12 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
     LOG_INFO("Node %02x:%02x sending every ~%d seconds\n",
              linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1], tx_interval);
 
+    // We dont add jitter for the periodic pattern to keep it regular
+#if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
     etimer_set(&et, compute_tx_with_jitter(tx_interval));
+#else
+    etimer_set(&et, tx_interval * CLOCK_SECOND);
+#endif
   }
   else
   {
@@ -202,7 +243,11 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
       LOG_DBG("Timer expired, sending data packet\n");
       send_data_packet();
 
+#if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
       etimer_set(&et, compute_tx_with_jitter(tx_interval));
+#else
+      etimer_reset(&et);
+#endif
     }
   }
 

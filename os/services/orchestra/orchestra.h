@@ -72,6 +72,9 @@ extern struct orchestra_rule unicast_per_neighbor_link_based_static;
 extern struct orchestra_rule unicast_rl_asl;
 extern struct orchestra_rule rl_asl_link_based;
 #endif
+#ifdef BUILD_WITH_PRIL
+extern struct orchestra_rule pril_unicast_link_based;
+#endif /* BUILD_WITH_PRIL */
 
 extern linkaddr_t orchestra_parent_linkaddr;
 extern int orchestra_parent_knows_us;

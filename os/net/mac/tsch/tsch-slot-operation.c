@@ -61,6 +61,10 @@
 #include "rl-asl.h"
 #endif /* BUILD_WITH_RL_ASL */
 
+#if BUILD_WITH_PRIL
+#include "pril.h"
+#endif /* BUILD_WITH_PRIL */
+
 #include "sys/log.h"
 /* TSCH debug macros, i.e. to set LEDs or GPIOs on various TSCH
  * timeslot events */
@@ -1140,8 +1144,16 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
         /* Decide whether it is a TX/RX/IDLE or OFF slot */
+#if BUILD_WITH_PRIL
+        bool skip_tx = false;
+        CHECK_SKIP_TX(current_link, &skip_tx, current_packet);
+#endif /* BUILD_WITH_PRIL */
         /* Actual slot operation */
-        if(current_packet != NULL) {
+        if(current_packet != NULL
+#if BUILD_WITH_PRIL
+           && !skip_tx
+#endif /* BUILD_WITH_PRIL */
+           ) {
           /* We have something to transmit, do the following:
            * 1. send
            * 2. update_backoff_state(current_neighbor)
@@ -1151,9 +1163,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
         } else {
           /* Listen */
-#if BUILD_WITH_RL_ASL
+#if BUILD_WITH_RL_ASL || BUILD_WITH_PRIL
           bool skip_rx = false;
-          RL_ASL_CHECK_SKIP_RX(current_link, &skip_rx);
+          CHECK_SKIP_RX(current_link, &skip_rx);
           if (!skip_rx) {
             static struct pt slot_rx_pt;
             PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
@@ -1166,7 +1178,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           //           current_link->slotframe_handle);
           //   );
           // }
-#else/* BUILD_WITH_RL_ASL */
+#else/* BUILD_WITH_RL_ASL || BUILD_WITH_PRIL */
           static struct pt slot_rx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
 #endif /* BUILD_WITH_RL_ASL */

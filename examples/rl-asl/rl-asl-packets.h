@@ -91,6 +91,11 @@ struct rl_asl_data_hdr
 {
     uint8_t payload_len; // Length of the payload
     uint8_t paddng;
+#ifdef BUILD_WITH_PRIL
+    uint64_t sleep_ie_asn; // PRIL: Sleep information element (asn)
+    uint8_t timing_ie_s;   // PRIL: Generation period in seconds
+    uint8_t paddng2;
+#endif                  /* BUILD_WITH_PRIL */
     uint16_t seqnum;    // Sequence number
     int16_t datachksum; // Checksum for the data
 } __attribute__((packed));

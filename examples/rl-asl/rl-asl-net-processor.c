@@ -12,6 +12,10 @@
 #include "rl-asl-conf.h"
 #endif /* BUILD_WITH_RL_ASL */
 
+#ifdef BUILD_WITH_PRIL
+#include "pril.h"
+#endif /* BUILD_WITH_PRIL */
+
 #if BUILD_WITH_RL_ASL
 #include "rl-asl-handshake.h"
 #endif /* BUILD_WITH_RL_ASL */
@@ -238,7 +242,17 @@ data_input:
     LOG_DBG("Processing data packet from %02x:%02x to %02x:%02x\n",
             scr.u8[0], scr.u8[1], dest.u8[0], dest.u8[1]);
 
+#ifdef BUILD_WITH_PRIL
+    // If PRIL is enabled, notify the PRIL module about the received data packet
+    pril_data_packet_input(&scr);
+    // Clear the sleep_ie_asn
+    RL_ASL_DATA_BUF->sleep_ie_asn = 0;
+    // Recalculate the data checksum
+    RL_ASL_DATA_BUF->datachksum = 0;
+    RL_ASL_DATA_BUF->datachksum = ~rl_asl_data_chksum();
+#else
     rl_asl_data_packet_input(&scr, rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), is_for_us);
+#endif /* BUILD_WITH_PRIL */
 
     if (is_for_us)
         goto drop; // If it's for us, we don't forward it

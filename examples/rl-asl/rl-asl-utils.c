@@ -6,6 +6,9 @@
 #include "net/mac/tsch/tsch.h"
 #include "tsch-asn.h"
 #include "os/sys/log.h"
+#ifdef BUILD_WITH_PRIL
+#include "pril-nbr.h"
+#endif /* BUILD_WITH_PRIL */
 
 #define LOG_MODULE "rl-asl-utils"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_UTILS
@@ -16,6 +19,9 @@ void rl_asl_init(void)
     LOG_INFO("RL-ASL utilities initialized\n");
     rl_asl_buf_init();
     rl_asl_ds_nbr_init();
+#ifdef BUILD_WITH_PRIL
+    pril_nbr_init();
+#endif /* BUILD_WITH_PRIL */
 }
 /*---------------------------------------------------------------------------*/
 double ASNToTime(uint64_t asn_val)
@@ -142,6 +148,11 @@ void print_data_header()
 {
     LOG_DBG("Data Header (%zu bytes):\n", sizeof(struct rl_asl_data_hdr));
     LOG_DBG("  Payload Length: %d (%zu bytes)\n", RL_ASL_DATA_BUF->payload_len, sizeof(RL_ASL_DATA_BUF->payload_len));
+    LOG_DBG("  Sequence Number: %d (%zu bytes)\n", rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), sizeof(RL_ASL_DATA_BUF->seqnum));
+#ifdef BUILD_WITH_PRIL
+    LOG_DBG("  Sleep IE ASN: %" PRIu64 " (%zu bytes)\n", rl_asl_ip_ntohl64(RL_ASL_DATA_BUF->sleep_ie_asn), sizeof(RL_ASL_DATA_BUF->sleep_ie_asn));
+    LOG_DBG("  Timing IE (s): %d (%zu bytes)\n", RL_ASL_DATA_BUF->timing_ie_s, sizeof(RL_ASL_DATA_BUF->timing_ie_s));
+#endif /* BUILD_WITH_PRIL */
     LOG_DBG("  Data Checksum: %04x (%zu bytes)\n", rl_asl_ip_htons(RL_ASL_DATA_BUF->datachksum), sizeof(RL_ASL_DATA_BUF->datachksum));
     LOG_DBG("  Payload Data: ");
     for (uint16_t i = 0; i < RL_ASL_DATA_BUF->payload_len; i++)

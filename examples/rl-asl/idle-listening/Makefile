@@ -9,6 +9,8 @@ MAKE_NET = MAKE_NET_OTHER
 
 MAKE_WITH_RL_ASL ?= 0
 
+MAKE_WITH_PRIL ?= 0
+
 MAKE_WITH_RL_ASL_TRAIN ?= 1
 
 MAKE_WITH_RL_ASL_TOPOLOGY_A ?= 1
@@ -20,6 +22,13 @@ MAKE_WITH_RL_ASL_MODEL ?= ../models/topology-a
 # Convert MODEL to an include path
 MODEL_INCLUDE += -I$(MAKE_WITH_RL_ASL_MODEL)
 CFLAGS += $(MODEL_INCLUDE) -DRL_ASL_MODEL_SCENARIO=\"$(MAKE_WITH_RL_ASL_MODEL)\"
+endif
+
+ifeq ($(MAKE_WITH_PRIL),1)
+  MODULES += $(CONTIKI_NG_SERVICES_DIR)/pril
+  ifeq ($(MAKE_WITH_RL_ASL),1)
+     $(error "PRIL and RL-ASL cannot be enabled at the same time")
+  endif
 endif
 
 ifeq ($(MAKE_WITH_RL_ASL_TOPOLOGY_A),1)
@@ -52,6 +61,9 @@ ifeq ($(MAKE_WITH_LINK_BASED_ORCHESTRA),1)
  ORCHESTRA_EXTRA_RULES = &unicast_per_neighbor_link_based_static
  ifeq ($(MAKE_WITH_RL_ASL),1)
   ORCHESTRA_EXTRA_RULES = &rl_asl_link_based
+ endif
+ ifeq ($(MAKE_WITH_PRIL),1)
+  ORCHESTRA_EXTRA_RULES = &pril_unicast_link_based
  endif
 else
   ifeq ($(MAKE_WITH_RL_ASL),1)
