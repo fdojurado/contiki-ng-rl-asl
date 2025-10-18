@@ -12,7 +12,7 @@
 
 #include "os/sys/log.h"
 #define LOG_MODULE "pril"
-#define LOG_LEVEL LOG_LEVEL_DBG
+#define LOG_LEVEL LOG_LEVEL_INFO
 
 /*---------------------------------------------------------------------------*/
 static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
@@ -22,8 +22,8 @@ static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
 
     nbr->tx_state = PRIL_STATE_OFF;
     nbr->retr_count = 0;
-    LOG_INFO("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
-             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
+    LOG_DBG("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
+            neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 }
 /*---------------------------------------------------------------------------*/
 static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
@@ -43,9 +43,9 @@ static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
     else
     {
         nbr->tx_state = PRIL_STATE_RETR;
-        LOG_INFO("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
-                 nbr->retr_count,
-                 neighbor_addr->u8[0], neighbor_addr->u8[1]);
+        LOG_DBG("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
+                nbr->retr_count,
+                neighbor_addr->u8[0], neighbor_addr->u8[1]);
     }
 }
 /*---------------------------------------------------------------------------*/
@@ -69,8 +69,8 @@ void pril_packet_sent(int mac_status)
     if (nbr == NULL)
         return;
 
-    LOG_INFO("PRIL packet sent to %02x:%02x, mac_status=%d\n",
-             neighbor_addr->u8[0], neighbor_addr->u8[1], mac_status);
+    LOG_DBG("PRIL packet sent to %02x:%02x, mac_status=%d\n",
+            neighbor_addr->u8[0], neighbor_addr->u8[1], mac_status);
 
     if (mac_status == MAC_TX_OK)
     {
@@ -107,8 +107,8 @@ static void pril_process_data_packet_from_nref(pril_nbr_t *nbr)
     if (!linkaddr_cmp(nbr_addr, min_gen_nbr_addr))
         return;
 
-    LOG_INFO("Data packet received from neighbor with minimum generation period %02x:%02x\n",
-             min_gen_nbr_addr->u8[0], min_gen_nbr_addr->u8[1]);
+    LOG_DBG("Data packet received from neighbor with minimum generation period %02x:%02x\n",
+            min_gen_nbr_addr->u8[0], min_gen_nbr_addr->u8[1]);
 
     // Lets get the next hop towards the root
     const linkaddr_t *nxthop = NETSTACK_ROUTING.nexthop(&linkaddr_node_addr, &root_node_addr);
@@ -125,23 +125,35 @@ static void pril_process_data_packet_from_nref(pril_nbr_t *nbr)
     if (nxt_hop_nbr->sleep_end > 0)
     {
         nxt_hop_nbr->new_sleep_end = Tmin_cells;
-        LOG_INFO("  Updating next hop neighbor %02x:%02x new_sleep_end to %d\n",
-                 nxthop->u8[0], nxthop->u8[1], nxt_hop_nbr->new_sleep_end);
+        LOG_DBG("  Updating next hop neighbor %02x:%02x new_sleep_end to %d\n",
+                nxthop->u8[0], nxthop->u8[1], nxt_hop_nbr->new_sleep_end);
     }
     else
     {
         nxt_hop_nbr->sleep_end = Tmin_cells;
-        LOG_INFO("  Updating next hop neighbor %02x:%02x sleep_end to %d\n",
-                 nxthop->u8[0], nxthop->u8[1], nxt_hop_nbr->sleep_end);
+        LOG_DBG("  Updating next hop neighbor %02x:%02x sleep_end to %d\n",
+                nxthop->u8[0], nxthop->u8[1], nxt_hop_nbr->sleep_end);
     }
 }
 /*---------------------------------------------------------------------------*/
-void pril_data_packet_input(const linkaddr_t *src)
+void pril_data_packet_input(const linkaddr_t *src, int16_t seqnum, bool is_for_us)
 {
-    LOG_INFO("Received data packet from %02x:%02x\n", src->u8[0], src->u8[1]);
+    uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
+    LOG_INFO("Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n",
+             is_for_us, seqnum, full_asn, src->u8[0], src->u8[1]);
     print_data_header();
-    int16_t seqnum = rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum);
     int16_t sleep_end = rl_asl_ip_htons(RL_ASL_DATA_BUF->sleep_end);
+    // What is the difference between the current ASN and the last_rx_asn?
+    uint64_t current_asn = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
+    int64_t asn_diff = (int64_t)(current_asn - full_asn);
+    LOG_DBG("Current ASN: %" PRIu64 ", Last RX ASN: %" PRIu64 ", Diff: %" PRIi64 "\n",
+            current_asn,
+            ((uint64_t)last_rx_asn.ms1b << 32 | last_rx_asn.ls4b),
+            asn_diff);
+    // We now need to deduct the elapsed cells from sleep_end
+    sleep_end -= (int16_t)asn_diff;
+    if (sleep_end < 0)
+        sleep_end = 0;
     uint8_t timing_T_s = RL_ASL_DATA_BUF->timing_T_s;
     LOG_DBG("PRIL Data IE: sleep_end=%d, timing_T_s=%u\n", sleep_end, timing_T_s);
     pril_nbr_t *nbr = pril_nbr_add(src, seqnum, sleep_end, timing_T_s, false);
@@ -282,22 +294,22 @@ int pril_link_state_tick(pril_nbr_t *nbr)
             if (nbr->rx_state == PRIL_STATE_OFF)
             {
                 nbr->rx_state = PRIL_STATE_ON;
-                LOG_INFO("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
-                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
+                LOG_DBG("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
+                        neighbor_addr->u8[0], neighbor_addr->u8[1]);
             }
             if (nbr->tx_state == PRIL_STATE_OFF || nbr->tx_state == PRIL_STATE_RETR)
             {
                 nbr->tx_state = PRIL_STATE_ON;
-                LOG_INFO("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
-                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
+                LOG_DBG("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
+                        neighbor_addr->u8[0], neighbor_addr->u8[1]);
                 /* If new_sleep_end was queued, transfer it now */
                 if (nbr->new_sleep_end > 0)
                 {
                     nbr->sleep_end = nbr->new_sleep_end;
                     nbr->new_sleep_end = 0;
                     // nbr->tx_state = PRIL_STATE_OFF;
-                    LOG_INFO("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
-                             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
+                    LOG_DBG("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
+                            neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
                 }
             }
         }
@@ -412,7 +424,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         void *packet;
         packet = queuebuf_dataptr(current_packet->qb);
         uint8_t packet_len = queuebuf_datalen(current_packet->qb);
-        LOG_INFO("Current packet length: %u\n", packet_len);
+        LOG_DBG("Current packet length: %u\n", packet_len);
         //  lets skip the IEEE 802.15.4 header (assuming no security)
         if (packet_len <= 9)
         {
@@ -421,27 +433,27 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         }
 
         struct rl_asl_uip_hdr *ip_hdr = (struct rl_asl_uip_hdr *)((uint8_t *)packet + 9);
-        LOG_DBG("IP Header:\n");
-        LOG_DBG("  Length: %d\n", ip_hdr->len);
-        LOG_DBG("  TTL: %d\n", ip_hdr->ttl);
-        LOG_DBG("  Proto: %d\n", ip_hdr->proto);
-        LOG_DBG("  Checksum: %04x\n", ip_hdr->ipchksum);
-        LOG_DBG("  Source: ");
-        LOG_DBG_LLADDR(&ip_hdr->scr);
-        LOG_DBG_("\n");
-        LOG_DBG("  Destination: ");
-        LOG_DBG_LLADDR(&ip_hdr->dest);
-        LOG_DBG_("\n");
+        // LOG_DBG("IP Header:\n");
+        // LOG_DBG("  Length: %d\n", ip_hdr->len);
+        // LOG_DBG("  TTL: %d\n", ip_hdr->ttl);
+        // LOG_DBG("  Proto: %d\n", ip_hdr->proto);
+        // LOG_DBG("  Checksum: %04x\n", ip_hdr->ipchksum);
+        // LOG_DBG("  Source: ");
+        // LOG_DBG_LLADDR(&ip_hdr->scr);
+        // LOG_DBG_("\n");
+        // LOG_DBG("  Destination: ");
+        // LOG_DBG_LLADDR(&ip_hdr->dest);
+        // LOG_DBG_("\n");
         struct rl_asl_data_hdr *data_hdr = (struct rl_asl_data_hdr *)((uint8_t *)ip_hdr + sizeof(struct rl_asl_uip_hdr));
-        LOG_DBG("Data Header:\n");
-        LOG_DBG("  Payload Length: %d\n", data_hdr->payload_len);
-        LOG_DBG("  Sequence Number: %d\n", rl_asl_ip_htons(data_hdr->seqnum));
+        // LOG_DBG("Data Header:\n");
+        // LOG_DBG("  Payload Length: %d\n", data_hdr->payload_len);
+        // LOG_DBG("  Sequence Number: %d\n", rl_asl_ip_htons(data_hdr->seqnum));
         // Lets update the sleep
         data_hdr->sleep_end = rl_asl_ip_htons(nbr->sleep_end);
-        LOG_DBG("  Sleep End: %d\n", rl_asl_ip_htons(data_hdr->sleep_end));
-        LOG_DBG("  Timing T_s: %u\n", data_hdr->timing_T_s);
-        LOG_DBG("  Data Checksum: %04x\n", rl_asl_ip_htons(data_hdr->datachksum));
-        LOG_DBG("  updated Sleep End in packet to: %d\n", rl_asl_ip_htons(data_hdr->sleep_end));
+        // LOG_DBG("  Sleep End: %d\n", rl_asl_ip_htons(data_hdr->sleep_end));
+        // LOG_DBG("  Timing T_s: %u\n", data_hdr->timing_T_s);
+        // LOG_DBG("  Data Checksum: %04x\n", rl_asl_ip_htons(data_hdr->datachksum));
+        // LOG_DBG("  updated Sleep End in packet to: %d\n", rl_asl_ip_htons(data_hdr->sleep_end));
         // Recalculate the data checksum
         data_hdr->datachksum = 0;
         data_hdr->datachksum = ~rl_asl_data_chksum_from_buffer((uint8_t *)data_hdr);
@@ -461,7 +473,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         void *packet;
         packet = queuebuf_dataptr(current_packet->qb);
         uint8_t packet_len = queuebuf_datalen(current_packet->qb);
-        LOG_INFO("Current packet length: %u\n", packet_len);
+        LOG_DBG("Current packet length: %u\n", packet_len);
         //  lets skip the IEEE 802.15.4 header (assuming no security)
         if (packet_len <= 9)
         {

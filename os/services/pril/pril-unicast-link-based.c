@@ -45,7 +45,7 @@
 #include "os/sys/log.h"
 
 #define LOG_MODULE "PRIL Link-Based"
-#define LOG_LEVEL LOG_LEVEL_DBG
+#define LOG_LEVEL LOG_LEVEL_ERR
 
 static uint16_t slotframe_handle = 0;
 static uint16_t local_channel_offset;

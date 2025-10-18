@@ -4,7 +4,7 @@
 /* log */
 #include "sys/log.h"
 #define LOG_MODULE "pril-nbr"
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL LOG_LEVEL_ERR
 
 NBR_TABLE(pril_nbr_t, pril_nbr_table);
 

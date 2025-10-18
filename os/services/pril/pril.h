@@ -8,7 +8,7 @@
 /* Called when a data packet has been sent */
 void pril_packet_sent(int mac_status);
 /* Called when a data packet is received */
-void pril_data_packet_input(const linkaddr_t *src);
+void pril_data_packet_input(const linkaddr_t *src, int16_t seqnum, bool is_for_us);
 /* Check whether to skip RX for a given link */
 void pril_check_skip_rx(const struct tsch_link *link, bool *skip_rx);
 /* Check whether to transmit for a given link */

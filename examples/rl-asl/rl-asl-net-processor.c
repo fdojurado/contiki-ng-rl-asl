@@ -244,7 +244,7 @@ data_input:
 
 #ifdef BUILD_WITH_PRIL
     // If PRIL is enabled, notify the PRIL module about the received data packet
-    pril_data_packet_input(&scr);
+    pril_data_packet_input(&scr, rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), is_for_us);
 #else
     rl_asl_data_packet_input(&scr, rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), is_for_us);
 #endif /* BUILD_WITH_PRIL */
