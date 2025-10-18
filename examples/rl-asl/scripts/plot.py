@@ -1,3 +1,4 @@
+from matplotlib.patches import Patch
 from matplotlib.colors import to_rgba
 from scipy.stats import norm
 import argparse
@@ -31,7 +32,8 @@ DATA_INFO = {
     # orange
     "Orchestra-link-based": {"color": "#ff7f0e", "label": "Orch.-LB", "alpha": 0.6},
     # purple
-    "RL-ASL-link-based": {"color": "#9467bd", "label": "RL-ASL-LB", "alpha": 0.6}
+    "RL-ASL-link-based": {"color": "#9467bd", "label": "RL-ASL-LB", "alpha": 0.6},
+    "PRIL-M": {"color": "#d62728", "label": "PRIL-M", "alpha": 0.6},
 }
 
 
@@ -846,8 +848,6 @@ def plot_protocol_metric_heatmap(networks, labels, output_folder):
                 "protocol_metric_heatmap.pdf"), format="pdf")
     plt.close()
 
-
-from matplotlib.patches import Patch
 
 def plot_stacked_bar(networks, labels, metric, output_folder):
     """
