@@ -12,6 +12,12 @@
 #if BUILD_WITH_RL_ASL
 #include "orchestra.h"
 #endif /* BUILD_WITH_RL_ASL */
+
+#ifdef BUILD_WITH_PRIL
+#include "pril-utils.h"
+#include "pril-nbr.h"
+#endif /* BUILD_WITH_PRIL */
+
 #include "os/sys/log.h"
 
 #define LOG_MODULE "data-packet-generator"
@@ -70,18 +76,30 @@ void send_data_packet(void)
   RL_ASL_DATA_BUF->seqnum = rl_asl_ip_htons(seqnum);
 
 #ifdef BUILD_WITH_PRIL
+  pril_nbr_t *nbr = pril_nbr_get(nxthop);
   // For PRIL, set sleep_ie and timing_ie
   // we need to calculate the next asn based on the current asn and the tx interval
   int tx_interval = get_tx_interval();
   LOG_DBG("Current ASN: %" PRIu64 ", tx_interval: %d seconds\n", full_asn, tx_interval);
-  // We need to convert the tx_interval in seconds to slots
-  uint32_t slots = tx_interval * 1000000.0 / tsch_timing[tsch_ts_timeslot_length];
-  LOG_DBG("Tx interval in slots: %u\n", slots);
-  struct tsch_asn_t next_asn = *asn;
-  TSCH_ASN_INC(next_asn, slots);
-  LOG_DBG("Next ASN: %" PRIu64 "\n", ((uint64_t)next_asn.ms1b << 32) | next_asn.ls4b);
-  RL_ASL_DATA_BUF->sleep_ie_asn = rl_asl_ip_htonl64(((uint64_t)next_asn.ms1b << 32) | next_asn.ls4b); // Set next wake-up time
-  RL_ASL_DATA_BUF->timing_ie_s = get_tx_interval();                                                   // Set generation period
+  RL_ASL_DATA_BUF->sleep_end = rl_asl_ip_htons(pril_compute_cells_from_seconds(tx_interval));
+  if (nbr != NULL){
+    int Tmin_cells = pril_compute_cells_from_seconds(tx_interval);
+    if(nbr->sleep_end > 0)
+    {
+        nbr->new_sleep_end = Tmin_cells;
+        LOG_INFO("Updating neighbor %02x:%02x new_sleep_end to %d\n",
+                 nxthop->u8[0], nxthop->u8[1], nbr->new_sleep_end);
+    }
+    else
+    {
+        nbr->sleep_end = Tmin_cells;
+        LOG_INFO("Updating neighbor %02x:%02x sleep_end to %d\n",
+                 nxthop->u8[0], nxthop->u8[1], nbr->sleep_end);
+    }
+  }
+  RL_ASL_DATA_BUF->timing_T_s = (uint8_t)tx_interval;
+  LOG_DBG("Set PRIL sleep_end to %d cells and timing_T_s to %d seconds\n",
+          pril_compute_cells_from_seconds(tx_interval), tx_interval);
 #endif /* BUILD_WITH_PRIL */
 
   rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 4); // Set max MAC transmissions

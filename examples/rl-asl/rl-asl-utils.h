@@ -25,6 +25,8 @@ uint16_t rl_asl_ip_chksum(void);
 
 uint16_t rl_asl_data_chksum(void);
 
+uint16_t rl_asl_data_chksum_from_buffer(const uint8_t *data);
+
 uint16_t rl_asl_bc_schedule_chksum(void);
 
 void print_ip_header();

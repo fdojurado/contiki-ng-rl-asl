@@ -7,6 +7,10 @@
 #include "rl-asl-utils.h"
 #include "os/sys/log.h"
 
+#ifdef BUILD_WITH_PRIL
+#include "pril.h"
+#endif /* BUILD_WITH_PRIL */
+
 #define LOG_MODULE "rl-asl-net"
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_NET
 
@@ -32,6 +36,10 @@ set_packet_attrs(void)
 {
     /* set protocol in NETWORK_ID */
     rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_NETWORK_ID, RL_ASL_IP_BUF->proto);
+#ifdef BUILD_WITH_PRIL
+    /* set PRIL sleep flag */
+    rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, RL_ASL_DATA_BUF->sleep_end > 0 ? 1 : 0);
+#endif /* BUILD_WITH_PRIL */
 }
 
 /*--------------------------------------------------------------------*/
@@ -83,6 +91,17 @@ static void rl_asl_net_input(void)
     rl_asl_ip_input();
 }
 /*---------------------------------------------------------------------------*/
+static void packet_sent(void *ptr, int status, int transmissions)
+{
+    if (callback != NULL)
+    {
+        callback->output_callback(status);
+    }
+#ifdef BUILD_WITH_PRIL
+    pril_packet_sent(status);
+#endif /* BUILD_WITH_RL_ASL */
+}
+/*---------------------------------------------------------------------------*/
 static uint8_t rl_asl_net_output(const linkaddr_t *localdest)
 {
     // LOG_INFO("RL-ASL Net output to %02x:%02x\n", localdest->u8[0], localdest->u8[1]);
@@ -113,7 +132,7 @@ static uint8_t rl_asl_net_output(const linkaddr_t *localdest)
     LOG_PRINT_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
     LOG_INFO_("\n");
 
-    NETSTACK_MAC.send(NULL, NULL);
+    NETSTACK_MAC.send(&packet_sent, NULL);
 
     watchdog_periodic();
     return 1; // Indicating success

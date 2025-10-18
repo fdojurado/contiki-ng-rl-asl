@@ -1108,6 +1108,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* Reset drift correction */
       drift_correction = 0;
       is_drift_correction_used = 0;
+#ifdef BUILD_WITH_PRIL
+      SLOT_TICK_FOR_LINK(current_link);
+#endif /* BUILD_WITH_PRIL */
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       uint8_t do_skip_best_link = 0;
@@ -1146,7 +1149,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Decide whether it is a TX/RX/IDLE or OFF slot */
 #if BUILD_WITH_PRIL
         bool skip_tx = false;
-        CHECK_SKIP_TX(current_link, &skip_tx, current_packet);
+        CHECK_SKIP_TX(current_link, &skip_tx);
 #endif /* BUILD_WITH_PRIL */
         /* Actual slot operation */
         if(current_packet != NULL
@@ -1159,6 +1162,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
            * 2. update_backoff_state(current_neighbor)
            * 3. post tx callback
            **/
+#if BUILD_WITH_PRIL
+          ATTACH_SLEEP_IF_LAST(current_link, current_packet);
+#endif /* BUILD_WITH_PRIL */
           static struct pt slot_tx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
         } else {

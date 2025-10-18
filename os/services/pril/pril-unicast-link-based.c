@@ -51,6 +51,9 @@ static uint16_t slotframe_handle = 0;
 static uint16_t local_channel_offset;
 static struct tsch_slotframe *sf_unicast;
 
+// Forward declaration
+static int deactivate_rx_parent_link(const linkaddr_t *linkaddr);
+
 /*---------------------------------------------------------------------------*/
 static uint16_t
 get_node_pair_timeslot(const linkaddr_t *from, const linkaddr_t *to)
@@ -134,10 +137,16 @@ add_uc_links(const linkaddr_t *linkaddr)
     nbr = pril_nbr_get(linkaddr);
     if (nbr == NULL)
     {
-      if (linkaddr_cmp(linkaddr, &orchestra_parent_linkaddr))
-        nbr = pril_nbr_update(linkaddr, -1, -1, -1, 1);
-      else
-        nbr = pril_nbr_update(linkaddr, -1, -1, -1, 0);
+      /* Determine if this neighbor is our parent once, avoid duplicate cmp */
+      int is_parent = linkaddr_cmp(linkaddr, &orchestra_parent_linkaddr);
+      nbr = pril_nbr_add(linkaddr, -1, -1, -1, is_parent ? true : false);
+
+      if (nbr == NULL)
+      {
+        LOG_ERR("add_uc_links: failed to add neighbor %02x:%02x\n",
+                linkaddr->u8[0], linkaddr->u8[1]);
+        return;
+      }
     }
 
     /* Add Tx link if it does not exist */
@@ -236,6 +245,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     }
     remove_uc_links(old_addr);
     add_uc_links(new_addr);
+    deactivate_rx_parent_link(new_addr);
   }
   // print the current tsch schedule
   tsch_schedule_print();
@@ -315,6 +325,9 @@ init(uint16_t sf_handle)
               rt_table->src.u8[0], rt_table->src.u8[1],
               get_node_pair_timeslot(&linkaddr_node_addr, &rt_table->src),
               local_channel_offset);
+      // Remove the TX link to this neighbor since it routes through us
+      remove_unicast_link(get_node_pair_timeslot(&linkaddr_node_addr, &rt_table->src),
+                          LINK_OPTION_TX | LINK_OPTION_SHARED);
     }
     rt_table++;
   }

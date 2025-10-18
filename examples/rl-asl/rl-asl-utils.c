@@ -129,6 +129,15 @@ uint16_t rl_asl_data_chksum(void)
     return (sum == 0) ? 0xffff : rl_asl_ip_htons(sum);
 }
 /*---------------------------------------------------------------------------*/
+uint16_t rl_asl_data_chksum_from_buffer(const uint8_t *data)
+{
+    uint16_t sum;
+
+    sum = chksum(0, data, RL_ASL_DATAH_LEN);
+    LOG_DBG("Data checksum from buffer: %04x\n", sum);
+    return (sum == 0) ? 0xffff : rl_asl_ip_htons(sum);
+}
+/*---------------------------------------------------------------------------*/
 void print_ip_header()
 {
     LOG_DBG("IP Header:\n");
@@ -150,8 +159,8 @@ void print_data_header()
     LOG_DBG("  Payload Length: %d (%zu bytes)\n", RL_ASL_DATA_BUF->payload_len, sizeof(RL_ASL_DATA_BUF->payload_len));
     LOG_DBG("  Sequence Number: %d (%zu bytes)\n", rl_asl_ip_htons(RL_ASL_DATA_BUF->seqnum), sizeof(RL_ASL_DATA_BUF->seqnum));
 #ifdef BUILD_WITH_PRIL
-    LOG_DBG("  Sleep IE ASN: %" PRIu64 " (%zu bytes)\n", rl_asl_ip_ntohl64(RL_ASL_DATA_BUF->sleep_ie_asn), sizeof(RL_ASL_DATA_BUF->sleep_ie_asn));
-    LOG_DBG("  Timing IE (s): %d (%zu bytes)\n", RL_ASL_DATA_BUF->timing_ie_s, sizeof(RL_ASL_DATA_BUF->timing_ie_s));
+    LOG_DBG("  Sleep End: %d (%zu bytes)\n", rl_asl_ip_htons(RL_ASL_DATA_BUF->sleep_end), sizeof(RL_ASL_DATA_BUF->sleep_end));
+    LOG_DBG("  Timing T_s: %d (%zu bytes)\n", RL_ASL_DATA_BUF->timing_T_s, sizeof(RL_ASL_DATA_BUF->timing_T_s));
 #endif /* BUILD_WITH_PRIL */
     LOG_DBG("  Data Checksum: %04x (%zu bytes)\n", rl_asl_ip_htons(RL_ASL_DATA_BUF->datachksum), sizeof(RL_ASL_DATA_BUF->datachksum));
     LOG_DBG("  Payload Data: ");

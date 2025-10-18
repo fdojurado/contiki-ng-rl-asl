@@ -10,9 +10,8 @@ NBR_TABLE(pril_nbr_t, pril_nbr_table);
 
 static int count_neighbors = 0;
 
-static int16_t min_gen_period = INT16_MAX;
-static pril_nbr_t *min_gen_period_nbr = NULL;
-
+static int min_timing_T_s = INT32_MAX;
+static pril_nbr_t *nbr_with_min_T_s = NULL;
 /***********************************************************************/
 void pril_nbr_init(void)
 {
@@ -23,6 +22,59 @@ void pril_nbr_init(void)
 pril_nbr_t *pril_nbr_get(const linkaddr_t *addr)
 {
     return nbr_table_get_from_lladdr(pril_nbr_table, addr);
+}
+/***********************************************************************/
+pril_nbr_t *pril_nbr_add(const linkaddr_t *addr, int16_t seqnum,
+                         int16_t sleep_end, uint8_t timing_T_s, bool is_parent)
+
+{
+    pril_nbr_t *nbr = pril_nbr_get(addr);
+    if (nbr != NULL)
+    {
+        // Neighbor already exists, update fields
+        if (nbr->first_seqno == -1)
+            nbr->first_seqno = seqnum;
+        nbr->last_seqno = seqnum;
+        nbr->sleep_end = sleep_end;
+        nbr->timing_T_s = timing_T_s;
+        if (nbr->timing_T_s < min_timing_T_s)
+        {
+            min_timing_T_s = nbr->timing_T_s;
+            nbr_with_min_T_s = nbr;
+        }
+        LOG_INFO("Updated existing neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
+        return nbr;
+    }
+
+    // Add new neighbor
+    nbr = nbr_table_add_lladdr(pril_nbr_table, addr, NBR_TABLE_REASON_IPV6_ND, NULL);
+    if (nbr != NULL)
+    {
+        nbr->parent = is_parent;
+        nbr->first_seqno = seqnum;
+        nbr->tx_state = PRIL_STATE_ON;
+        nbr->rx_state = PRIL_STATE_ON;
+        nbr->last_seqno = seqnum;
+        nbr->sleep_end = sleep_end;
+        nbr->new_sleep_end = -1;
+        nbr->retr_count = 0;
+        nbr->max_retries = 4; // Default max retries
+        nbr->timing_T_s = timing_T_s;
+        nbr->last_sleep_asn.ms1b = 0;
+        nbr->last_sleep_asn.ls4b = 0;
+        if (nbr->timing_T_s < min_timing_T_s)
+        {
+            min_timing_T_s = nbr->timing_T_s;
+            nbr_with_min_T_s = nbr;
+        }
+        count_neighbors++;
+        LOG_INFO("Added new neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
+    }
+    else
+    {
+        LOG_ERR("Failed to add neighbor %02x:%02x - table full\n", addr->u8[0], addr->u8[1]);
+    }
+    return nbr;
 }
 /***********************************************************************/
 pril_nbr_t *pril_nbr_get_by_rx_link(const struct tsch_link *link)
@@ -74,73 +126,28 @@ const linkaddr_t *pril_nbr_get_addr(pril_nbr_t *nbr)
     return nbr_table_get_lladdr(pril_nbr_table, nbr);
 }
 /***********************************************************************/
-pril_nbr_t *pril_nbr_update(const linkaddr_t *addr, int16_t seqno,
-                            uint64_t sleep_ie_asn, uint8_t timing_ie_s, int8_t parent)
-{
-    pril_nbr_t *nbr = pril_nbr_get(addr);
-
-    if (nbr == NULL)
-    {
-        nbr = nbr_table_add_lladdr(pril_nbr_table, addr, NBR_TABLE_REASON_IPV6_ND, NULL);
-        if (nbr == NULL)
-        {
-            LOG_ERR("Failed to add neighbor %02x:%02x to table\n", addr->u8[0], addr->u8[1]);
-            return NULL;
-        }
-        nbr->first_seqno = seqno;
-        nbr->last_seqno = seqno;
-        nbr->sleep_ie_asn = sleep_ie_asn;
-        nbr->sleep_ie_asn_secondary = -1; // Initialize secondary sleep_ie_asn
-        nbr->timing_ie_s = timing_ie_s;
-        nbr->rx_link = NULL;
-        nbr->tx_link = NULL;
-        nbr->parent = parent;
-        count_neighbors++;
-        LOG_INFO("Added neighbor %02x:%02x with seqno %d, sleep_ie_asn %" PRIu64 ", timing_ie_s %u\n",
-                 addr->u8[0], addr->u8[1], seqno, sleep_ie_asn, timing_ie_s);
-    }
-    else
-    {
-        // Only update first_seqno if it is uninitialized
-        if (nbr->first_seqno == -1 && seqno != -1)
-        {
-            nbr->first_seqno = seqno;
-        }
-        // Always update last_seqno if seqno is newer
-        if (seqno > nbr->last_seqno)
-        {
-            nbr->last_seqno = seqno;
-        }
-        nbr->sleep_ie_asn = sleep_ie_asn;
-        nbr->timing_ie_s = timing_ie_s;
-        nbr->parent = parent;
-        LOG_INFO("Updated neighbor %02x:%02x with seqno %d, sleep_ie_asn %" PRIu64 ", timing_ie_s %u\n",
-                 addr->u8[0], addr->u8[1], seqno, sleep_ie_asn, timing_ie_s);
-    }
-
-    // Update min_gen_period and min_gen_period_nbr
-    if (timing_ie_s > 0 && timing_ie_s < min_gen_period)
-    {
-        min_gen_period = timing_ie_s;
-        min_gen_period_nbr = nbr;
-    }
-
-    return nbr;
-}
-/***********************************************************************/
 void pril_nbr_rx_link_set(pril_nbr_t *nbr, const struct tsch_link *link)
 {
-    nbr->rx_link = (struct tsch_link *)link;
+    if (nbr != NULL)
+    {
+        nbr->rx_link = (struct tsch_link *)link;
+    }
 }
 /***********************************************************************/
 void pril_nbr_tx_link_set(pril_nbr_t *nbr, const struct tsch_link *link)
 {
-    nbr->tx_link = (struct tsch_link *)link;
+    if (nbr != NULL)
+    {
+        nbr->tx_link = (struct tsch_link *)link;
+    }
 }
 /***********************************************************************/
-pril_nbr_t *pril_nbr_min_gen_period_neighbor(void)
+void pril_nbr_rx_set_state(pril_nbr_t *nbr, pril_state_t state)
 {
-    return min_gen_period_nbr;
+    if (nbr != NULL)
+    {
+        nbr->rx_state = state;
+    }
 }
 /***********************************************************************/
 void pril_nbr_remove(const linkaddr_t *addr)
@@ -156,27 +163,6 @@ void pril_nbr_remove(const linkaddr_t *addr)
     {
         LOG_WARN("Neighbor %02x:%02x not found in table for removal\n", addr->u8[0], addr->u8[1]);
     }
-}
-/***********************************************************************/
-bool pril_nbr_is_there_a_non_paired_child(void)
-{
-    pril_nbr_t *nbr = nbr_table_head(pril_nbr_table);
-    while (nbr != NULL)
-    {
-
-        if (nbr->parent == 1)
-        {
-            nbr = nbr_table_next(pril_nbr_table, nbr);
-            continue;
-        }
-
-        if (nbr->last_seqno - nbr->first_seqno < 3)
-        {
-            return true;
-        }
-        nbr = nbr_table_next(pril_nbr_table, nbr);
-    }
-    return false;
 }
 /***********************************************************************/
 pril_nbr_t *pril_nbr_head(void)
@@ -206,20 +192,46 @@ void pril_nbr_print(void)
     while (nbr != NULL)
     {
         const linkaddr_t *addr = pril_nbr_get_addr(nbr);
-        LOG_INFO("  Neighbor %02x:%02x - First Seqno: %d, Last Seqno: %d, Sleep IE ASN: %" PRIu64 ", Secondary Sleep IE ASN: %" PRIu64 " Timing IE(s): %d, rx ts = %u, rx ch = %u, tx ts = %u, tx ch = %u, parent = %d\n",
-                 addr->u8[0],
-                 addr->u8[1],
+        LOG_INFO("  Neighbor %02x:%02x - First Seqno: %d, Last Seqno: %d, Sleep End: %u, New Sleep End: %d, Retries: %d/%d, Timing T_s: %u, Parent: %d, RX Link: (ts=%u, ch_off=%u), TX Link: (ts=%u, ch_off=%u)\n",
+                 addr->u8[0], addr->u8[1],
                  nbr->first_seqno,
                  nbr->last_seqno,
-                 nbr->sleep_ie_asn,
-                 nbr->sleep_ie_asn_secondary,
-                 nbr->timing_ie_s,
+                 nbr->sleep_end,
+                 nbr->new_sleep_end,
+                 nbr->retr_count,
+                 nbr->max_retries,
+                 nbr->timing_T_s,
+                 nbr->parent,
                  nbr->rx_link ? nbr->rx_link->timeslot : 0xFFFF,
                  nbr->rx_link ? nbr->rx_link->channel_offset : 0xFFFF,
                  nbr->tx_link ? nbr->tx_link->timeslot : 0xFFFF,
-                 nbr->tx_link ? nbr->tx_link->channel_offset : 0xFFFF,
-                 nbr->parent);
+                 nbr->tx_link ? nbr->tx_link->channel_offset : 0xFFFF);
         nbr = nbr_table_next(pril_nbr_table, nbr);
     }
 }
 /***********************************************************************/
+pril_nbr_t *pril_nbr_min_gen_period_neighbor(void)
+{
+    return nbr_with_min_T_s;
+}
+/***********************************************************************/
+bool pril_nbr_is_there_a_non_paired_child(void)
+{
+    pril_nbr_t *nbr = nbr_table_head(pril_nbr_table);
+    while (nbr != NULL)
+    {
+
+        if (nbr->parent == 1)
+        {
+            nbr = nbr_table_next(pril_nbr_table, nbr);
+            continue;
+        }
+
+        if (nbr->last_seqno - nbr->first_seqno < 3)
+        {
+            return true;
+        }
+        nbr = nbr_table_next(pril_nbr_table, nbr);
+    }
+    return false;
+}
