@@ -24,7 +24,7 @@ static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
     nbr->tx_state = PRIL_STATE_OFF;
     nbr->retr_count = 0;
     LOG_INFO("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
-            neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
+             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 }
 /*---------------------------------------------------------------------------*/
 static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
@@ -45,8 +45,8 @@ static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
     {
         nbr->tx_state = PRIL_STATE_RETR;
         LOG_INFO("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
-                nbr->retr_count,
-                neighbor_addr->u8[0], neighbor_addr->u8[1]);
+                 nbr->retr_count,
+                 neighbor_addr->u8[0], neighbor_addr->u8[1]);
     }
 }
 /*---------------------------------------------------------------------------*/
@@ -142,23 +142,26 @@ static void pril_process_data_packet_from_nref(pril_nbr_t *nbr)
 void pril_data_packet_input(const linkaddr_t *src, int16_t seqnum, bool is_for_us)
 {
     uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
-    LOG_INFO("Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n",
-             is_for_us, seqnum, full_asn, src->u8[0], src->u8[1]);
     print_data_header();
     int16_t sleep_end = rl_asl_ip_htons(RL_ASL_DATA_BUF->sleep_end);
+    uint8_t timing_T_s = RL_ASL_DATA_BUF->timing_T_s;
+    LOG_INFO("Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x with sleep_end=%d\n",
+             is_for_us,
+             seqnum,
+             full_asn,
+             src->u8[0], src->u8[1],
+             sleep_end);
     // What is the difference between the current ASN and the last_rx_asn?
     uint64_t current_asn = ((uint64_t)tsch_current_asn.ms1b << 32) | tsch_current_asn.ls4b;
     int64_t asn_diff = (int64_t)(current_asn - full_asn);
-    LOG_DBG("Current ASN: %" PRIu64 ", Last RX ASN: %" PRIu64 ", Diff: %" PRIi64 "\n",
-            current_asn,
-            ((uint64_t)last_rx_asn.ms1b << 32 | last_rx_asn.ls4b),
-            asn_diff);
+    // LOG_DBG("Current ASN: %" PRIu64 ", Last RX ASN: %" PRIu64 ", Diff: %" PRIi64 "\n",
+    //         current_asn,
+    //         ((uint64_t)last_rx_asn.ms1b << 32 | last_rx_asn.ls4b),
+    //         asn_diff);
     // We now need to deduct the elapsed cells from sleep_end
     sleep_end -= (int16_t)asn_diff;
     if (sleep_end < 0)
         sleep_end = 0;
-    uint8_t timing_T_s = RL_ASL_DATA_BUF->timing_T_s;
-    LOG_DBG("PRIL Data IE: sleep_end=%d, timing_T_s=%u\n", sleep_end, timing_T_s);
     pril_nbr_t *nbr = pril_nbr_add(src, seqnum, sleep_end, timing_T_s, false);
     if (sleep_end > 0)
         pril_nbr_rx_set_state(nbr, PRIL_STATE_OFF);
@@ -298,13 +301,13 @@ int pril_link_state_tick(pril_nbr_t *nbr)
             {
                 nbr->rx_state = PRIL_STATE_ON;
                 LOG_INFO("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
-                        neighbor_addr->u8[0], neighbor_addr->u8[1]);
+                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
             }
             if (nbr->tx_state == PRIL_STATE_OFF || nbr->tx_state == PRIL_STATE_RETR)
             {
                 nbr->tx_state = PRIL_STATE_ON;
                 LOG_INFO("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
-                        neighbor_addr->u8[0], neighbor_addr->u8[1]);
+                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
                 /* If new_sleep_end was queued, transfer it now */
                 if (nbr->new_sleep_end > 0 && nbr->new_sleep_end > 0)
                 {
@@ -312,7 +315,7 @@ int pril_link_state_tick(pril_nbr_t *nbr)
                     nbr->new_sleep_end = 0;
                     // nbr->tx_state = PRIL_STATE_OFF;
                     LOG_INFO("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
-                            neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
+                             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
                 }
             }
         }
@@ -408,7 +411,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (current_packet == NULL || current_packet->qb == NULL)
             return;
 
-        LOG_INFO("Attaching Sleep IE for next TX to %02x:%02x (q=1, state=ON, sleep_end=%d)\n",
+        LOG_DBG("Attaching Sleep IE for next TX to %02x:%02x (q=1, state=ON, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 
         /* Here we first need to check which children has the minimum timing_T_s */
@@ -420,7 +423,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (child_addr == NULL)
             return;
 
-        LOG_INFO("Child with min T_s is %02x:%02x with T_s=%u\n",
+        LOG_DBG("Child with min T_s is %02x:%02x with T_s=%u\n",
                 child_addr->u8[0], child_addr->u8[1],
                 child_with_min_T_s->timing_T_s);
 
@@ -470,7 +473,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (current_packet == NULL || current_packet->qb == NULL)
             return;
 
-        LOG_INFO("Re-attaching Sleep IE for RETR TX to %02x:%02x (state=RETR, sleep_end=%d)\n",
+        LOG_DBG("Re-attaching Sleep IE for RETR TX to %02x:%02x (state=RETR, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 
         void *packet;
@@ -496,7 +499,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
     }
     else
     {
-        LOG_INFO("Not attaching Sleep IE for next TX to %02x:%02x (q=%d, state=%d, sleep_end=%d)\n",
+        LOG_DBG("Not attaching Sleep IE for next TX to %02x:%02x (q=%d, state=%d, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], q, nbr->tx_state, nbr->sleep_end);
     }
 }

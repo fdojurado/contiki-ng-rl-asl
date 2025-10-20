@@ -99,7 +99,6 @@ void send_data_packet(void)
   // For PRIL, set sleep_ie and timing_ie
   // we need to calculate the next asn based on the current asn and the tx interval
   int tx_interval = get_tx_interval();
-  LOG_DBG("Current ASN: %" PRIu64 ", tx_interval: %d seconds\n", full_asn, tx_interval);
   if (num_acked >= 3)
   {
     RL_ASL_DATA_BUF->sleep_end = rl_asl_ip_htons(pril_compute_cells_from_seconds(tx_interval));
