@@ -8,6 +8,7 @@
 #include "net/queuebuf.h"
 #include "pril-utils.h"
 #include "rl-asl-buf.h"
+#include "rl-asl-data-packet-generator.h"
 #include "orchestra.h"
 
 #include "os/sys/log.h"
@@ -22,7 +23,7 @@ static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
 
     nbr->tx_state = PRIL_STATE_OFF;
     nbr->retr_count = 0;
-    LOG_DBG("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
+    LOG_INFO("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 }
 /*---------------------------------------------------------------------------*/
@@ -43,16 +44,18 @@ static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
     else
     {
         nbr->tx_state = PRIL_STATE_RETR;
-        LOG_DBG("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
+        LOG_INFO("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
                 nbr->retr_count,
                 neighbor_addr->u8[0], neighbor_addr->u8[1]);
     }
 }
 /*---------------------------------------------------------------------------*/
-void pril_packet_sent(int mac_status)
+void pril_packet_sent(const struct tsch_packet *packet, int mac_status, int transmissions)
 {
     const linkaddr_t *neighbor_addr;
     pril_nbr_t *nbr;
+
+    data_packet_generator_ack_received(packet, mac_status);
 
     /* Does this packet have a sleep_end > 0? */
     int was_sleep_end_set = rl_asl_buf_get_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG);
@@ -230,8 +233,8 @@ void pril_check_skip_tx(const struct tsch_link *link, bool *skip_tx)
     if (pril_nbr_count() == 0 || pril_nbr_is_there_a_non_paired_child())
         return;
 
-    LOG_DBG("Checking PRIL TX skip for link timeslot %u, channel offset %u\n",
-            link->timeslot, link->channel_offset);
+    // LOG_DBG("Checking PRIL TX skip for link timeslot %u, channel offset %u\n",
+    //         link->timeslot, link->channel_offset);
 
     const linkaddr_t *neighbor_addr = pril_nbr_get_addr(nbr);
     if (neighbor_addr == NULL)
@@ -294,21 +297,21 @@ int pril_link_state_tick(pril_nbr_t *nbr)
             if (nbr->rx_state == PRIL_STATE_OFF)
             {
                 nbr->rx_state = PRIL_STATE_ON;
-                LOG_DBG("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
+                LOG_INFO("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
             }
             if (nbr->tx_state == PRIL_STATE_OFF || nbr->tx_state == PRIL_STATE_RETR)
             {
                 nbr->tx_state = PRIL_STATE_ON;
-                LOG_DBG("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
+                LOG_INFO("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
                         neighbor_addr->u8[0], neighbor_addr->u8[1]);
                 /* If new_sleep_end was queued, transfer it now */
-                if (nbr->new_sleep_end > 0)
+                if (nbr->new_sleep_end > 0 && nbr->new_sleep_end > 0)
                 {
                     nbr->sleep_end = nbr->new_sleep_end;
                     nbr->new_sleep_end = 0;
                     // nbr->tx_state = PRIL_STATE_OFF;
-                    LOG_DBG("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
+                    LOG_INFO("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
                             neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
                 }
             }
@@ -353,7 +356,7 @@ void pril_slot_tick_for_link(const struct tsch_link *link)
 
         if (matches_tx || matches_rx)
         {
-            const char *which = matches_tx && matches_rx ? "TX/RX" : (matches_tx ? "TX" : "RX");
+            // const char *which = matches_tx && matches_rx ? "TX/RX" : (matches_tx ? "TX" : "RX");
             // LOG_DBG("Found PRIL %s link for neighbor %02x:%02x\n",
             //         which, nbr_addr->u8[0], nbr_addr->u8[1]);
 
@@ -366,9 +369,9 @@ void pril_slot_tick_for_link(const struct tsch_link *link)
                 int result = pril_link_state_tick(nbr);
                 if (result == 0)
                 {
-                    LOG_DBG("  Updated PRIL %s link state for %02x:%02x: sleep_end=%d, new_sleep_end=%d, tx_state=%d, rx_state=%d\n",
-                            which, nbr_addr->u8[0], nbr_addr->u8[1],
-                            nbr->sleep_end, nbr->new_sleep_end, nbr->tx_state, nbr->rx_state);
+                    // LOG_DBG("  Updated PRIL %s link state for %02x:%02x: sleep_end=%d, new_sleep_end=%d, tx_state=%d, rx_state=%d\n",
+                    //         which, nbr_addr->u8[0], nbr_addr->u8[1],
+                    //         nbr->sleep_end, nbr->new_sleep_end, nbr->tx_state, nbr->rx_state);
                     nbr->last_sleep_asn.ms1b = tsch_current_asn.ms1b;
                     nbr->last_sleep_asn.ls4b = tsch_current_asn.ls4b;
                 }
@@ -405,7 +408,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (current_packet == NULL || current_packet->qb == NULL)
             return;
 
-        LOG_DBG("Attaching Sleep IE for next TX to %02x:%02x (q=1, state=ON, sleep_end=%d)\n",
+        LOG_INFO("Attaching Sleep IE for next TX to %02x:%02x (q=1, state=ON, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 
         /* Here we first need to check which children has the minimum timing_T_s */
@@ -417,18 +420,18 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (child_addr == NULL)
             return;
 
-        LOG_DBG("Child with min T_s is %02x:%02x with T_s=%u\n",
+        LOG_INFO("Child with min T_s is %02x:%02x with T_s=%u\n",
                 child_addr->u8[0], child_addr->u8[1],
                 child_with_min_T_s->timing_T_s);
 
         void *packet;
         packet = queuebuf_dataptr(current_packet->qb);
         uint8_t packet_len = queuebuf_datalen(current_packet->qb);
-        LOG_DBG("Current packet length: %u\n", packet_len);
+        // LOG_DBG("Current packet length: %u\n", packet_len);
         //  lets skip the IEEE 802.15.4 header (assuming no security)
         if (packet_len <= 9)
         {
-            LOG_WARN("Packet too short to attach Sleep IE\n");
+            LOG_WARN("Packet too short to attach Sleep IE (len=%u)\n", packet_len);
             return;
         }
 
@@ -457,7 +460,7 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         // Recalculate the data checksum
         data_hdr->datachksum = 0;
         data_hdr->datachksum = ~rl_asl_data_chksum_from_buffer((uint8_t *)data_hdr);
-        LOG_DBG("  updated Data Checksum in packet to: %04x\n", rl_asl_ip_htons(data_hdr->datachksum));
+        // LOG_DBG("  updated Data Checksum in packet to: %04x\n", rl_asl_ip_htons(data_hdr->datachksum));
         // We need to set 'RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG' so that pril_packet_sent knows this packet had sleep info
         rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, 1);
         // lets see if we set it
@@ -467,17 +470,17 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         if (current_packet == NULL || current_packet->qb == NULL)
             return;
 
-        LOG_DBG("Re-attaching Sleep IE for RETR TX to %02x:%02x (state=RETR, sleep_end=%d)\n",
+        LOG_INFO("Re-attaching Sleep IE for RETR TX to %02x:%02x (state=RETR, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 
         void *packet;
         packet = queuebuf_dataptr(current_packet->qb);
         uint8_t packet_len = queuebuf_datalen(current_packet->qb);
-        LOG_DBG("Current packet length: %u\n", packet_len);
+        // LOG_DBG("Current packet length: %u\n", packet_len);
         //  lets skip the IEEE 802.15.4 header (assuming no security)
         if (packet_len <= 9)
         {
-            LOG_WARN("Packet too short to attach Sleep IE\n");
+            LOG_WARN("Packet too short to attach Sleep IE (len=%u)\n", packet_len);
             return;
         }
 
@@ -485,17 +488,15 @@ void pril_attach_sleep_if_last(const struct tsch_link *link, const struct tsch_p
         struct rl_asl_data_hdr *data_hdr = (struct rl_asl_data_hdr *)((uint8_t *)ip_hdr + sizeof(struct rl_asl_uip_hdr));
         // Lets update the sleep
         data_hdr->sleep_end = rl_asl_ip_htons(nbr->sleep_end);
-        LOG_DBG("  Sleep End: %d\n", rl_asl_ip_htons(data_hdr->sleep_end));
         // Recalculate the data checksum
         data_hdr->datachksum = 0;
         data_hdr->datachksum = ~rl_asl_data_chksum_from_buffer((uint8_t *)data_hdr);
-        LOG_DBG("  updated Data Checksum in packet to: %04x\n", rl_asl_ip_htons(data_hdr->datachksum));
         // We need to set 'RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG' so that pril_packet_sent knows this packet had sleep info
         rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, 1);
     }
     else
     {
-        LOG_DBG("Not attaching Sleep IE for next TX to %02x:%02x (q=%d, state=%d, sleep_end=%d)\n",
+        LOG_INFO("Not attaching Sleep IE for next TX to %02x:%02x (q=%d, state=%d, sleep_end=%d)\n",
                 neighbor_addr->u8[0], neighbor_addr->u8[1], q, nbr->tx_state, nbr->sleep_end);
     }
 }

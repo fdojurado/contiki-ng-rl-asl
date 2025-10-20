@@ -21,7 +21,7 @@
 #include "os/sys/log.h"
 
 #define LOG_MODULE "data-packet-generator"
-#define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_DATA_PACKET_GENERATOR
+#define LOG_LEVEL LOG_LEVEL_DBG
 
 /* Traffic pattern selection */
 #define TRAFFIC_PATTERN_BASELINE 1
@@ -43,11 +43,30 @@ static struct tsch_asn_t *asn = &tsch_current_asn;
 
 static int16_t seqnum = 0; // Sequence number for data packets
 
+static int8_t num_acked = 0; // Number of ACKs received
+
 PROCESS(data_packet_generator_process, "Transmission Process");
 
 // Forward declarations
 static int get_tx_interval(void);
 
+/*---------------------------------------------------------------------------*/
+void data_packet_generator_ack_received(const struct tsch_packet *packet, int mac_status)
+{
+  // Inspect the seqnum of the ACKed packet
+  if (packet == NULL || packet->qb == NULL)
+    return;
+
+  if (mac_status != MAC_TX_OK)
+    return; // Only count successful ACKs
+
+  int16_t seq = rl_asl_buf_get_attr(RL_ASL_BUF_ATTR_PRIL_SEQNUM);
+  if (seq == seqnum - 1) // ACK for the last sent packet
+  {
+    num_acked++;
+    LOG_INFO("ACK received for seqnum %d, total ACKed: %d\n", seq, num_acked);
+  }
+}
 /*---------------------------------------------------------------------------*/
 void send_data_packet(void)
 {
@@ -81,28 +100,53 @@ void send_data_packet(void)
   // we need to calculate the next asn based on the current asn and the tx interval
   int tx_interval = get_tx_interval();
   LOG_DBG("Current ASN: %" PRIu64 ", tx_interval: %d seconds\n", full_asn, tx_interval);
-  RL_ASL_DATA_BUF->sleep_end = rl_asl_ip_htons(pril_compute_cells_from_seconds(tx_interval));
-  if (nbr != NULL){
-    int Tmin_cells = pril_compute_cells_from_seconds(tx_interval);
-    if(nbr->sleep_end > 0)
+  if (num_acked >= 3)
+  {
+    RL_ASL_DATA_BUF->sleep_end = rl_asl_ip_htons(pril_compute_cells_from_seconds(tx_interval));
+    if (nbr != NULL)
     {
+      int Tmin_cells = pril_compute_cells_from_seconds(tx_interval);
+      if (nbr->sleep_end > 0)
+      {
         nbr->new_sleep_end = Tmin_cells;
         LOG_INFO("Updating neighbor %02x:%02x new_sleep_end to %d\n",
                  nxthop->u8[0], nxthop->u8[1], nbr->new_sleep_end);
-    }
-    else
-    {
+      }
+      else
+      {
         nbr->sleep_end = Tmin_cells;
         LOG_INFO("Updating neighbor %02x:%02x sleep_end to %d\n",
                  nxthop->u8[0], nxthop->u8[1], nbr->sleep_end);
+      }
+      rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, 1);
+      LOG_DBG("Set PRIL sleep_end to %d cells for neighbor %02x:%02x\n",
+              rl_asl_ip_htons(RL_ASL_DATA_BUF->sleep_end),
+              nxthop->u8[0], nxthop->u8[1]);
     }
   }
+  else
+  {
+    RL_ASL_DATA_BUF->sleep_end = rl_asl_ip_htons(0); // No sleep initially
+  }
   RL_ASL_DATA_BUF->timing_T_s = (uint8_t)tx_interval;
-  LOG_DBG("Set PRIL sleep_end to %d cells and timing_T_s to %d seconds\n",
-          pril_compute_cells_from_seconds(tx_interval), tx_interval);
+  if (rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SEQNUM, seqnum))
+  {
+    LOG_DBG("Set RL_ASL_BUF_ATTR_PRIL_SEQNUM to %d\n", seqnum);
+  }
+  else
+  {
+    LOG_WARN("Failed to set RL_ASL_BUF_ATTR_PRIL_SEQNUM\n");
+  }
 #endif /* BUILD_WITH_PRIL */
 
-  rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 4); // Set max MAC transmissions
+  if (rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS, 4))
+  {
+    LOG_DBG("Set RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS to 4\n");
+  }
+  else
+  {
+    LOG_WARN("Failed to set RL_ASL_BUF_ATTR_MAX_MAC_TRANSMISSIONS\n");
+  }
 
   RL_ASL_DATA_BUF->datachksum = 0; // Clear checksum before calculating
   RL_ASL_DATA_BUF->datachksum = ~rl_asl_data_chksum();
@@ -215,22 +259,18 @@ compute_tx_with_jitter(int tx_interval)
 PROCESS_THREAD(data_packet_generator_process, ev, data)
 {
   static struct etimer et;
+  static struct etimer assoc_check_timer;
   static int tx_interval;
+  static bool first_start_done = false;
 
   PROCESS_BEGIN();
 
   tx_interval = get_tx_interval();
+
   if (tx_interval > 0)
   {
-    LOG_INFO("Node %02x:%02x sending every ~%d seconds\n",
+    LOG_INFO("Node %02x:%02x will send every ~%d seconds after TSCH association\n",
              linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1], tx_interval);
-
-    // We dont add jitter for the periodic pattern to keep it regular
-#if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
-    etimer_set(&et, compute_tx_with_jitter(tx_interval));
-#else
-    etimer_set(&et, tx_interval * CLOCK_SECOND);
-#endif
   }
   else
   {
@@ -238,27 +278,61 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
              linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
   }
 
-  LOG_INFO("TSCH is associated, starting transmission process\n");
+  LOG_INFO("Waiting for TSCH association before starting transmissions...\n");
+
+  /* Set a periodic timer to check association */
+  etimer_set(&assoc_check_timer, CLOCK_SECOND);
 
   while (1)
   {
     PROCESS_WAIT_EVENT();
-    if (!tsch_is_associated)
+
+    /* Periodically check association status */
+    if (etimer_expired(&assoc_check_timer))
     {
-      if (etimer_expired(&et))
-        etimer_reset(&et);
+      etimer_reset(&assoc_check_timer);
+
+      if (!first_start_done && tsch_is_associated)
+      {
+        LOG_INFO("TSCH association complete, starting first TX timer (delay = %d s)\n", tx_interval);
+        etimer_set(&et, tx_interval * CLOCK_SECOND);
+        first_start_done = true;
+      }
+      continue;
     }
-    else if (etimer_expired(&et))
+
+    /* If et fired, handle TX; but only when et was actually started (first_start_done) */
+    if (first_start_done && etimer_expired(&et))
     {
+
+      /* If TSCH lost association meanwhile, cancel sending and go back to waiting */
+      if (!tsch_is_associated)
+      {
+        LOG_WARN("TSCH not associated at TX time — postponing transmissions");
+        /* stop current TX timer and wait for re-association */
+        first_start_done = false;
+        etimer_stop(&et);
+        /* ensure assoc checker is running immediately */
+        etimer_set(&assoc_check_timer, CLOCK_SECOND);
+        continue;
+      }
+
 #if BUILD_WITH_RL_ASL
       if (orchestra_parent_knows_us == 0)
       {
         LOG_WARN("Parent does not know us yet, skipping data packet\n");
+        /* schedule next try in tx_interval (or jittered) */
+#if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
+        etimer_set(&et, compute_tx_with_jitter(tx_interval));
+#else
         etimer_reset(&et);
+#endif
         continue;
       }
 #endif
-      LOG_DBG("Timer expired, sending data packet\n");
+
+      LOG_DBG("Timer expired, sending data packet (first_start_done=%d, tsch associated=%d)\n",
+              first_start_done, tsch_is_associated);
       send_data_packet();
 
 #if TRAFFIC_PATTERN != TRAFFIC_PATTERN_PERIODIC
@@ -268,6 +342,5 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
 #endif
     }
   }
-
   PROCESS_END();
 }

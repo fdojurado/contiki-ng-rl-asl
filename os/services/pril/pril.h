@@ -6,7 +6,7 @@
 #include "net/linkaddr.h"
 
 /* Called when a data packet has been sent */
-void pril_packet_sent(int mac_status);
+void pril_packet_sent(const struct tsch_packet *packet, int mac_status, int transmissions);
 /* Called when a data packet is received */
 void pril_data_packet_input(const linkaddr_t *src, int16_t seqnum, bool is_for_us);
 /* Check whether to skip RX for a given link */

@@ -777,7 +777,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   #ifdef BUILD_WITH_PRIL
     if(current_packet->sent){
-      mac_call_sent_callback(current_packet->sent, NULL, current_packet->ret, current_packet->transmissions);
+      mac_call_sent_callback(current_packet->sent, current_packet, current_packet->ret, current_packet->transmissions);
     }
   #endif /* BUILD_WITH_PRIL */
 

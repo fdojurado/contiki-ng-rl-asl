@@ -4,6 +4,6 @@
 #include "contiki.h"
 
 /* Utility functions for PRIL */
-int pril_compute_cells_from_seconds(uint32_t seconds);
+int pril_compute_cells_from_seconds(int seconds);
 
 #endif /* PRIL_UTILS_H */

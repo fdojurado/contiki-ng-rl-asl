@@ -36,10 +36,10 @@ set_packet_attrs(void)
 {
     /* set protocol in NETWORK_ID */
     rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_NETWORK_ID, RL_ASL_IP_BUF->proto);
-#ifdef BUILD_WITH_PRIL
-    /* set PRIL sleep flag */
-    rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, RL_ASL_DATA_BUF->sleep_end > 0 ? 1 : 0);
-#endif /* BUILD_WITH_PRIL */
+// #ifdef BUILD_WITH_PRIL
+//     /* set PRIL sleep flag */
+//     rl_asl_buf_set_attr(RL_ASL_BUF_ATTR_PRIL_SLEEP_FLAG, RL_ASL_DATA_BUF->sleep_end > 0 ? 1 : 0);
+// #endif /* BUILD_WITH_PRIL */
 }
 
 /*--------------------------------------------------------------------*/
@@ -98,7 +98,7 @@ static void packet_sent(void *ptr, int status, int transmissions)
         callback->output_callback(status);
     }
 #ifdef BUILD_WITH_PRIL
-    pril_packet_sent(status);
+    pril_packet_sent(ptr, status, transmissions);
 #endif /* BUILD_WITH_RL_ASL */
 }
 /*---------------------------------------------------------------------------*/

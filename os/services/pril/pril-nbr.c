@@ -42,7 +42,7 @@ pril_nbr_t *pril_nbr_add(const linkaddr_t *addr, int16_t seqnum,
             min_timing_T_s = nbr->timing_T_s;
             nbr_with_min_T_s = nbr;
         }
-        LOG_INFO("Updated existing neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
+        LOG_DBG("Updated existing neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
         return nbr;
     }
 
@@ -68,7 +68,7 @@ pril_nbr_t *pril_nbr_add(const linkaddr_t *addr, int16_t seqnum,
             nbr_with_min_T_s = nbr;
         }
         count_neighbors++;
-        LOG_INFO("Added new neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
+        LOG_DBG("Added new neighbor %02x:%02x\n", addr->u8[0], addr->u8[1]);
     }
     else
     {
@@ -156,7 +156,7 @@ void pril_nbr_remove(const linkaddr_t *addr)
     if (nbr != NULL)
     {
         nbr_table_remove(pril_nbr_table, nbr);
-        LOG_INFO("Removed neighbor %02x:%02x from table\n", addr->u8[0], addr->u8[1]);
+        LOG_DBG("Removed neighbor %02x:%02x from table\n", addr->u8[0], addr->u8[1]);
         count_neighbors--;
     }
     else
