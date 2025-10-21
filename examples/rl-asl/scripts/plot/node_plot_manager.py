@@ -154,7 +154,7 @@ class NodePlotManager:
                 for node_info in network['nodes'].values():
                     if 'power' in node_info:
                         metrics.add('power')
-                    if 'delay' in node_info:
+                    if 'latency' in node_info:
                         metrics.add('latency')
                     if 'jitter' in node_info:
                         metrics.add('jitter')
