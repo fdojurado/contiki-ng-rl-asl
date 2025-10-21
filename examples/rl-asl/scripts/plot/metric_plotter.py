@@ -77,6 +77,8 @@ class MetricPlotter(ABC):
                 return [], scale
             metric_info = node_info[metric]
             per_sample = metric_info.get("samples_s", [])
+            if metric == 'jitter':
+                per_sample = metric_info.get("samples_jitter", [])
 
         return per_sample, scale
     
