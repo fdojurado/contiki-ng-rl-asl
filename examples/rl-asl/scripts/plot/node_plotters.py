@@ -2,6 +2,7 @@
 Per-node plotter implementations for analyzing individual node metrics.
 """
 
+from scipy.stats import norm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -116,6 +117,99 @@ class NodeBarPlotter(MetricPlotter):
         elif metric == "packet_delivery_ratio":
             return node_info.get("packet_delivery_ratio", {}).get("avg", 0)
         return node_info.get(metric, 0)
+
+
+class NodeHistogramPlotter(MetricPlotter):
+    """Creates per-node histograms showing latency distributions per protocol."""
+
+    def plot(self, networks, labels, metric, output_folder, node_ids=None):
+        """
+        Create one subplot per node, where each subplot shows the latency
+        distribution for that node across all protocols.
+        """
+        node_data = {}
+        all_node_ids = set()
+
+        # ---- Collect per-node samples ----
+        for net, label in zip(networks, labels):
+            if "nodes" not in net:
+                continue
+
+            for node_id, node_info in net["nodes"].items():
+                node_id = int(node_id)
+                if node_ids is not None and node_id not in node_ids:
+                    continue
+
+                # Extract per-node samples
+                per_sample, scale = self.get_per_sample_data(
+                    net, metric, node_id=node_id)
+                if not per_sample:
+                    continue
+
+                values = np.array(
+                    [v["avg"] * scale for v in per_sample.values()])
+                if values.size == 0:
+                    continue
+
+                if node_id not in node_data:
+                    node_data[node_id] = {}
+                node_data[node_id][label] = values
+                all_node_ids.add(node_id)
+
+        # ---- Check if data exists ----
+        if not all_node_ids:
+            return
+
+        sorted_node_ids = sorted(all_node_ids)
+        n_nodes = len(sorted_node_ids)
+
+        # ---- Create one subplot per node ----
+        fig, axes = plt.subplots(
+            n_nodes, 1, figsize=(7, 3 * n_nodes), sharex=True
+        )
+        if n_nodes == 1:
+            axes = [axes]
+
+        # ---- Plot per-node histograms ----
+        for ax, node_id in zip(axes, sorted_node_ids):
+            for label, values in node_data[node_id].items():
+                color = self.config.get_label_color(label)
+                alpha = self.config.get_label_alpha(label)
+                pretty_label = self.config.get_label_name(label)
+
+                sns.histplot(
+                    values, bins=30, kde=False, stat="density",
+                    label=pretty_label, color=color, alpha=alpha, ax=ax
+                )
+
+                # Fit and plot Gaussian curve
+                if len(values) > 1:
+                    mu, std = norm.fit(values)
+                    xmin, xmax = ax.get_xlim()
+                    x = np.linspace(xmin, xmax, 200)
+                    p = norm.pdf(x, mu, std)
+                    ax.plot(x, p, color=color, linewidth=2, alpha=alpha)
+
+            ax.set_title(f"Node {node_id}")
+            ax.set_ylabel("Density")
+            ax.legend()
+
+        # ---- Common x-label ----
+        xlabel = self.config.METRIC_INFO.get(metric, {}).get(
+            "label_with_units", metric.replace("_", " ").title()
+        )
+        axes[-1].set_xlabel(xlabel)
+
+        # ---- Figure title and layout ----
+        fig.suptitle(
+            f"{metric.replace('_', ' ').title()} Distribution per Node",
+            fontsize=14
+        )
+        fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+        # ---- Save plot ----
+        self.save_plot(fig, f"{metric}_per_node_histograms.pdf", output_folder)
+        plt.close(fig)
 
 
 class NodeHeatmapPlotter(MetricPlotter):

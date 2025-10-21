@@ -57,17 +57,27 @@ class MetricPlotter(ABC):
         
         return [item[0] for item in combined], [item[1] for item in combined]
     
-    def get_per_sample_data(self, net, metric):
+    def get_per_sample_data(self, net, metric, node_id=None):
         """Extract per-sample data for a metric."""
         info = self.config.METRIC_INFO[metric]
-        suffix = info.get("suffix", "")
+        if not node_id:
+            suffix = info.get("suffix", "")
         scale = info.get("scale", 1.0)
-        
-        if suffix:
-            per_sample = net["network"][metric][f"per_sample_avg_{suffix}"]
+
+        if not node_id:
+            if suffix:
+                per_sample = net["network"][metric][f"per_sample_avg_{suffix}"]
+            else:
+                per_sample = net["network"][metric]["per_sample_avg"]
         else:
-            per_sample = net["network"][metric]["per_sample_avg"]
-        
+            if "nodes" not in net or str(node_id) not in net["nodes"]:
+                return [], scale
+            node_info = net["nodes"][str(node_id)]
+            if metric not in node_info:
+                return [], scale
+            metric_info = node_info[metric]
+            per_sample = metric_info.get("samples_s", [])
+
         return per_sample, scale
     
     def create_figure(self, metric, plot_type):

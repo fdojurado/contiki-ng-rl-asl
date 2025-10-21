@@ -9,7 +9,7 @@ from plot_config import PlotConfig
 from plot_styler import PlotStyler
 from node_plotters import (
     NodeBarPlotter, NodeHeatmapPlotter, NodeScatterPlotter,
-    NodeLinePlotter, NodeBoxPlotter
+    NodeLinePlotter, NodeBoxPlotter, NodeHistogramPlotter
 )
 
 
@@ -23,6 +23,7 @@ class NodePlotManager:
         
         # Initialize node-specific plotters
         self.bar_plotter = NodeBarPlotter(self.config, self.styler)
+        self.histogram_plotter = NodeHistogramPlotter(self.config, self.styler)
         self.heatmap_plotter = NodeHeatmapPlotter(self.config, self.styler)
         self.scatter_plotter = NodeScatterPlotter(self.config, self.styler)
         self.line_plotter = NodeLinePlotter(self.config, self.styler)
@@ -67,6 +68,9 @@ class NodePlotManager:
         # print("Creating per-node scatter plots...")
         # self._create_node_scatter_plots(networks, labels, node_metrics, output_folder)
         
+        print("Creating distribution plots...")
+        self._create_node_distribution_plots(networks, labels, node_metrics, output_folder, node_ids)
+
         print("Creating per-node box plots...")
         self._create_node_box_plots(networks, labels, node_metrics, output_folder, node_ids)
         
@@ -99,6 +103,19 @@ class NodePlotManager:
         if "latency" in metrics and "packet_delivery_ratio" in metrics:
             self.scatter_plotter.plot_two_metrics_per_node(
                 networks, labels, "latency", "packet_delivery_ratio", output_folder)
+            
+    def _create_node_distribution_plots(self, networks, labels, metrics, output_folder, node_ids):
+        """Create distribution-related plots for per-node metrics."""   
+        # CDF plots for specific metrics
+        # for metric in ["latency", "jitter"]:
+        #     if metric in metrics:
+        #         self.cdf_plotter.plot(networks, labels, metric, output_folder)
+        
+        # Histogram plots for specific metrics
+        for metric in ["latency", "jitter"]:
+            if metric in metrics:
+                self.histogram_plotter.plot(networks, labels, metric, output_folder)
+            
     
     def _create_node_box_plots(self, networks, labels, metrics, output_folder, node_ids):
         """Create box plots for per-node metrics."""
