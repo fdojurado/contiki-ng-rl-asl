@@ -13,7 +13,7 @@
 
 #include "os/sys/log.h"
 #define LOG_MODULE "pril"
-#define LOG_LEVEL LOG_LEVEL_NONE
+#define LOG_LEVEL LOG_LEVEL_INFO
 
 /*---------------------------------------------------------------------------*/
 static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
@@ -23,7 +23,7 @@ static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
 
     nbr->tx_state = PRIL_STATE_OFF;
     nbr->retr_count = 0;
-    LOG_INFO("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
+    LOG_DBG("PRIL TX: sleep frame sent and ACKed -> TX OFF for %02x:%02x (sleep_end=%d)\n",
              neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
 }
 /*---------------------------------------------------------------------------*/
@@ -44,7 +44,7 @@ static void pril_on_tx_noack(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
     else
     {
         nbr->tx_state = PRIL_STATE_RETR;
-        LOG_INFO("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
+        LOG_DBG("PRIL TX: sleep frame no ACK -> RETR (count=%d) for %02x:%02x\n",
                  nbr->retr_count,
                  neighbor_addr->u8[0], neighbor_addr->u8[1]);
     }
@@ -300,13 +300,13 @@ int pril_link_state_tick(pril_nbr_t *nbr)
             if (nbr->rx_state == PRIL_STATE_OFF)
             {
                 nbr->rx_state = PRIL_STATE_ON;
-                LOG_INFO("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
+                LOG_DBG("PRIL link %02x:%02x RX -> ON (sleep_end reached 0)\n",
                          neighbor_addr->u8[0], neighbor_addr->u8[1]);
             }
             if (nbr->tx_state == PRIL_STATE_OFF || nbr->tx_state == PRIL_STATE_RETR)
             {
                 nbr->tx_state = PRIL_STATE_ON;
-                LOG_INFO("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
+                LOG_DBG("PRIL link %02x:%02x TX -> ON (sleep_end reached 0)\n",
                          neighbor_addr->u8[0], neighbor_addr->u8[1]);
                 /* If new_sleep_end was queued, transfer it now */
                 if (nbr->new_sleep_end > 0 && nbr->new_sleep_end > 0)
@@ -314,7 +314,7 @@ int pril_link_state_tick(pril_nbr_t *nbr)
                     nbr->sleep_end = nbr->new_sleep_end;
                     nbr->new_sleep_end = 0;
                     // nbr->tx_state = PRIL_STATE_OFF;
-                    LOG_INFO("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
+                    LOG_DBG("PRIL link %02x:%02x applying queued new_sleep_end=%d\n",
                              neighbor_addr->u8[0], neighbor_addr->u8[1], nbr->sleep_end);
                 }
             }
