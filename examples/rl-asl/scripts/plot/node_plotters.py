@@ -15,13 +15,16 @@ class NodeBarPlotter(MetricPlotter):
     """Creates bar plots for per-node metrics."""
     
     def plot(self, networks, labels, metric, output_folder, node_ids=None):
-        """Create bar plot showing metric values for each node across protocols."""
+        """Create bar plot showing metric values for each node across protocols.
+        Nodes are shown in ascending ID order. Within each node's grouped bars,
+        the bars (protocols) are ordered by their value for that node.
+        """
         fig, ax = self.create_figure(metric, "bar")
-        
+
         # Extract node data for all protocols
         node_data = {}
         all_node_ids = set()
-        
+
         for net, label in zip(networks, labels):
             node_data[label] = {}
             if 'nodes' in net:
@@ -30,40 +33,74 @@ class NodeBarPlotter(MetricPlotter):
                         if metric in node_info:
                             node_data[label][int(node_id)] = self._extract_node_metric(node_info, metric)
                             all_node_ids.add(int(node_id))
-        
+
         if not all_node_ids:
             print(f"No node data found for metric {metric}")
             return
-        
+
         # Sort nodes by ID
         sorted_node_ids = sorted(all_node_ids)
         n_nodes = len(sorted_node_ids)
-        n_protocols = len(labels)
-        
-        # Create grouped bar plot
-        width = 0.8 / n_protocols
+
+        # Determine maximum number of bars that can appear in any single node group
+        max_bars_per_node = 0
+        for node_id in sorted_node_ids:
+            cnt = sum(1 for label in labels if node_id in node_data.get(label, {}))
+            max_bars_per_node = max(max_bars_per_node, cnt)
+        if max_bars_per_node == 0:
+            print(f"No node data found for metric {metric}")
+            return
+
+        # width per bar (keep groups within 0.8 width)
+        width = 0.8 / max_bars_per_node
         x = np.arange(n_nodes)
-        
-        for i, (label, protocol_data) in enumerate(node_data.items()):
-            values = [protocol_data.get(node_id, 0) for node_id in sorted_node_ids]
-            
-            color = self.config.get_label_color(label)
-            alpha = self.config.get_label_alpha(label)
-            pretty_label = self.config.get_label_name(label)
-            
-            bars = ax.bar(x + i * width, values, width, 
-                         label=pretty_label, color=color, alpha=alpha,
-                         edgecolor="black", linewidth=1)
-        
+
+        # Keep track of which protocol labels have been added to the legend
+        legend_added = set()
+
+        # For each node, sort available protocol bars by value and draw them centered around x[node_index]
+        for node_idx, node_id in enumerate(sorted_node_ids):
+            # collect (label, value) for protocols that have data for this node
+            per_node = []
+            for label in labels:
+                value = node_data.get(label, {}).get(node_id, None)
+                if value is not None:
+                    per_node.append((label, value))
+
+            if not per_node:
+                # nothing to plot for this node
+                continue
+
+            # sort bars by value (ascending). Use key=lambda p: p[1]
+            per_node.sort(key=lambda p: p[1])
+
+            k = len(per_node)
+            # offsets to center the group around the node x position
+            offsets = (np.arange(k) - (k - 1) / 2.0) * width
+
+            for i, (label, value) in enumerate(per_node):
+                color = self.config.get_label_color(label)
+                alpha = self.config.get_label_alpha(label)
+                pretty_label = self.config.get_label_name(label)
+
+                lbl = pretty_label if pretty_label not in legend_added else None
+                if lbl is not None:
+                    legend_added.add(pretty_label)
+
+                ax.bar(x[node_idx] + offsets[i], value, width,
+                       label=lbl, color=color, alpha=alpha,
+                       edgecolor="black", linewidth=1)
+
         # Style the plot
         ax.set_xlabel("Node ID")
-        ax.set_xticks(x + width * (n_protocols - 1) / 2)
+        ax.set_xticks(x)
         ax.set_xticklabels([f"Node {nid}" for nid in sorted_node_ids])
-        
+
+        # Use styler to add labels/legend/styles (legend will reflect first appearance of each protocol)
         self.styler.set_axis_labels(ax, metric, "bar", x_label="Node ID")
         self.styler.add_legend(ax, metric, "bar")
         self.styler.style_axes(ax, metric, "bar")
-        
+
         self.save_plot(fig, f"{metric}_per_node_bar.pdf", output_folder)
     
     def _extract_node_metric(self, node_info, metric):
