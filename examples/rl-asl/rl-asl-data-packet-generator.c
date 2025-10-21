@@ -62,10 +62,7 @@ void data_packet_generator_ack_received(const struct tsch_packet *packet, int ma
 
   int16_t seq = rl_asl_buf_get_attr(RL_ASL_BUF_ATTR_PRIL_SEQNUM);
   if (seq == seqnum - 1) // ACK for the last sent packet
-  {
     num_acked++;
-    LOG_INFO("ACK received for seqnum %d, total ACKed: %d\n", seq, num_acked);
-  }
 }
 /*---------------------------------------------------------------------------*/
 void send_data_packet(void)
