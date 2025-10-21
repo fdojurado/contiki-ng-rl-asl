@@ -13,7 +13,7 @@
 
 #include "os/sys/log.h"
 #define LOG_MODULE "pril"
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL LOG_LEVEL_NONE
 
 /*---------------------------------------------------------------------------*/
 static void pril_on_tx_success(pril_nbr_t *nbr, const linkaddr_t *neighbor_addr)
