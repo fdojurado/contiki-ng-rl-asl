@@ -227,11 +227,24 @@ static int get_tx_interval(void)
   switch (linkaddr_node_addr.u8[0])
   {
   case 3:
-    return 15; // Flow 1
+  case 11:
+  case 15:
+  case 19:
+    return 17; // Flow 1
   case 4:
-    return 30; // Flow 2
+  case 12:
+  case 16:
+  case 20:
+    return 19; // Flow 2
   case 5:
-    return 45; // Flow 3
+  case 13:
+  case 17:
+  case 21:
+    return 23; // Flow 3
+  case 14:
+  case 18:
+  case 22:
+    return 29; // Flow 4
   default:
     return 0; // Non-senders stay silent
   }
