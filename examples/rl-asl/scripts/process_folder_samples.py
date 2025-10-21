@@ -619,6 +619,12 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 mu, su = safe_mean_std(vals)
                 out.setdefault("energy", {}).setdefault(
                     "samples_mJ", {})[seq] = {"avg": mu, "std": su}
+                
+            if k.startswith("samples_s_"):
+                seq = k.split("_")[-1]
+                mu, su = safe_mean_std(vals)
+                out.setdefault("latency", {}).setdefault(
+                    "samples_s", {})[seq] = {"avg": mu, "std": su}
 
             if k.startswith("samples_packet_loss_"):
                 seq = k.split("_")[-1]
