@@ -43,7 +43,9 @@ static struct tsch_asn_t *asn = &tsch_current_asn;
 
 static int16_t seqnum = 0; // Sequence number for data packets
 
+#ifdef BUILD_WITH_PRIL
 static int8_t num_acked = 0; // Number of ACKs received
+#endif                       /* BUILD_WITH_PRIL */
 
 PROCESS(data_packet_generator_process, "Transmission Process");
 
@@ -51,6 +53,7 @@ PROCESS(data_packet_generator_process, "Transmission Process");
 static int get_tx_interval(void);
 
 /*---------------------------------------------------------------------------*/
+#ifdef BUILD_WITH_PRIL
 void data_packet_generator_ack_received(const struct tsch_packet *packet, int mac_status)
 {
   // Inspect the seqnum of the ACKed packet
@@ -64,6 +67,7 @@ void data_packet_generator_ack_received(const struct tsch_packet *packet, int ma
   if (seq == seqnum - 1) // ACK for the last sent packet
     num_acked++;
 }
+#endif /* BUILD_WITH_PRIL */
 /*---------------------------------------------------------------------------*/
 void send_data_packet(void)
 {

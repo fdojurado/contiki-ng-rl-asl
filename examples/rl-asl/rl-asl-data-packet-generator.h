@@ -12,6 +12,8 @@
 
 PROCESS_NAME(data_packet_generator_process);
 
+#ifdef BUILD_WITH_PRIL
 void data_packet_generator_ack_received(const struct tsch_packet *packet, int mac_status);
+#endif /* BUILD_WITH_PRIL */
 
 #endif // RL_ASL_DATA_PACKET_GENERATOR_H
