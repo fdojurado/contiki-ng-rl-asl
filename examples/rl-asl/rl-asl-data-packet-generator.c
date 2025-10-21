@@ -320,7 +320,7 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
       /* If TSCH lost association meanwhile, cancel sending and go back to waiting */
       if (!tsch_is_associated)
       {
-        LOG_WARN("TSCH not associated at TX time — postponing transmissions");
+        LOG_WARN("TSCH not associated at TX time — postponing transmissions\n");
         /* stop current TX timer and wait for re-association */
         first_start_done = false;
         etimer_stop(&et);
