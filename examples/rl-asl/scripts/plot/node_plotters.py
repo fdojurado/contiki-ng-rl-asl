@@ -306,7 +306,7 @@ class NodeLinePlotter(MetricPlotter):
         if metric == "power":
             samples = node_info["power"]["samples_mW"]
             seqs = sorted(map(int, samples.keys()))
-            values = [samples[str(seq)]["power"] for seq in seqs]
+            values = [samples[str(seq)]["avg"] for seq in seqs]
             return seqs, values
         return [], []
 
