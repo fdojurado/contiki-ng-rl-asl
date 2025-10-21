@@ -67,8 +67,8 @@ class NodePlotManager:
         # print("Creating per-node scatter plots...")
         # self._create_node_scatter_plots(networks, labels, node_metrics, output_folder)
         
-        # print("Creating per-node box plots...")
-        # self._create_node_box_plots(networks, labels, node_metrics, output_folder, node_ids)
+        print("Creating per-node box plots...")
+        self._create_node_box_plots(networks, labels, node_metrics, output_folder, node_ids)
         
         # print("Creating per-node timeline plots...")
         # self._create_node_timeline_plots(networks, labels, output_folder, node_ids)
