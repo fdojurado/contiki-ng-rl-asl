@@ -9,7 +9,7 @@ from plot_config import PlotConfig
 from plot_styler import PlotStyler
 from node_plotters import (
     NodeBarPlotter, NodeHeatmapPlotter, NodeScatterPlotter,
-    NodeLinePlotter, NodeBoxPlotter, NodeHistogramPlotter
+    NodeLinePlotter, NodeBoxPlotter, NodeHistogramPlotter, NodeStackedBarPlotter
 )
 
 
@@ -28,6 +28,7 @@ class NodePlotManager:
         self.scatter_plotter = NodeScatterPlotter(self.config, self.styler)
         self.line_plotter = NodeLinePlotter(self.config, self.styler)
         self.box_plotter = NodeBoxPlotter(self.config, self.styler)
+        self.stacked_bar_plotter = NodeStackedBarPlotter(self.config, self.styler)
         
         # Apply global styling
         self.styler.apply_seaborn_style()
@@ -74,6 +75,9 @@ class NodePlotManager:
         print("Creating per-node box plots...")
         self._create_node_box_plots(networks, labels, node_metrics, output_folder, node_ids)
         
+        print("Creating per-node stacked bar plots...")
+        self._create_node_stacked_bar_plots(networks, labels, node_metrics, output_folder, node_ids)
+        
         # print("Creating per-node timeline plots...")
         # self._create_node_timeline_plots(networks, labels, output_folder, node_ids)
         
@@ -116,11 +120,17 @@ class NodePlotManager:
             if metric in metrics:
                 self.histogram_plotter.plot(networks, labels, metric, output_folder)
             
-    
     def _create_node_box_plots(self, networks, labels, metrics, output_folder, node_ids):
         """Create box plots for per-node metrics."""
         for metric in metrics:
             self.box_plotter.plot(networks, labels, metric, output_folder, node_ids)
+            
+    def _create_node_stacked_bar_plots(self, networks, labels, metrics, output_folder, node_ids):
+        """Create stacked bar plots for per-node metrics."""
+        for metric in ["power"]:
+            if metric in metrics:
+                print(f"Creating stacked bar plot for metric: {metric}")
+                self.stacked_bar_plotter.plot(networks, labels, metric, output_folder, node_ids)
     
     def _create_node_timeline_plots(self, networks, labels, output_folder, node_ids):
         """Create timeline plots for per-node time series data."""
