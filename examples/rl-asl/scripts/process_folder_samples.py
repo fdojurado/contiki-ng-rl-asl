@@ -270,8 +270,12 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 continue
 
             pwr = node.get("power")
-            cpu = node.get("cpu_activity")
-            radio = node.get("radio_activity")
+            cpu = node.get("power")
+            radio_tx = node.get("power")
+            radio_rx_non_uc = node.get("power")
+            radio_rx_uc = node.get("power")
+            radio_rx_uc_idle = node.get("power")
+            radio_rx = node.get("power")
             egy = node.get("energy")
             lcy = node.get("latency")
             pkt_loss = node.get("packet_loss")
@@ -283,13 +287,29 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                 node_acc.setdefault(node_id, {}).setdefault(
                     "average_mW", []).append(float(pwr["average_mW"]))
 
-            if isinstance(cpu, dict) and "average" in cpu:
+            if isinstance(cpu, dict) and "average_cpu_mW" in cpu:
                 node_acc.setdefault(node_id, {}).setdefault(
-                    "average_cpu", []).append(float(cpu["average"]))
+                    "average_cpu_mW", []).append(float(cpu["average_cpu_mW"]))
 
-            if isinstance(radio, dict) and "average" in radio:
+            if isinstance(radio_tx, dict) and "average_tx_mW" in radio_tx:
                 node_acc.setdefault(node_id, {}).setdefault(
-                    "average_radio", []).append(float(radio["average"]))
+                    "average_tx_mW", []).append(float(radio_tx["average_tx_mW"]))
+
+            if isinstance(radio_rx_non_uc, dict) and "average_rx_non_uc_total_mW" in radio_rx_non_uc:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_rx_non_uc_total_mW", []).append(float(radio_rx_non_uc["average_rx_non_uc_total_mW"]))
+                
+            if isinstance(radio_rx_uc, dict) and "average_rx_uc_mW" in radio_rx_uc:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_rx_uc_mW", []).append(float(radio_rx_uc["average_rx_uc_mW"]))
+                
+            if isinstance(radio_rx_uc_idle, dict) and "average_rx_uc_idle_mW" in radio_rx_uc_idle:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_rx_uc_idle_mW", []).append(float(radio_rx_uc_idle["average_rx_uc_idle_mW"]))
+
+            if isinstance(radio_rx, dict) and "average_rx_mW" in radio_rx:
+                node_acc.setdefault(node_id, {}).setdefault(
+                    "average_rx_radio_mW", []).append(float(radio_rx["average_rx_mW"]))
 
             if isinstance(egy, dict) and "energy_mJ" in egy:
                 node_acc.setdefault(node_id, {}).setdefault(
@@ -326,15 +346,15 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
                         node_acc.setdefault(node_id, {}).setdefault(
                             key, []).append(float(s["power"]))
 
-            samples = cpu.get("samples") if isinstance(cpu, dict) else None
-            if isinstance(samples, dict):
-                for seq, s in samples.items():
-                    if not isinstance(s, dict):
-                        continue
-                    if "cpu_activity" in s:
-                        key = f"samples_cpu_{seq}"
-                        node_acc.setdefault(node_id, {}).setdefault(
-                            key, []).append(float(s["cpu_activity"]))
+            # samples = cpu.get("samples") if isinstance(cpu, dict) else None
+            # if isinstance(samples, dict):
+            #     for seq, s in samples.items():
+            #         if not isinstance(s, dict):
+            #             continue
+            #         if "cpu_activity" in s:
+            #             key = f"samples_cpu_{seq}"
+            #             node_acc.setdefault(node_id, {}).setdefault(
+            #                 key, []).append(float(s["cpu_activity"]))
 
             samples = radio.get("samples") if isinstance(radio, dict) else None
             if isinstance(samples, dict):
@@ -553,16 +573,37 @@ def process_folder_samples(folder: Path, results: Mapping[str, Mapping[str, Any]
             mu, su = safe_mean_std(metrics["average_mW"])
             out.setdefault("power", {})["avg_mW"] = mu
             out["power"]["std_mW"] = su
-
-        if "average_cpu" in metrics:
-            mu, su = safe_mean_std(metrics["average_cpu"])
-            out.setdefault("cpu", {})["avg"] = mu
-            out["cpu"]["std"] = su
-
-        if "average_radio" in metrics:
-            mu, su = safe_mean_std(metrics["average_radio"])
-            out.setdefault("radio", {})["avg"] = mu
-            out["radio"]["std"] = su
+        # cpu
+        if "average_cpu_mW" in metrics:
+            mu, su = safe_mean_std(metrics["average_cpu_mW"])
+            out.setdefault("power", {})["avg_cpu_mW"] = mu
+            out["power"]["std_cpu_mW"] = su
+        # tx
+        if "average_tx_mW" in metrics:
+            mu, su = safe_mean_std(metrics["average_tx_mW"])
+            out.setdefault("power", {})["avg_tx_mW"] = mu
+            out["power"]["std_tx_mW"] = su
+        # radio_rx
+        if "average_rx_radio_mW" in metrics:
+            mu, su = safe_mean_std(metrics["average_rx_radio_mW"])
+            out.setdefault("power", {})["avg_rx_mW"] = mu
+            out["power"]["std_rx_mW"] = su
+        # radio_rx_non_uc
+        if "average_rx_non_uc_total_mW" in metrics:
+            mu, su = safe_mean_std(
+                metrics["average_rx_non_uc_total_mW"])
+            out.setdefault("power", {})["avg_rx_non_uc_total_mW"] = mu
+            out["power"]["std_rx_non_uc_total_mW"] = su
+        # radio_rx_uc
+        if "average_rx_uc_mW" in metrics:
+            mu, su = safe_mean_std(metrics["average_rx_uc_mW"])
+            out.setdefault("power", {})["avg_rx_uc_mW"] = mu
+            out["power"]["std_rx_uc_mW"] = su
+        # radio_rx_uc_idle
+        if "average_rx_uc_idle_mW" in metrics:
+            mu, su = safe_mean_std(metrics["average_rx_uc_idle_mW"])
+            out.setdefault("power", {})["avg_rx_uc_idle_mW"] = mu
+            out["power"]["std_rx_uc_idle_mW"] = su
 
         if "average_uJ" in metrics:
             mu, su = safe_mean_std(metrics["average_uJ"])

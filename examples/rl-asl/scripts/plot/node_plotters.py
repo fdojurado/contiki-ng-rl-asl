@@ -118,6 +118,148 @@ class NodeBarPlotter(MetricPlotter):
             return node_info.get("packet_delivery_ratio", {}).get("avg", 0)
         return node_info.get(metric, 0)
 
+class NodeStackedBarPlotter(MetricPlotter):
+    """Creates stacked bar plots for per-node power breakdown across protocols."""
+
+    def plot(self, networks, labels, metric, output_folder, node_ids=None):
+        print(f"Creating stacked bar plot for metric: {metric}")
+        if metric != "power":
+            print(f"Stacked bar plot is only implemented for 'power' metric, skipping {metric}.")
+            return
+
+        # Power components to plot
+        components = [
+            "avg_cpu_mW", "avg_tx_mW", "avg_rx_non_uc_total_mW",
+            "avg_rx_uc_mW", "avg_rx_uc_idle_mW"
+        ]
+
+        # Colors and hatches
+        base_rx_color = "#C44E52"
+        colors = {
+            "avg_cpu_mW": "#4C72B0",
+            "avg_tx_mW": "#55A868",
+            "avg_rx_non_uc_total_mW": base_rx_color,
+            "avg_rx_uc_mW": base_rx_color,
+            "avg_rx_uc_idle_mW": base_rx_color,
+        }
+        hatches = {
+            "avg_cpu_mW": "",
+            "avg_tx_mW": "//",
+            "avg_rx_non_uc_total_mW": "\\\\\\\\",
+            "avg_rx_uc_mW": "xx",
+            "avg_rx_uc_idle_mW": "oo",
+        }
+
+        # ---- Collect per-node, per-protocol power data ----
+        node_data = {}
+        all_node_ids = set()
+
+        for net, label in zip(networks, labels):
+            pretty_label = self.config.get_label_name(label)
+            if 'nodes' not in net:
+                continue
+            for node_id, node_info in net['nodes'].items():
+                node_id = int(node_id)
+                if node_ids is not None and node_id not in node_ids:
+                    continue
+
+                power_info = node_info.get("power", {})
+                if not power_info:
+                    continue
+
+                if node_id not in node_data:
+                    node_data[node_id] = {}
+                node_data[node_id][pretty_label] = {
+                    comp: power_info.get(comp, 0.0) for comp in components
+                }
+                node_data[node_id][pretty_label]["avg_rx_mW"] = power_info.get("avg_rx_mW", 0.0)
+                all_node_ids.add(node_id)
+
+        if not all_node_ids:
+            print(f"No node power data found for stacked bar plot.")
+            return
+
+        sorted_node_ids = sorted(all_node_ids)
+        n_nodes = len(sorted_node_ids)
+
+        # ---- Prepare bar geometry ----
+        fig, ax = self.create_figure(metric, "stacked_bar")
+
+        n_protocols = len(labels)
+        width = 0.8 / n_protocols
+        x = np.arange(n_nodes)
+
+        # ---- Plot stacked bars ----
+        for p_idx, label in enumerate(labels):
+            pretty_label = self.config.get_label_name(label)
+            color = self.config.get_label_color(label)
+            alpha = self.config.get_label_alpha(label)
+
+            # Build arrays for all nodes for this protocol
+            data_per_component = {comp: [] for comp in components}
+            rx_total = []
+            for node_id in sorted_node_ids:
+                node_entry = node_data.get(node_id, {}).get(pretty_label, None)
+                if node_entry:
+                    for comp in components:
+                        data_per_component[comp].append(node_entry[comp])
+                    rx_total.append(node_entry["avg_rx_mW"])
+                else:
+                    for comp in components:
+                        data_per_component[comp].append(0.0)
+                    rx_total.append(0.0)
+
+            bottoms = np.zeros(n_nodes)
+            for comp in components:
+                ax.bar(
+                    x + (p_idx - (n_protocols - 1) / 2) * width,
+                    data_per_component[comp],
+                    width,
+                    bottom=bottoms,
+                    color=colors[comp],
+                    edgecolor="black",
+                    linewidth=1,
+                    hatch=hatches[comp],
+                    alpha=0.8,
+                )
+                bottoms += np.array(data_per_component[comp])
+
+            # Add RX total outline
+            cpu_tx = np.array(data_per_component["avg_cpu_mW"]) + np.array(data_per_component["avg_tx_mW"])
+            ax.bar(
+                x + (p_idx - (n_protocols - 1) / 2) * width,
+                rx_total,
+                width,
+                bottom=cpu_tx,
+                color="none",
+                edgecolor="red",
+                linewidth=1.2,
+                linestyle="--",
+                label=f"{pretty_label} RX total",
+                alpha=alpha,
+            )
+
+        # ---- Style axes ----
+        ax.set_xticks(x)
+        ax.set_xticklabels([f"Node {nid}" for nid in sorted_node_ids])
+        self.styler.set_axis_labels(ax, metric, "bar", x_label="Node ID")
+        ax.grid(axis="y", linestyle="--", alpha=0.7)
+
+        # ---- Legend ----
+        legend_elements = [
+            Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
+            Patch(facecolor="#55A868", edgecolor="black", hatch="//", label="TX"),
+            Patch(facecolor=base_rx_color, edgecolor="black", hatch="\\\\\\\\", label="RX non-UC"),
+            Patch(facecolor=base_rx_color, edgecolor="black", hatch="xx", label="RX UC active"),
+            Patch(facecolor=base_rx_color, edgecolor="black", hatch="oo", label="RX UC idle"),
+            Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)")
+        ]
+        ax.legend(handles=legend_elements, bbox_to_anchor=(1.01, 1), loc="upper left", frameon=False, fontsize=9)
+
+        # ---- Save and close ----
+        self.save_plot(fig, f"{metric}_per_node_stacked_bar.pdf", output_folder)
+        plt.close(fig)
+
 
 class NodeHistogramPlotter(MetricPlotter):
     """Creates per-node histograms showing latency distributions per protocol."""
