@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # --- Main Plot: Avg Reward vs Episode (all inputs) + Single Epsilon ---
     for node_id in node_ids:
-        plt.figure(figsize=(10, 5))
+        plt.figure(figsize=(8, 3))
         ax1 = plt.gca()
 
         for data, legend in zip(datasets, legends):
@@ -145,24 +145,42 @@ if __name__ == "__main__":
                 continue
             df = episode_data[node_id]
             sns.lineplot(x=df.index, y=df["avg_reward"],
-                         label=f"{legend} (Avg Reward)", ax=ax1)
+                         label=f"{legend}", ax=ax1, linewidth=2.0)
 
         # Only plot epsilon from first file
         first_df = extract_episode_data(datasets[0]).get(node_id)
+        ax1.set_xlabel("Episode", fontsize=16)
+        ax1.set_ylabel("Reward", fontsize=16)
+        ax1.tick_params(axis='both', which='major', labelsize=14)
+
         if first_df is not None and "epsilon" in first_df:
             ax2 = ax1.twinx()
             sns.lineplot(x=first_df.index, y=first_df["epsilon"], ax=ax2,
-                         label="Epsilon", color="red", linestyle=":")
+                         label="Epsilon", color="red", linestyle=":", linewidth=2.0)
             ax2.set_ylabel("Epsilon", fontsize=16)
-            ax2.legend(loc="upper right", fontsize=12)
+            ax2.tick_params(axis='both', which='major', labelsize=14)
+            legend = ax2.legend(loc="lower right", fontsize=13, frameon=True)
+            frame = legend.get_frame()
+            # Solid white background (non-transparent)
+            frame.set_facecolor("white")
+            frame.set_alpha(1.0)             # Full opacity
+            frame.set_edgecolor("black")     # Black border
+            frame.set_linewidth(0.5)         # Thicker border
 
         ax1.set_xlabel("Episode", fontsize=16)
         ax1.set_ylabel("Reward", fontsize=16)
-        ax1.legend(loc="upper left", fontsize=12)
+        legend = ax1.legend(handles=ax1.get_legend_handles_labels()[0], fontsize=13, loc="upper left",
+                            frameon=True)
+        frame = legend.get_frame()
+        # Solid white background (non-transparent)
+        frame.set_facecolor("white")
+        frame.set_alpha(1.0)             # Full opacity
+        frame.set_edgecolor("black")     # Black border
+        frame.set_linewidth(0.5)         # Thicker border
         plt.grid(True, linestyle="--", alpha=0.6)
         plt.tight_layout()
 
-        out_file = output_folder / f"{node_id}_avg_reward_epsilon.png"
+        out_file = output_folder / f"{node_id}_avg_reward_epsilon.pdf"
         plt.savefig(out_file)
         plt.close()
         print(f"Saved {out_file}")
