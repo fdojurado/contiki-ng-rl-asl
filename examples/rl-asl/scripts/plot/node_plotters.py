@@ -84,6 +84,8 @@ class NodeBarPlotter(MetricPlotter):
             for i, (label, value) in enumerate(per_node):
                 color = self.config.get_label_color(label)
                 alpha = self.config.get_label_alpha(label)
+                scale = self.config.METRIC_INFO[metric].get("scale", 1.0)
+                value *= scale
                 pretty_label = self.config.get_label_name(label)
 
                 lbl = pretty_label if pretty_label not in legend_added else None
