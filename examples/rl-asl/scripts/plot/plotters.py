@@ -458,9 +458,9 @@ class StackedBarPlotter(MetricPlotter):
             Patch(facecolor=base_rx_color, edgecolor="black", hatch="oo", label="RX UC idle"),
             Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)")
         ]
-        
-        legend = ax.legend(handles=legend_elements,
-                   loc="upper left", frameon=True, fontsize=16)
+
+        legend = ax.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1),
+                           loc="upper left", frameon=True, fontsize=16)
         # Increase legend box outline width
         legend.get_frame().set_linewidth(1.0)
         legend.get_frame().set_edgecolor("black")

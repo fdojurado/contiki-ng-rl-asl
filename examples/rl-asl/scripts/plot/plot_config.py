@@ -56,7 +56,7 @@ class PlotConfig:
                 },
                 "stacked_bar": {
                     "figsize": (9, 4),
-                    "fonts": {"xlabel": 18, "ylabel": 18, "xtick": 18, "ytick": 18, "legend": 18},
+                    "fonts": {"xlabel": 18, "ylabel": 20, "xtick": 18, "ytick": 18, "legend": 18},
                     "legend": True,
                     "show_labels": {"x": False, "y": True}
                 }
