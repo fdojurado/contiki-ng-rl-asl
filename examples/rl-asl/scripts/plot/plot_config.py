@@ -39,9 +39,9 @@ class PlotConfig:
             "scale": 1.0,      # mW
             "plot_styles": {
                 "bar": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
-                    "legend": True,
+                    "legend": False,
                     "show_labels": {"x": False, "y": True}
                 },
                 "line": {
@@ -90,7 +90,7 @@ class PlotConfig:
             "scale": 1e-3,
             "plot_styles": {
                 "bar": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 16},
                     "legend": False,
                     "show_labels": {"x": False, "y": True}
@@ -134,6 +134,7 @@ class PlotConfig:
                     "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 16},
                     "legend": False,
+                    "show_labels": {"x": False, "y": True}
                 },
                 "line": {
                     "figsize": (6, 4),

@@ -184,7 +184,7 @@ class NodeStackedBarPlotter(MetricPlotter):
 
         # ---- Plot one figure per node ----
         for node_id in sorted(all_node_ids):
-            fig, ax = self.create_figure(metric, f"stacked_bar_node_{node_id}")
+            fig, ax = plt.subplots(figsize=(5, 3))
 
             # Determine protocols available for this node and sort them by chosen metric value (total power)
             available = node_data.get(node_id, {})
@@ -244,7 +244,7 @@ class NodeStackedBarPlotter(MetricPlotter):
                     bottom=cpu_tx,
                     color="none",
                     edgecolor="red",
-                    linewidth=2.2,
+                    linewidth=2.8,
                     linestyle="--",
                     alpha=1.0,
                     zorder=5,
@@ -253,29 +253,20 @@ class NodeStackedBarPlotter(MetricPlotter):
 
             # ---- Style axes ----
             ax.set_xticks(x)
-            ax.set_xticklabels(pretty_labels, rotation=25, ha="right")
-            ax.set_title(f"Node {node_id} - Power Breakdown")
+            ax.set_xticklabels(pretty_labels, rotation=0, ha="center")
+            ax.set_title(f"Node {node_id} - Power Breakdown", fontsize=18)
             self.styler.set_axis_labels(
-                ax, metric, "bar", x_label="Protocol", y_label="Power (mW)"
+                ax, metric, "stacked_bar", x_label="Protocol", y_label="Power [mW]"
             )
-            ax.grid(axis="y", linestyle="--", alpha=0.7)
-
-            # ---- Legend ----
-            legend_elements = [
-                Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
-                Patch(facecolor="#55A868", edgecolor="black", hatch="//", label="TX"),
-                Patch(facecolor=base_rx_color, edgecolor="black", hatch="\\\\\\\\", label="RX non-UC"),
-                Patch(facecolor=base_rx_color, edgecolor="black", hatch="xx", label="RX UC active"),
-                Patch(facecolor=base_rx_color, edgecolor="black", hatch="oo", label="RX UC idle"),
-                Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)"),
-            ]
-            ax.legend(
-                handles=legend_elements,
-                bbox_to_anchor=(1.01, 1),
-                loc="upper left",
-                frameon=False,
-                fontsize=9,
-            )
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["left"].set_linewidth(3)
+            ax.spines["left"].set_edgecolor("black")
+            ax.spines["bottom"].set_linewidth(3)
+            ax.spines["bottom"].set_edgecolor("black")
+            ax.tick_params(axis="y", labelsize=18)
+            ax.tick_params(axis="x", labelsize=16)
+            # ax.grid(axis="y", linestyle="--", alpha=0.7)
 
             # ---- Save and close ----
             filename = f"{metric}_node_{node_id}_stacked_bar.pdf"
