@@ -269,7 +269,10 @@ class RadarPlotter(MetricPlotter):
         norm_matrix = []
         for i, metric in enumerate(metrics):
             col = values_matrix[:, i]
-            if self.config.METRIC_INFO[metric]["sort"] == "asc":
+            # if metric is packet_delivery_ratio, we always use descending
+            if metric == "packet_delivery_ratio" or self.config.METRIC_INFO[metric]["sort"] == "desc":
+                norm = (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
+            elif self.config.METRIC_INFO[metric]["sort"] == "asc":
                 norm = 1 - (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
             else:
                 norm = (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
