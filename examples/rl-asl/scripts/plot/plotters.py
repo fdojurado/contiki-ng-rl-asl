@@ -100,7 +100,7 @@ class ScatterPlotter(MetricPlotter):
     
     def plot_rdc_vs_latency(self, networks, labels, output_folder):
         """Create scatter plot of RDC vs Latency."""
-        metric_x, metric_y = "rdc", "latency"
+        metric_x, metric_y = "power", "latency"
         
         fig, ax = self.create_figure(metric_x, "scatter")
         
@@ -249,7 +249,7 @@ class RadarPlotter(MetricPlotter):
     
     def plot(self, networks, labels, output_folder):
         """Create radar plot comparing multiple metrics."""
-        metrics = ["latency", "rdc", "packet_delivery_ratio"]
+        metrics = ["latency", "power", "packet_delivery_ratio"]
         
         # Collect data
         data = {}
