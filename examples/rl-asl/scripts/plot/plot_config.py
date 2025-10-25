@@ -117,8 +117,8 @@ class PlotConfig:
                     "legend": False,
                 },
                 "scatter": {
-                    "figsize": (6, 4),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
+                    "figsize": (5, 3),
+                    "fonts": {"xlabel": 22, "ylabel": 22, "xtick": 22, "ytick": 22, "legend": 18},
                     "legend": False,
                 }
             }
@@ -233,9 +233,9 @@ class PlotConfig:
             "sort": "asc",
             "plot_styles": {
                 "radar": {
-                    "figsize": (9, 5),
-                    "fonts": {"xlabel": 20, "ylabel": 20, "xtick": 26, "ytick": 22, "legend": 25},
-                    "legend": True,
+                    "figsize": (2.5, 2.5),
+                    "fonts": {"xlabel": 13, "ylabel": 13, "xtick": 13, "ytick": 7, "legend": 18},
+                    "legend": False,
                     "show_labels": {"x": False, "y": True}
                 }
             }
