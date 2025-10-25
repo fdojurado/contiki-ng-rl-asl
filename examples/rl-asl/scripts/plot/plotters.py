@@ -67,6 +67,10 @@ class LinePlotter(MetricPlotter):
         """Create line plot for per-sample data."""
         fig, ax = self.create_figure(metric, "line")
         
+        # Increase this value to make the plotted lines thicker
+        line_width = 2
+        marker_size = 3
+        
         for net, label in zip(networks, labels):
             per_sample, scale = self.get_per_sample_data(net, metric)
             
@@ -79,7 +83,7 @@ class LinePlotter(MetricPlotter):
             pretty_label = self.config.get_label_name(label)
             
             ax.plot(seqs, values, marker="o", label=pretty_label, 
-                   color=color, alpha=alpha, linewidth=1, markersize=2)
+                   color=color, alpha=alpha, linewidth=line_width, markersize=marker_size)
             
             # Add error band
             ax.fill_between(seqs,

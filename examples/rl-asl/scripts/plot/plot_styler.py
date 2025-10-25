@@ -77,6 +77,12 @@ class PlotStyler:
                 ax.legend(handles, labels, **legend_args)
             else:
                 ax.legend(**legend_args)
+                
+            # Update the legend outline width for better visibility
+            legend = ax.get_legend()
+            if legend:
+                legend.get_frame().set_linewidth(1.0)
+                legend.get_frame().set_edgecolor("black")
     
     def get_plot_colors_and_styles(self, labels):
         """Get colors, alphas, and hatches for a list of labels."""
