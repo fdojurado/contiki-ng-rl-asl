@@ -90,12 +90,12 @@ class PlotConfig:
                     "show_labels": {"x": False, "y": True}
                 },
                 "line": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
                 },
                 "violin": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
                     "show_labels": {"x": False, "y": True}
@@ -106,7 +106,7 @@ class PlotConfig:
                     "legend": False,
                 },
                 "cdf": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
                 },
@@ -119,14 +119,15 @@ class PlotConfig:
         },
         "jitter": {
             "suffix": "ms",
-            "label_with_units": "Jitter [s]",
+            "label_with_units": "Jitter [ms]",
             "label_no_units": "Jitter",
             "sort": "asc",
-            "scale": 1e-3,
+            "scale": 1.0,
             "plot_styles": {
                 "bar": {
-                    "figsize": (6, 4),
-                    "fonts": {"xlabel": 18, "ylabel": 22, "xtick": 14, "ytick": 14, "legend": 16}
+                    "figsize": (5, 3),
+                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 16},
+                    "legend": False,
                 },
                 "line": {
                     "figsize": (6, 4),
@@ -160,7 +161,7 @@ class PlotConfig:
             "ylim": (80, 100),
             "plot_styles": {
                 "bar": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": True,
                     "show_labels": {"x": False, "y": True}

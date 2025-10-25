@@ -125,7 +125,7 @@ class ScatterPlotter(MetricPlotter):
         self.styler.add_legend(ax, metric_x, "scatter")
         self.styler.style_axes(ax, metric_x, "scatter")
         
-        self.save_plot(fig, "rdc_vs_latency.pdf", output_folder)
+        self.save_plot(fig, "power_vs_latency.pdf", output_folder)
     
     def plot(self, networks, labels, metric, output_folder):
         """Default scatter plot implementation."""
