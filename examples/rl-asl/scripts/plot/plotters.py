@@ -422,7 +422,7 @@ class StackedBarPlotter(MetricPlotter):
         ind = np.arange(n)
         width = 0.6
         
-        fig, ax = self.create_figure(metric, "bar")
+        fig, ax = self.create_figure(metric, "stacked_bar")
         
         # Create stacked bars
         bottom = np.zeros(n)
@@ -435,13 +435,14 @@ class StackedBarPlotter(MetricPlotter):
         # Add RX total outline
         cpu_tx = np.array(data["avg_cpu_mW"]) + np.array(data["avg_tx_mW"])
         ax.bar(ind, rx_total, width, bottom=cpu_tx,
-              color="none", edgecolor="red", linewidth=1.2,
+              color="none", edgecolor="red", linewidth=2.8,
               linestyle="--", label="RX (group)")
         
         # Styling
-        self.styler.set_axis_labels(ax, metric, "bar", x_label="Protocols")
+        self.styler.set_axis_labels(ax, metric, "stacked_bar", x_label="Protocols")
         ax.set_xticks(ind)
-        ax.set_xticklabels(pretty_labels, rotation=20, ha="right", fontsize=10)
+        ax.set_xticklabels(pretty_labels, rotation=0, ha="center", fontsize=10)
+        self.styler.style_axes(ax, metric, "stacked_bar")
         ax.grid(axis="y", linestyle="--", alpha=0.7)
         
         # Custom legend
@@ -454,7 +455,10 @@ class StackedBarPlotter(MetricPlotter):
             Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)")
         ]
         
-        ax.legend(handles=legend_elements, bbox_to_anchor=(1.01, 1),
-                 loc="upper left", frameon=False, fontsize=9)
+        legend = ax.legend(handles=legend_elements,
+                   loc="upper left", frameon=True, fontsize=16)
+        # Increase legend box outline width
+        legend.get_frame().set_linewidth(1.0)
+        legend.get_frame().set_edgecolor("black")
         
         self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
