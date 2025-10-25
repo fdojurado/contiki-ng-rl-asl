@@ -25,7 +25,7 @@ class PlotConfig:
         # Your approaches (SAGE) – strong, consistent blue tones, full opacity
         "RL-ASL": {"color": "#1f77b4", "label": "RL-ASL", "alpha": 1.0, "hatch": ""},
         # Baselines – distinct colors, but with transparency to look less strong
-        "Orchestra": {"color": "#2ca02c", "label": "Orch.-RB", "alpha": 0.6},
+        "Orchestra": {"color": "#2ca02c", "label": "Orch.", "alpha": 0.6},
         "Orchestra-link-based": {"color": "#ff7f0e", "label": "Orch.-LB", "alpha": 0.6},
         "RL-ASL-link-based": {"color": "#9467bd", "label": "RL-ASL-LB", "alpha": 0.6},
         "PRIL-M": {"color": "#d62728", "label": "PRIL-M", "alpha": 0.6},
