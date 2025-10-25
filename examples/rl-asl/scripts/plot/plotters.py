@@ -382,6 +382,10 @@ class StackedBarPlotter(MetricPlotter):
         """Create stacked bar chart for power consumption breakdown."""
         metric = "power"
         
+        # Sort protocols by the chosen metric value
+        sorted_labels, sorted_networks = self.sort_protocols_by_metric(labels, networks, metric)
+        pretty_labels = [self.config.get_label_name(l) for l in sorted_labels]
+        
         # Define components
         components = [
             "avg_cpu_mW", "avg_tx_mW", "avg_rx_non_uc_total_mW",
@@ -405,16 +409,16 @@ class StackedBarPlotter(MetricPlotter):
             "avg_rx_uc_idle_mW": "oo",
         }
         
-        # Collect data
+        # Collect data (in sorted order)
         data = {comp: [] for comp in components}
         rx_total = []
-        for net in networks:
+        for net in sorted_networks:
             power = net["network"]["power"]
             for comp in components:
                 data[comp].append(power.get(comp, 0.0))
             rx_total.append(power.get("avg_rx_mW", 0.0))
         
-        n = len(labels)
+        n = len(sorted_labels)
         ind = np.arange(n)
         width = 0.6
         
@@ -437,7 +441,7 @@ class StackedBarPlotter(MetricPlotter):
         # Styling
         self.styler.set_axis_labels(ax, metric, "bar", x_label="Protocols")
         ax.set_xticks(ind)
-        ax.set_xticklabels(labels, rotation=20, ha="right", fontsize=10)
+        ax.set_xticklabels(pretty_labels, rotation=20, ha="right", fontsize=10)
         ax.grid(axis="y", linestyle="--", alpha=0.7)
         
         # Custom legend
