@@ -171,11 +171,11 @@ class NodeStackedBarPlotter(MetricPlotter):
 
                 if node_id not in node_data:
                     node_data[node_id] = {}
-                node_data[node_id][pretty_label] = {
-                    comp: power_info.get(comp, 0.0) for comp in components
-                }
-                node_data[node_id][pretty_label]["avg_rx_mW"] = power_info.get(
-                    "avg_rx_mW", 0.0)
+                # store original label as well so we can retrieve colors/alpha later
+                entry = {comp: power_info.get(comp, 0.0) for comp in components}
+                entry["avg_rx_mW"] = power_info.get("avg_rx_mW", 0.0)
+                entry["_orig_label"] = label
+                node_data[node_id][pretty_label] = entry
                 all_node_ids.add(node_id)
 
         if not all_node_ids:
@@ -186,21 +186,36 @@ class NodeStackedBarPlotter(MetricPlotter):
         for node_id in sorted(all_node_ids):
             fig, ax = self.create_figure(metric, f"stacked_bar_node_{node_id}")
 
-            pretty_labels = []
-            n_protocols = len(labels)
+            # Determine protocols available for this node and sort them by chosen metric value (total power)
+            available = node_data.get(node_id, {})
+            if not available:
+                continue
+
+            # compute total power per protocol (CPU + TX + RX total) and sort descending
+            def total_power(proto_entry):
+                return (
+                    proto_entry.get("avg_cpu_mW", 0.0)
+                    + proto_entry.get("avg_tx_mW", 0.0)
+                    + proto_entry.get("avg_rx_mW", 0.0)
+                )
+
+            # available is mapping pretty_label -> entry
+            sorted_protocols = sorted(
+                available.items(), key=lambda kv: total_power(kv[1]), reverse=False
+            )
+            pretty_labels = [kv[0] for kv in sorted_protocols]
+            n_protocols = len(pretty_labels)
             x = np.arange(n_protocols)
             width = 0.6
 
-            for p_idx, label in enumerate(labels):
-                pretty_label = self.config.get_label_name(label)
-                pretty_labels.append(pretty_label)
-                color = self.config.get_label_color(label)
-                alpha = self.config.get_label_alpha(label)
-
-                node_entry = node_data.get(node_id, {}).get(pretty_label, None)
+            for p_idx, pretty_label in enumerate(pretty_labels):
+                node_entry = available.get(pretty_label, None)
                 if not node_entry:
-                    # No data for this protocol/node
                     continue
+
+                orig_label = node_entry.get("_orig_label")
+                color = self.config.get_label_color(orig_label)
+                alpha = self.config.get_label_alpha(orig_label)
 
                 # Prepare stacked data
                 bottoms = 0.0
@@ -220,8 +235,7 @@ class NodeStackedBarPlotter(MetricPlotter):
                     bottoms += value
 
                 # RX total outline (fully opaque)
-                cpu_tx = node_entry.get(
-                    "avg_cpu_mW", 0) + node_entry.get("avg_tx_mW", 0)
+                cpu_tx = node_entry.get("avg_cpu_mW", 0) + node_entry.get("avg_tx_mW", 0)
                 rx_total = node_entry.get("avg_rx_mW", 0)
                 ax.bar(
                     p_idx,
@@ -242,22 +256,18 @@ class NodeStackedBarPlotter(MetricPlotter):
             ax.set_xticklabels(pretty_labels, rotation=25, ha="right")
             ax.set_title(f"Node {node_id} - Power Breakdown")
             self.styler.set_axis_labels(
-                ax, metric, "bar", x_label="Protocol", y_label="Power (mW)")
+                ax, metric, "bar", x_label="Protocol", y_label="Power (mW)"
+            )
             ax.grid(axis="y", linestyle="--", alpha=0.7)
 
             # ---- Legend ----
             legend_elements = [
                 Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
-                Patch(facecolor="#55A868", edgecolor="black",
-                      hatch="//", label="TX"),
-                Patch(facecolor=base_rx_color, edgecolor="black",
-                      hatch="\\\\\\\\", label="RX non-UC"),
-                Patch(facecolor=base_rx_color, edgecolor="black",
-                      hatch="xx", label="RX UC active"),
-                Patch(facecolor=base_rx_color, edgecolor="black",
-                      hatch="oo", label="RX UC idle"),
-                Patch(facecolor="none", edgecolor="red",
-                      linestyle="--", label="RX total (boundary)"),
+                Patch(facecolor="#55A868", edgecolor="black", hatch="//", label="TX"),
+                Patch(facecolor=base_rx_color, edgecolor="black", hatch="\\\\\\\\", label="RX non-UC"),
+                Patch(facecolor=base_rx_color, edgecolor="black", hatch="xx", label="RX UC active"),
+                Patch(facecolor=base_rx_color, edgecolor="black", hatch="oo", label="RX UC idle"),
+                Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)"),
             ]
             ax.legend(
                 handles=legend_elements,
