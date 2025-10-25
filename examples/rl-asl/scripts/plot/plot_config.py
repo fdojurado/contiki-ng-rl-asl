@@ -22,12 +22,10 @@ class PlotConfig:
     
     # Protocol information
     DATA_INFO = {
-        # Your approaches (SAGE) – strong, consistent blue tones, full opacity
         "RL-ASL": {"color": "#1f77b4", "label": "RL-ASL", "alpha": 1.0, "hatch": ""},
-        # Baselines – distinct colors, but with transparency to look less strong
         "Orchestra": {"color": "#2ca02c", "label": "Orch.", "alpha": 0.6},
         "Orchestra-link-based": {"color": "#ff7f0e", "label": "Orch.-LB", "alpha": 0.6},
-        "RL-ASL-link-based": {"color": "#9467bd", "label": "RL-ASL-LB", "alpha": 0.6},
+        "RL-ASL-link-based": {"color": "#034676", "label": "RL-ASL-LB", "alpha": 1.0, "hatch": "//"},
         "PRIL-M": {"color": "#d62728", "label": "PRIL-M", "alpha": 0.6},
     }
     
@@ -87,7 +85,7 @@ class PlotConfig:
             "plot_styles": {
                 "bar": {
                     "figsize": (6, 4),
-                    "fonts": {"xlabel": 20, "ylabel": 9, "xtick": 14, "ytick": 8, "legend": 16},
+                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 16},
                     "legend": False,
                     "show_labels": {"x": False, "y": True}
                 },
@@ -157,14 +155,14 @@ class PlotConfig:
             "suffix": "",
             "label_with_units": "PDR [%]",
             "label_no_units": "PDR",
-            "sort": "desc",
+            "sort": "asc",
             "scale": 100,
             "ylim": (80, 100),
             "plot_styles": {
                 "bar": {
                     "figsize": (6, 4),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
-                    "legend": False,
+                    "legend": True,
                     "show_labels": {"x": False, "y": True}
                 },
                 "line": {
