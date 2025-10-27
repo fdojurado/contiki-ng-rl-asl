@@ -101,7 +101,7 @@ class PlotConfig:
                     "legend": False,
                 },
                 "violin": {
-                    "figsize": (5, 3),
+                    "figsize": (5, 2),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
                     "show_labels": {"x": False, "y": True}
@@ -168,9 +168,9 @@ class PlotConfig:
             "ylim": (80, 100),
             "plot_styles": {
                 "bar": {
-                    "figsize": (5, 3),
+                    "figsize": (5, 2),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
-                    "legend": True,
+                    "legend": False,
                     "show_labels": {"x": False, "y": True}
                 },
                 "line": {
