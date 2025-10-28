@@ -52,12 +52,54 @@ class BarPlotter(MetricPlotter):
         ax.set_xticklabels([])
         
         self.styler.set_axis_labels(ax, metric, "bar")
-        self.styler.add_legend(ax, metric, "bar", handles=bars, labels=styles['pretty_labels'])
+        # Do NOT add the legend to the main axes; save it separately instead.
         self.styler.style_axes(ax, metric, "bar")
         self.styler.apply_axis_limits(ax, metric)
         ax.xaxis.grid(False)
         
+                # Save main plot WITHOUT legend
         self.save_plot(fig, f"{metric}_bar.pdf", output_folder)
+        
+        # Define preferred legend order (match your dataset naming)
+        preferred_order = ["RL-ASL", "RL-ASL-LB", "Orch.", "Orch.-LB", "PRIL-M"]
+        
+        # Create a separate figure for the legend
+        legend_fig = plt.figure(figsize=(3.5, max(1.0, 0.5 * len(styles['pretty_labels']))))
+        legend_ax = legend_fig.add_subplot(111)
+        legend_ax.axis("off")
+        
+        # Use the bar patches as legend handles
+        handles = list(bars)
+        labels = styles['pretty_labels']
+
+        # Build a map for label->handle
+        handle_map = {label: handle for handle, label in zip(handles, labels)}
+
+        # Reorder according to preferred_order, skipping missing labels
+        reordered_labels = [l for l in preferred_order if l in labels]
+
+        # Add any remaining labels (unexpected protocols)
+        for l in labels:
+            if l not in reordered_labels:
+                reordered_labels.append(l)
+
+        # Rebuild ordered handle/label lists
+        ordered_handles = [handle_map[l] for l in reordered_labels]
+
+        # Create the legend
+        legend = legend_ax.legend(
+            handles=ordered_handles,
+            labels=reordered_labels,
+            loc="center",
+            frameon=True,
+            fontsize=self.config.get_fontsize("bar", "legend",
+                                              self.config.LEGEND_FONT_SIZE, plot_type="bar")
+        )
+        legend.get_frame().set_linewidth(1.0)
+        legend.get_frame().set_edgecolor("black")
+        
+        self.save_plot(legend_fig, f"{metric}_bar_legend.pdf", output_folder)
+        plt.close(legend_fig)
 
 
 class LinePlotter(MetricPlotter):
@@ -126,6 +168,11 @@ class ScatterPlotter(MetricPlotter):
                      fontsize=self.config.get_fontsize(metric_y, "ylabel", 
                                                       self.config.Y_LABEL_FONT_SIZE, plot_type="scatter"))
         
+        # Use logarithmic scale for the y-axis
+        ax.set_yscale("log")
+        # set the y-limit to 20
+        ax.set_ylim(0, 20)
+        
         self.styler.add_legend(ax, metric_x, "scatter")
         self.styler.style_axes(ax, metric_x, "scatter")
         
@@ -141,8 +188,8 @@ class ScatterPlotter(MetricPlotter):
 class ViolinPlotter(MetricPlotter):
     """Creates violin and box plots for data distributions."""
     
-    def plot(self, networks, labels, metric, output_folder, kind="violin"):
-        """Create violin or box plot."""
+    def plot(self, networks, labels, metric, output_folder, kind="violin", use_log=True):
+        """Create violin or box plot. Set use_log=True to plot y-axis on a logarithmic scale."""
         # Collect per-sample data
         data = []
         protocol_names = []
@@ -154,7 +201,7 @@ class ViolinPlotter(MetricPlotter):
             
             data.extend(values)
             protocol_names.extend([self.config.get_label_name(label)] * len(values))
-            avg_vals.append(np.mean(values))
+            avg_vals.append(np.mean(values) if len(values) > 0 else np.nan)
         
         # Sort protocols
         sorted_labels, _ = self.sort_protocols_by_metric(labels, networks, metric)
@@ -162,6 +209,17 @@ class ViolinPlotter(MetricPlotter):
         
         # Create DataFrame
         df = pd.DataFrame({"Protocol": protocol_names, metric: data})
+        
+        # If log scale requested, ensure all values are positive by shifting if necessary
+        if use_log and not df.empty:
+            min_val = df[metric].min(skipna=True)
+            if min_val is None or np.isnan(min_val):
+                pass
+            else:
+                if min_val <= 0:
+                    # shift all values to be strictly positive
+                    shift = abs(min_val) + 1e-9
+                    df[metric] = df[metric] + shift
         
         # Create plot
         fig, ax = self.create_figure(metric, kind)
@@ -175,6 +233,10 @@ class ViolinPlotter(MetricPlotter):
                           dodge=False, legend=False, inner="quartile", order=order,
                           palette=self.config.get_palette(labels), ax=ax)
         
+        # Apply logarithmic scale if requested
+        if use_log:
+            ax.set_yscale("log")
+        
         ax.set_xlabel("")
         ax.set_xticks([])
         ax.set_xticklabels([])
@@ -183,7 +245,7 @@ class ViolinPlotter(MetricPlotter):
         self.styler.style_axes(ax, metric, kind)
         self.styler.apply_axis_limits(ax, metric)
         
-        self.save_plot(fig, f"{metric}_{kind}.pdf", output_folder)
+        self.save_plot(fig, f"{metric}_{kind}{'_log' if use_log else ''}.pdf", output_folder)
 
 
 class CDFPlotter(MetricPlotter):
@@ -264,20 +326,39 @@ class RadarPlotter(MetricPlotter):
                 values.append(avg)
             data[self.config.get_label_name(label)] = values
         
-        # Normalize metrics
+        # print the data
+        for label, values in data.items():
+            print(f"{label}: {values}")
+
+                # Normalize metrics
         values_matrix = np.array(list(data.values()))
         norm_matrix = []
         for i, metric in enumerate(metrics):
             col = values_matrix[:, i]
-            # if metric is packet_delivery_ratio, we always use descending
-            if metric == "packet_delivery_ratio" or self.config.METRIC_INFO[metric]["sort"] == "desc":
-                norm = (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
-            elif self.config.METRIC_INFO[metric]["sort"] == "asc":
-                norm = 1 - (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
+            min_val, max_val = np.min(col), np.max(col)
+            diff = max_val - min_val
+
+            if diff < 1e-12:
+                # All protocols have the same value → all should get perfect score 1.0
+                norm = np.ones_like(col)
             else:
-                norm = (col - np.min(col)) / (np.max(col) - np.min(col) + 1e-9)
+                if metric == "packet_delivery_ratio" or self.config.METRIC_INFO[metric]["sort"] == "desc":
+                    # Higher is better
+                    norm = (col - min_val) / (diff + 1e-9)
+                elif self.config.METRIC_INFO[metric]["sort"] == "asc":
+                    # Lower is better
+                    norm = 1 - (col - min_val) / (diff + 1e-9)
+                else:
+                    # Default: assume higher is better
+                    norm = (col - min_val) / (diff + 1e-9)
+
             norm_matrix.append(norm)
+
         norm_matrix = np.array(norm_matrix).T
+
+        # print the normalized matrix
+        for i, (protocol, values) in enumerate(zip(data.keys(), norm_matrix)):
+            print(f"{protocol} (norm): {values.tolist()}")
         
         # Setup radar plot
         num_vars = len(metrics)
@@ -450,9 +531,11 @@ class StackedBarPlotter(MetricPlotter):
         ax.set_xticks(ind)
         ax.set_xticklabels(pretty_labels, rotation=0, ha="center", fontsize=10)
         self.styler.style_axes(ax, metric, "stacked_bar")
+        ax.tick_params(axis="x", labelsize=13)
+        # ax.tick_params(axis="y", labelsize=14)
         ax.grid(axis="y", linestyle="--", alpha=0.7)
         
-        # Custom legend
+        # Custom legend elements (do NOT add to the main axes)
         legend_elements = [
             Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
             Patch(facecolor="#55A868", edgecolor="black", hatch="//", label="TX"),
@@ -462,10 +545,19 @@ class StackedBarPlotter(MetricPlotter):
             Patch(facecolor="none", edgecolor="red", linestyle="--", label="RX total (boundary)")
         ]
 
-        legend = ax.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1),
-                           loc="upper left", frameon=True, fontsize=16)
-        # Increase legend box outline width
+        # Save main plot WITHOUT legend
+        self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
+
+        # Create a separate figure that contains only the legend and save it
+        # Size chosen to fit the legend comfortably; adjust as needed.
+        legend_fig = plt.figure(figsize=(3.5, max(1.0, 0.5 * len(legend_elements))))
+        legend_ax = legend_fig.add_subplot(111)
+        legend_ax.axis("off")
+        legend = legend_ax.legend(handles=legend_elements, loc="center", frameon=True,
+                                 fontsize=self.config.get_fontsize("stacked_bar", "legend",
+                                                                  self.config.LEGEND_FONT_SIZE, plot_type="stacked_bar"))
         legend.get_frame().set_linewidth(1.0)
         legend.get_frame().set_edgecolor("black")
-        
-        self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
+
+        self.save_plot(legend_fig, f"{metric}_legend.pdf", output_folder)
+        plt.close(legend_fig)

@@ -61,6 +61,11 @@ class NodeBarPlotter(MetricPlotter):
         # Keep track of which protocol labels have been added to the legend
         legend_added = set()
 
+        # If metric is latency, use logarithmic y-scale and ensure non-zero positive values
+        use_log_y = (metric == "latency")
+        # small positive epsilon to replace non-positive values for log scale
+        eps = 1e-6
+
         # For each node, sort available protocol bars by value and draw them centered around x[node_index]
         for node_idx, node_id in enumerate(sorted_node_ids):
             # collect (label, value) for protocols that have data for this node
@@ -86,6 +91,11 @@ class NodeBarPlotter(MetricPlotter):
                 alpha = self.config.get_label_alpha(label)
                 scale = self.config.METRIC_INFO[metric].get("scale", 1.0)
                 value *= scale
+
+                # if log scale requested, replace non-positive values with a small positive epsilon
+                if use_log_y and value <= 0:
+                    value = eps
+
                 pretty_label = self.config.get_label_name(label)
 
                 lbl = pretty_label if pretty_label not in legend_added else None
@@ -95,6 +105,12 @@ class NodeBarPlotter(MetricPlotter):
                 ax.bar(x[node_idx] + offsets[i], value, width,
                        label=lbl, color=color, alpha=alpha,
                        edgecolor="black", linewidth=1)
+
+        # If metric is latency, set logarithmic y-scale AFTER plotting
+        if use_log_y:
+            ax.set_yscale("log")
+            # set the y-limits to [0, 20]
+            ax.set_ylim(bottom=eps, top=20.0)
 
         # Style the plot
         ax.set_xlabel("Node ID")
@@ -256,7 +272,7 @@ class NodeStackedBarPlotter(MetricPlotter):
             # ---- Style axes ----
             ax.set_xticks(x)
             ax.set_xticklabels(pretty_labels, rotation=0, ha="center")
-            ax.set_title(f"Node {node_id} - Power Breakdown", fontsize=18)
+            # ax.set_title(f"Node {node_id} - Power Breakdown", fontsize=18)
             self.styler.set_axis_labels(
                 ax, metric, "stacked_bar", x_label="Protocol", y_label="Power [mW]"
             )
@@ -267,7 +283,7 @@ class NodeStackedBarPlotter(MetricPlotter):
             ax.spines["bottom"].set_linewidth(3)
             ax.spines["bottom"].set_edgecolor("black")
             ax.tick_params(axis="y", labelsize=18)
-            ax.tick_params(axis="x", labelsize=16)
+            ax.tick_params(axis="x", labelsize=13)
             # ax.grid(axis="y", linestyle="--", alpha=0.7)
 
             # ---- Save and close ----

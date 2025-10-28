@@ -37,6 +37,7 @@ class PlotConfig:
             "label_no_units": "Power",
             "sort": "asc",
             "scale": 1.0,      # mW
+            "ylim": (0, 1.5),
             "plot_styles": {
                 "bar": {
                     "figsize": (5, 3),
@@ -50,13 +51,13 @@ class PlotConfig:
                     "legend": False,
                 },
                 "scatter": {
-                    "figsize": (6, 4),
+                    "figsize": (5, 3),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
                 },
                 "stacked_bar": {
-                    "figsize": (9, 4),
-                    "fonts": {"xlabel": 18, "ylabel": 20, "xtick": 18, "ytick": 18, "legend": 18},
+                    "figsize": (5, 2),
+                    "fonts": {"xlabel": 16, "ylabel": 18, "xtick": 15, "ytick": 16, "legend": 18},
                     "legend": True,
                     "show_labels": {"x": False, "y": True}
                 }
@@ -88,6 +89,7 @@ class PlotConfig:
             "label_no_units": "Latency",
             "sort": "asc",
             "scale": 1e-3,
+            "ylim": (0, 20.0),
             "plot_styles": {
                 "bar": {
                     "figsize": (5, 3),
