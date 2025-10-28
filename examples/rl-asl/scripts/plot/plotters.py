@@ -371,11 +371,19 @@ class RadarPlotter(MetricPlotter):
         for (protocol, values), label in zip(zip(data.keys(), norm_matrix), labels):
             vals = values.tolist()
             vals += vals[:1]
-            ax.plot(angles, vals, color=self.config.get_label_color(label), 
-                   alpha=self.config.get_label_alpha(label),
-                   linewidth=2, label=protocol)
+            ax.plot(angles, vals,
+                    color=self.config.get_label_color(label), 
+                    alpha=self.config.get_label_alpha(label),
+                    linewidth=2, linestyle="--", label=protocol)  # dashed outline
             ax.fill(angles, vals, color=self.config.get_label_color(label), alpha=0.25)
         
+        # Make the outer spine dashed as well
+        try:
+            ax.spines['polar'].set_linestyle('--')
+        except Exception:
+            # some matplotlib backends may not expose 'polar' spine in the same way; ignore if unavailable
+            pass
+
         # Set labels
         ax.set_xticks(angles[:-1])
         ax.set_xticklabels([self.config.METRIC_INFO[m]["label_no_units"] for m in metrics],

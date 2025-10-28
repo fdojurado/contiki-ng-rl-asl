@@ -89,7 +89,7 @@ class PlotConfig:
             "label_no_units": "Latency",
             "sort": "asc",
             "scale": 1e-3,
-            "ylim": (0, 20.0),
+            "ylim": (1e-1, 20.0),
             "plot_styles": {
                 "bar": {
                     "figsize": (5, 3),
