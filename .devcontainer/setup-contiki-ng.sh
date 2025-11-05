@@ -3,8 +3,14 @@ set -e
 
 echo "🔧 Installing Contiki-NG native toolchains and dependencies..."
 
+# Make apt non-interactive
+export DEBIAN_FRONTEND=noninteractive
+
 # Update system
 sudo apt-get update
+
+# Pre-answer Wireshark debconf prompt
+echo "wireshark-common wireshark-common/install-setuid boolean true" | sudo debconf-set-selections
 
 # 1️⃣ Core development tools
 sudo apt-get install -y \
