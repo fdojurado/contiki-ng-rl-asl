@@ -1,5 +1,26 @@
 {
-  "image": "contiker/contiki-ng:latest",
+  "name": "Contiki-NG Native Dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
   "features": {
-  }
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "upgradePackages": true
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup-contiki-ng.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "ms-azuretools.vscode-docker",
+        "twxs.cmake"
+      ]
+    }
+  },
+
+  "remoteUser": "vscode"
 }
