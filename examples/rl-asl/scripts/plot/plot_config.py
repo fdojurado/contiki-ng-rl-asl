@@ -9,7 +9,7 @@ from matplotlib.colors import to_rgba
 
 class PlotConfig:
     """Centralized configuration for all plotting operations."""
-    
+
     # Font sizes
     Y_LABEL_FONT_SIZE = 27
     X_LABEL_FONT_SIZE = 23
@@ -19,7 +19,7 @@ class PlotConfig:
     Y_TICK_HEATMAP_FONT_SIZE = 10
     LEGEND_FONT_SIZE = 18
     STANDARD_FIG_SIZE = (6, 3)
-    
+
     # Protocol information
     DATA_INFO = {
         "RL-ASL": {"color": "#1f77b4", "label": "RL-ASL", "alpha": 1.0, "hatch": ""},
@@ -27,8 +27,12 @@ class PlotConfig:
         "Orchestra-link-based": {"color": "#ff7f0e", "label": "Orch.-LB", "alpha": 0.6},
         "RL-ASL-link-based": {"color": "#034676", "label": "RL-ASL-LB", "alpha": 1.0, "hatch": "//"},
         "PRIL-M": {"color": "#d62728", "label": "PRIL-M", "alpha": 0.6},
+        # sensitivity anyalysis of the RL-ASL reward function for different R_skip values
+        "r-skip-0.25": {"color": "#1f77b4", "label": r"$R_{skip}=0.25$", "alpha": 1.0, "hatch": "//"},
+        "r-skip-0.5": {"color": "#1f77b4", "label": r"$R_{skip}=0.50$", "alpha": 1.0, "hatch": "\\"},
+        "r-skip-0.75": {"color": "#1f77b4", "label": r"$R_{skip}=0.75$", "alpha": 1.0, "hatch": "xx"},
     }
-    
+
     # Metric configuration
     METRIC_INFO = {
         "power": {
@@ -89,7 +93,7 @@ class PlotConfig:
             "label_no_units": "Latency",
             "sort": "asc",
             "scale": 1e-3,
-            "ylim": (1e-1, 20.0),
+            "ylim": (0, 20.0),
             "plot_styles": {
                 "bar": {
                     "figsize": (5, 3),
@@ -243,27 +247,27 @@ class PlotConfig:
             }
         }
     }
-    
+
     @classmethod
     def get_label_color(cls, label):
         """Get color for a protocol label."""
         return cls.DATA_INFO.get(label, {}).get("color", "#000000")
-    
+
     @classmethod
     def get_label_alpha(cls, label):
         """Get alpha value for a protocol label."""
         return cls.DATA_INFO.get(label, {}).get("alpha", 1.0)
-    
+
     @classmethod
     def get_label_name(cls, label):
         """Get display name for a protocol label."""
         return cls.DATA_INFO.get(label, {}).get("label", label)
-    
+
     @classmethod
     def get_label_hatch(cls, label):
         """Get hatch pattern for a protocol label."""
         return cls.DATA_INFO.get(label, {}).get("hatch", None)
-    
+
     @classmethod
     def get_palette(cls, labels):
         """Get color palette for a list of labels."""
@@ -274,7 +278,7 @@ class PlotConfig:
             )
             for lbl in labels
         }
-    
+
     @classmethod
     def get_fontsize(cls, metric, key, default=None, plot_type=None):
         """Fetch font size for a given metric and plot type."""
@@ -285,7 +289,7 @@ class PlotConfig:
             return fonts.get(key, default)
         fonts = info.get("fonts", {})
         return fonts.get(key, default)
-    
+
     @classmethod
     def get_figsize(cls, metric, default=None, plot_type=None):
         """Get figure size for a metric and plot type."""
@@ -296,7 +300,7 @@ class PlotConfig:
         if plot_type and plot_type in plot_styles:
             return plot_styles[plot_type].get("figsize", default)
         return info.get("figsize", default)
-    
+
     @classmethod
     def use_legend(cls, metric, plot_type=None, default=True):
         """Check if legend should be used for a metric and plot type."""
@@ -305,7 +309,7 @@ class PlotConfig:
         if plot_type and plot_type in info_plot_styles:
             return info_plot_styles[plot_type].get("legend", default)
         return info.get("legend", default)
-    
+
     @classmethod
     def show_axis_label(cls, metric, axis, plot_type=None, default=True):
         """Decide whether to show x/y label for a given metric + plot type."""
