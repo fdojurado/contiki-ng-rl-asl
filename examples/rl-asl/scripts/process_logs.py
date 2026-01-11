@@ -264,7 +264,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             else:
                 src_node.delay_update_time_at_rx(seq=seq, time_at_rx=asn)
 
-    if "SAGE node joining network" in msg:
+    if "RL ASL node joining network" in msg:
         node.joined_set(timestamp)
 
 
