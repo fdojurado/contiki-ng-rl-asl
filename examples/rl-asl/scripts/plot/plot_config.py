@@ -22,11 +22,38 @@ class PlotConfig:
 
     # Protocol information
     DATA_INFO = {
-        "RL-ASL": {"color": "#1f77b4", "label": "RL-ASL", "alpha": 1.0, "hatch": ""},
-        "Orchestra": {"color": "#2ca02c", "label": "Orch.", "alpha": 0.6},
-        "Orchestra-link-based": {"color": "#ff7f0e", "label": "Orch.-LB", "alpha": 0.6},
-        "RL-ASL-link-based": {"color": "#034676", "label": "RL-ASL-LB", "alpha": 1.0, "hatch": "//"},
-        "PRIL-M": {"color": "#d62728", "label": "PRIL-M", "alpha": 0.6},
+        "RL-ASL": {
+            "color": "#1f77b4",   # strong blue (Okabe–Ito)
+            "label": "RL-ASL",
+            "alpha": 1.0,
+            "hatch": ""
+        },
+        "RL-ASL-link-based": {
+            "color": "#034676",   # same blue
+            "label": "RL-ASL-LB",
+            "alpha": 1.0,
+            "hatch": "//"
+        },
+
+        # Main baseline (clearly distinguishable from blue)
+        "PRIL-M": {
+            "color": "#D55E00",   # vermillion / dark orange-red
+            "label": "PRIL-M",
+            "alpha": 0.9
+        },
+
+        # Secondary baselines (muted / neutral)
+        "Orchestra": {
+            "color": "#999999",   # neutral gray
+            "label": "Orch.",
+            "alpha": 0.6
+        },
+        "Orchestra-link-based": {
+            "color": "#999999",   # same gray
+            "label": "Orch.-LB",
+            "alpha": 0.6,
+            "hatch": "//"
+        },
         # sensitivity anyalysis of the RL-ASL reward function for different R_skip values
         "r-skip-0.25": {"color": "#1f77b4", "label": r"$R_{skip}=0.25$", "alpha": 1.0, "hatch": "//"},
         "r-skip-0.5": {"color": "#1f77b4", "label": r"$R_{skip}=0.50$", "alpha": 1.0, "hatch": "\\"},
