@@ -103,7 +103,7 @@ class PlotManager:
     def _create_specialized_plots(self, networks, labels, output_folder):
         """Create specialized plots like radar, heatmap, etc."""
         # Scatter plot: RDC vs Latency
-        self.scatter_plotter.plot_rdc_vs_latency(networks, labels, output_folder)
+        self.scatter_plotter.plot_power_latency_pdr(networks, labels, output_folder)
         
         # Radar plot
         self.radar_plotter.plot(networks, labels, output_folder)

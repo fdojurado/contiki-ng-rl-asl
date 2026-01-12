@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import norm
 from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator, FormatStrFormatter
+from matplotlib.lines import Line2D
+
 
 from metric_plotter import MetricPlotter
 
@@ -49,11 +52,17 @@ class BarPlotter(MetricPlotter):
 
         # Style the plot
         ax.set_xlim(-0.5, n - 0.5)
-        ax.set_xticks([])
-        ax.set_xticklabels([])
+        ax.set_xticks(positions)
+        ax.set_xticklabels(
+            styles['pretty_labels'],   # or sorted_labels
+            ha="center",
+            rotation=30,
+            fontsize=self.config.get_fontsize(
+                metric, "xtick", self.config.X_TICK_FONT_SIZE, plot_type="bar")
+        )
 
-        self.styler.set_axis_labels(ax, metric, "bar")
-        # Do NOT add the legend to the main axes; save it separately instead.
+        self.styler.set_axis_labels(
+            ax, metric, "bar", x_label=None, y_label=None)
         self.styler.style_axes(ax, metric, "bar")
         self.styler.apply_axis_limits(ax, metric)
         ax.xaxis.grid(False)
@@ -63,18 +72,10 @@ class BarPlotter(MetricPlotter):
             plt.close(fig)
             return
 
-        # Save main plot WITHOUT legend
-        # self.save_plot(fig, f"{metric}_bar.pdf", output_folder)
-
         # Define preferred legend order (match your dataset naming)
         preferred_order = ["RL-ASL", "RL-ASL-LB",
                            "Orch.", "Orch.-LB", "PRIL-M",
                            r"$R_{skip}=0.25$", r"$R_{skip}=0.50$", r"$R_{skip}=0.75$"]
-
-        # Create a separate figure for the legend
-        # legend_fig = plt.figure(figsize=(3.5, max(1.0, 0.5 * len(styles['pretty_labels']))))
-        # legend_ax = legend_fig.add_subplot(111)
-        # legend_ax.axis("off")
 
         # Use the bar patches as legend handles
         handles = list(bars)
@@ -188,11 +189,147 @@ class ScatterPlotter(MetricPlotter):
 
         self.save_plot(fig, "power_vs_latency.pdf", output_folder)
 
+    def plot_power_latency_pdr(self, networks, labels, output_folder):
+        """Scatter plot: Power vs Latency, PDR encoded as colormap."""
+
+        metric_x = "power"
+        metric_y = "latency"
+        metric_c = "packet_delivery_ratio"
+
+        fig, ax = self.create_figure(metric_x, "scatter")
+
+        # Collect PDR values first (for consistent color normalization)
+        pdr_vals = []
+        for net in networks:
+            pdr, _ = self.get_metric_values(net, metric_c)
+            pdr_vals.append(pdr)
+
+        # Normalize PDR for colormap
+        norm = plt.Normalize(vmin=80, vmax=100)
+        cmap = plt.cm.viridis  # or viridis / plasma
+
+        # Scatter points
+        for net, label in zip(networks, labels):
+            power, _ = self.get_metric_values(net, metric_x)
+            latency, _ = self.get_metric_values(net, metric_y)
+            pdr, _ = self.get_metric_values(net, metric_c)
+
+            ax.scatter(
+                power,
+                latency,
+                s=300,
+                facecolor=cmap(norm(pdr)),
+                edgecolor=self.config.get_label_color(label),
+                linewidths=4,
+                alpha=1.0,
+                label=self.config.get_label_name(label)
+            )
+
+        # Axis labels
+        ax.set_xlabel(
+            self.config.METRIC_INFO[metric_x]["label_with_units"],
+            fontsize=self.config.get_fontsize(metric_x, "xlabel",
+                                              self.config.X_LABEL_FONT_SIZE,
+                                              plot_type="scatter")
+        )
+        ax.set_ylabel(
+            self.config.METRIC_INFO[metric_y]["label_with_units"],
+            fontsize=self.config.get_fontsize(metric_y, "ylabel",
+                                              self.config.Y_LABEL_FONT_SIZE,
+                                              plot_type="scatter")
+        )
+
+        # Latency is usually log-scale
+        ax.set_yscale("log")
+        ax.set_ylim(0, 20)
+
+        # Styling
+        self.styler.style_axes(ax, metric_x, "scatter")
+
+        # --- PDR Colorbar ---
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax, pad=0.02)
+        # cbar.ax.yaxis.set_major_locator(
+        #     MaxNLocator(integer=True)
+        # )
+        cbar.ax.yaxis.set_major_formatter(
+            FormatStrFormatter('%d')
+        )
+        cbar.set_label(
+            self.config.METRIC_INFO[metric_c]["label_with_units"],
+            fontsize=self.config.get_fontsize(metric_c, "color_bar",
+                                              self.config.Y_LABEL_FONT_SIZE, plot_type="scatter")
+        )
+        # cbar ticks fontsize
+        cbar.ax.tick_params(labelsize=self.config.get_fontsize(metric_c, "color_bar",
+                                                               self.config.Y_LABEL_FONT_SIZE, plot_type="scatter"))
+
+        # only put the legend if "scenario-1" or "scenario-4" is in the output folder
+        if "scenario-1" in output_folder or "scenario-4" in output_folder:
+            preferred_order = [
+                "RL-ASL", "RL-ASL-LB",
+                "Orch.", "Orch.-LB", "PRIL-M",
+                r"$R_{skip}=0.25$", r"$R_{skip}=0.50$", r"$R_{skip}=0.75$"
+            ]
+
+            legend_handles = []
+
+            for label in labels:
+                legend_handles.append(
+                    Line2D(
+                        [0], [0],
+                        marker='o',
+                        linestyle='None',
+                        markersize=12,
+                        markerfacecolor='none',
+                        markeredgecolor=self.config.get_label_color(label),
+                        markeredgewidth=3,
+                        label=self.config.get_label_name(label)
+                    )
+                )
+
+            # Build label -> handle map
+            handle_map = {h.get_label(): h for h in legend_handles}
+
+            # Reorder according to preferred_order
+            ordered_labels = [l for l in preferred_order if l in handle_map]
+
+            # Append any remaining (unexpected) labels
+            for l in handle_map:
+                if l not in ordered_labels:
+                    ordered_labels.append(l)
+
+            ordered_handles = [handle_map[l] for l in ordered_labels]
+
+            legend = ax.legend(
+                handles=ordered_handles,
+                labels=ordered_labels,
+                loc="upper right",
+                # ncol=2,
+                frameon=True,
+                fontsize=self.config.get_fontsize(
+                    metric_x, "legend",
+                    self.config.LEGEND_FONT_SIZE,
+                    plot_type="scatter"
+                ),
+                columnspacing=1.2,           # horizontal space between columns
+                handletextpad=0.2,           # space between marker and text
+                labelspacing=0.2             # vertical spacing
+            )
+
+            legend.get_frame().set_linewidth(1.0)
+            legend.get_frame().set_edgecolor("black")
+
+        self.save_plot(fig, "power_vs_latency_pdr.pdf", output_folder)
+
     def plot(self, networks, labels, metric, output_folder):
         """Default scatter plot implementation."""
         # This could be extended for other scatter plot types
         if metric == "rdc":  # Special case for RDC vs Latency
             self.plot_rdc_vs_latency(networks, labels, output_folder)
+        if metric == "power_latency_pdr":
+            self.plot_power_latency_pdr(networks, labels, output_folder)
 
 
 class ViolinPlotter(MetricPlotter):
@@ -249,9 +386,20 @@ class ViolinPlotter(MetricPlotter):
         if use_log:
             ax.set_yscale("log")
 
+        # Get styling
+        styles = self.styler.get_plot_colors_and_styles(sorted_labels)
+        n = len(avg_vals)
+        positions = np.arange(n)
+
         ax.set_xlabel("")
-        ax.set_xticks([])
-        ax.set_xticklabels([])
+        ax.set_xticks(positions)
+        ax.set_xticklabels(
+            styles['pretty_labels'],   # or sorted_labels
+            ha="center",
+            rotation=30,
+            fontsize=self.config.get_fontsize(
+                metric, "xtick", self.config.X_TICK_FONT_SIZE, plot_type=kind)
+        )
 
         self.styler.set_axis_labels(ax, metric, kind)
         self.styler.style_axes(ax, metric, kind)
@@ -411,9 +559,47 @@ class RadarPlotter(MetricPlotter):
         ax.set_ylim(0, 1)
 
         if self.config.use_legend("radar", plot_type="radar"):
-            ax.legend(loc="center left", bbox_to_anchor=(1.1, 0.5),
-                      fontsize=self.config.get_fontsize("radar", "legend",
-                                                        self.config.LEGEND_FONT_SIZE, plot_type="radar"))
+            # Dont create a legend if the output folder does not contain 'scenario-1'
+            if "scenario-1" in output_folder or "scenario-4" in output_folder:
+                # Define preferred legend order (same idea as bar plot)
+                preferred_order = [
+                    "RL-ASL", "RL-ASL-LB",
+                    "Orch.", "Orch.-LB", "PRIL-M",
+                    r"$R_{skip}=0.25$", r"$R_{skip}=0.50$", r"$R_{skip}=0.75$"
+                ]
+
+                # Get current legend handles and labels from the axes
+                handles, legend_labels = ax.get_legend_handles_labels()
+
+                # Build label -> handle map
+                handle_map = {lbl: h for h, lbl in zip(handles, legend_labels)}
+
+                # Reorder according to preferred_order
+                reordered_labels = [
+                    l for l in preferred_order if l in legend_labels]
+
+                # Append any remaining labels (unexpected protocols)
+                for l in legend_labels:
+                    if l not in reordered_labels:
+                        reordered_labels.append(l)
+
+                ordered_handles = [handle_map[l] for l in reordered_labels]
+
+                legend = ax.legend(
+                    handles=ordered_handles,
+                    labels=reordered_labels,
+                    loc="center left",
+                    bbox_to_anchor=(1.1, 0.5),
+                    frameon=True,
+                    fontsize=self.config.get_fontsize(
+                        "radar", "legend",
+                        self.config.LEGEND_FONT_SIZE,
+                        plot_type="radar"
+                    )
+                )
+
+                legend.get_frame().set_linewidth(1.0)
+                legend.get_frame().set_edgecolor("black")
 
         self.save_plot(fig, "radar_metrics.pdf", output_folder)
 
@@ -506,10 +692,10 @@ class StackedBarPlotter(MetricPlotter):
         ]
 
         # Colors and hatches
-        base_rx_color = "#C44E52"
+        base_rx_color = "#9E9E9E"
         colors = {
-            "avg_cpu_mW": "#4C72B0",
-            "avg_tx_mW": "#55A868",
+            "avg_cpu_mW": "#7B6FD0",
+            "avg_tx_mW": "#8C6D31",
             "avg_rx_non_uc_total_mW": base_rx_color,
             "avg_rx_uc_mW": base_rx_color,
             "avg_rx_uc_idle_mW": base_rx_color,
@@ -545,26 +731,54 @@ class StackedBarPlotter(MetricPlotter):
                    hatch=hatches[comp])
             bottom += np.array(data[comp])
 
+        # Add total value on top of each stacked bar
+        for i, total in enumerate(bottom):
+            ax.text(
+                ind[i],                    # x position
+                total,                     # y position (top of stack)
+                f"{total:.1f}",            # format as needed
+                ha="center",
+                va="bottom",
+                fontsize=self.config.get_fontsize(
+                    metric, "above_bar",
+                    self.config.X_TICK_FONT_SIZE,
+                    plot_type="stacked_bar"
+                ),
+                fontweight="bold"
+            )
+
         # Add RX total outline
-        cpu_tx = np.array(data["avg_cpu_mW"]) + np.array(data["avg_tx_mW"])
-        ax.bar(ind, rx_total, width, bottom=cpu_tx,
-               color="none", edgecolor="red", linewidth=2.8,
-               linestyle="--", label="RX (group)")
+        # cpu_tx = np.array(data["avg_cpu_mW"]) + np.array(data["avg_tx_mW"])
+        # ax.bar(ind, rx_total, width, bottom=cpu_tx,
+        #        color="none", edgecolor="red", linewidth=2.8,
+        #        linestyle="--", label="RX (group)")
 
         # Styling
         self.styler.set_axis_labels(
             ax, metric, "stacked_bar", x_label="Protocols")
         ax.set_xticks(ind)
-        ax.set_xticklabels(pretty_labels, rotation=0, ha="center", fontsize=10)
+        ax.set_xticklabels(
+            pretty_labels,
+            ha="center",
+            rotation=30,
+            fontsize=self.config.get_fontsize(
+                metric, "xtick", self.config.X_TICK_FONT_SIZE, plot_type="stacked_bar")
+        )
         self.styler.style_axes(ax, metric, "stacked_bar")
-        ax.tick_params(axis="x", labelsize=13)
+        # ax.tick_params(axis="x", labelsize=13)
         # ax.tick_params(axis="y", labelsize=14)
         ax.grid(axis="y", linestyle="--", alpha=0.7)
 
+        # Dont create a legen if the output folder idoes not contain 'scenario-1'
+        if "scenario-1" not in output_folder:
+            self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
+            plt.close(fig)
+            return
+
         # Custom legend elements (do NOT add to the main axes)
         legend_elements = [
-            Patch(facecolor="#4C72B0", edgecolor="black", label="CPU"),
-            Patch(facecolor="#55A868", edgecolor="black",
+            Patch(facecolor="#7B6FD0", edgecolor="black", label="CPU"),
+            Patch(facecolor="#8C6D31", edgecolor="black",
                   hatch="//", label="TX"),
             Patch(facecolor=base_rx_color, edgecolor="black",
                   hatch="\\\\\\\\", label="RX non-UC"),
@@ -572,24 +786,30 @@ class StackedBarPlotter(MetricPlotter):
                   hatch="xx", label="RX UC active"),
             Patch(facecolor=base_rx_color, edgecolor="black",
                   hatch="oo", label="RX UC idle"),
-            Patch(facecolor="none", edgecolor="red",
-                  linestyle="--", label="RX total (boundary)")
+            # Patch(facecolor="none", edgecolor="red",
+            #       linestyle="--", label="RX total (boundary)")
         ]
 
-        # Save main plot WITHOUT legend
-        self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
+        # Add legend to the SAME axes
+        legend = ax.legend(
+            handles=legend_elements,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.15),
+            ncol=3,                     # ← controls horizontal filling
+            frameon=True,
+            fontsize=self.config.get_fontsize(
+                "power", "legend",
+                self.config.LEGEND_FONT_SIZE,
+                plot_type="stacked_bar"
+            ),
+            columnspacing=0.5,          # space between columns
+            handlelength=1.0,           # width of legend symbols
+            handletextpad=0.5           # space between symbol and text
+        )
 
-        # Create a separate figure that contains only the legend and save it
-        # Size chosen to fit the legend comfortably; adjust as needed.
-        legend_fig = plt.figure(
-            figsize=(3.5, max(1.0, 0.5 * len(legend_elements))))
-        legend_ax = legend_fig.add_subplot(111)
-        legend_ax.axis("off")
-        legend = legend_ax.legend(handles=legend_elements, loc="center", frameon=True,
-                                  fontsize=self.config.get_fontsize("stacked_bar", "legend",
-                                                                    self.config.LEGEND_FONT_SIZE, plot_type="stacked_bar"))
         legend.get_frame().set_linewidth(1.0)
         legend.get_frame().set_edgecolor("black")
 
-        self.save_plot(legend_fig, f"{metric}_legend.pdf", output_folder)
-        plt.close(legend_fig)
+        # Save plot WITH legend
+        self.save_plot(fig, f"{metric}_stacked_bar.pdf", output_folder)
+        plt.close(fig)

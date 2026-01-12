@@ -56,14 +56,16 @@ class PlotConfig:
                 },
                 "scatter": {
                     "figsize": (5, 3),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
+                    "fonts": {"xlabel": 20, "ylabel": 18, "xtick": 17, "ytick": 14, "legend": 16,
+                              "above_bar": 14,                              "color_bar": 6},
                     "legend": False,
                 },
                 "stacked_bar": {
-                    "figsize": (5, 2),
-                    "fonts": {"xlabel": 16, "ylabel": 18, "xtick": 15, "ytick": 16, "legend": 18},
+                    "figsize": (5, 3),
+                    "fonts": {"xlabel": 20, "ylabel": 18, "xtick": 16, "ytick": 14, "legend": 16,
+                              "above_bar": 14,                              "color_bar": 15},
                     "legend": True,
-                    "show_labels": {"x": False, "y": True}
+                    "show_labels": {"x": True, "y": True}
                 }
             }
         },
@@ -96,10 +98,10 @@ class PlotConfig:
             "ylim": (0, 20.0),
             "plot_styles": {
                 "bar": {
-                    "figsize": (5, 3),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 16},
+                    "figsize": (5, 2),
+                    "fonts": {"xlabel": 20, "ylabel": 19, "xtick": 14, "ytick": 20, "legend": 16},
                     "legend": False,
-                    "show_labels": {"x": False, "y": True}
+                    "show_labels": {"x": True, "y": True}
                 },
                 "line": {
                     "figsize": (5, 3),
@@ -107,10 +109,11 @@ class PlotConfig:
                     "legend": False,
                 },
                 "violin": {
-                    "figsize": (5, 2),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
+                    "figsize": (5, 3),
+                    "fonts": {"xlabel": 20, "ylabel": 18, "xtick": 16, "ytick": 14, "legend": 16,
+                              "color_bar": 15},
                     "legend": False,
-                    "show_labels": {"x": False, "y": True}
+                    "show_labels": {"x": True, "y": True}
                 },
                 "histogram": {
                     "figsize": (6, 4),
@@ -124,7 +127,7 @@ class PlotConfig:
                 },
                 "scatter": {
                     "figsize": (5, 3),
-                    "fonts": {"xlabel": 22, "ylabel": 22, "xtick": 22, "ytick": 22, "legend": 18},
+                    "fonts": {"xlabel": 22, "ylabel": 18, "xtick": 22, "ytick": 22, "legend": 18},
                     "legend": False,
                 }
             }
@@ -174,8 +177,9 @@ class PlotConfig:
             "ylim": (80, 100),
             "plot_styles": {
                 "bar": {
-                    "figsize": (5, 2),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
+                    "figsize": (7, 3),
+                    "fonts": {"xlabel": 20, "ylabel": 23, "xtick": 22, "ytick": 22, "legend": 16,
+                              "color_bar": 15},
                     "legend": False,
                     "show_labels": {"x": False, "y": True}
                 },
@@ -183,6 +187,12 @@ class PlotConfig:
                     "figsize": (6, 4),
                     "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
                     "legend": False,
+                },
+                "scatter": {
+                    "figsize": (6, 4),
+                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18,
+                              "color_bar": 16},
+                    "legend": True,
                 }
             }
         },
@@ -194,9 +204,9 @@ class PlotConfig:
             "scale": 100.0,
             "plot_styles": {
                 "bar": {
-                    "figsize": (6, 4),
-                    "fonts": {"xlabel": 20, "ylabel": 22, "xtick": 20, "ytick": 20, "legend": 18},
-                    "legend": True,
+                    "figsize": (5, 2),
+                    "fonts": {"xlabel": 20, "ylabel": 19, "xtick": 14, "ytick": 20, "legend": 16},
+                    "legend": False,
                     "show_labels": {"x": False, "y": True}
                 },
                 "line": {
@@ -240,8 +250,8 @@ class PlotConfig:
             "plot_styles": {
                 "radar": {
                     "figsize": (2.5, 2.5),
-                    "fonts": {"xlabel": 13, "ylabel": 13, "xtick": 13, "ytick": 7, "legend": 18},
-                    "legend": False,
+                    "fonts": {"xlabel": 13, "ylabel": 13, "xtick": 13, "ytick": 10, "legend": 18},
+                    "legend": True,
                     "show_labels": {"x": False, "y": True}
                 }
             }
