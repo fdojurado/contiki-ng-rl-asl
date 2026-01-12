@@ -44,12 +44,12 @@ class PlotConfig:
 
         # Secondary baselines (muted / neutral)
         "Orchestra": {
-            "color": "#999999",   # neutral gray
+            "color": "#9E9E9E",   # neutral gray
             "label": "Orch.",
             "alpha": 0.6
         },
         "Orchestra-link-based": {
-            "color": "#999999",   # same gray
+            "color": "#BDBDBD",   # same gray
             "label": "Orch.-LB",
             "alpha": 0.6,
             "hatch": "//"
