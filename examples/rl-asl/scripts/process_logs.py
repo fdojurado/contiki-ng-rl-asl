@@ -65,7 +65,7 @@ _RE_ENERGEST_ENERGY = re.compile(
 _RE_RADIO_TOTAL = re.compile(r"Radio total\s*:\s*([0-9\.]+)\s*/\s*([0-9\.]+)")
 # Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n"
 _RE_RX_SEQ = re.compile(
-    r"Processing data packet input with seqnum(?P<seq>\d+) at ASN (?P<asn>\d+), from (?P<ip>[\da-fA-F:]+)"
+    r"Processing data packet input with seqnum (?P<seq>\d+) at ASN (?P<asn>\d+), from (?P<ip>[\da-fA-F:]+)"
 )
 _RE_RL_ASL_TRACE = re.compile(
     r".*TRACE_OUTCOME,"
@@ -228,7 +228,7 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
             else:
                 node.rl_asl_q_table_set_q_value(
                     state=state, action=action, value=value)
-                
+
     if new_best_agent:
         episode = _safe_int(new_best_agent.group("episode"))
         rolling_avg = _safe_float(new_best_agent.group("rolling_avg"))
@@ -246,19 +246,14 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
         asn = _safe_int(receive_seq.group("asn"))
         ipaddress = receive_seq.group("ip")  # 04:00
         try:
-
-            ip_parts = ipaddress.split(":")
-            if len(ip_parts) >= 2:
-                node_id_part = ip_parts[0]  # last part
-                node_id = int(node_id_part, 16)
-            else:
-                node_id = int(ipaddress, 16)
+            src_id = int(ipaddress.split("::")[-1].split(":")[-1], 16)
         except Exception:
-            node_id = -1
-        src_node = network.nodes_get(node_id)
+            logger.debug("Could not convert mac to id: %s", ipaddress)
+            return
+        src_node = network.nodes_get(src_id)
         if src_node is None:
             logger.debug(
-                "Source node %s (id=%s) not found in network", ipaddress, node_id)
+                "Source node %s (id=%s) not found in network", ipaddress, src_id)
         else:
             src_node.delay_update_time_at_rx(seq=seq, time_at_rx=asn)
 
@@ -344,7 +339,7 @@ def process_testlog(testlog: Path, args) -> Dict:
     except Exception:
         logger.exception("Could not read testlog %s", testlog)
         return {}
-    
+
     # Get args. start timestamp in microseconds
     start_time_usec = args.start_timestamp * 1e6
     # if "ERR" in raw_text:
@@ -428,7 +423,8 @@ def process_testlog(testlog: Path, args) -> Dict:
             m = _RE_PLATFORM.match(file.name)
             platform = m.group(1) if m else file.stem.split(
                 "_")[-2] if "_" in file.stem else file.stem
-            node_info = fit_iot_lab_conf.get_node_config(platform, topology=topology)
+            node_info = fit_iot_lab_conf.get_node_config(
+                platform, topology=topology)
             node = network.nodes_add(
                 node_info["node_id"]) if node_info else None
             if node is None:
