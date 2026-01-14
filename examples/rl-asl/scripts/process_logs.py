@@ -65,7 +65,7 @@ _RE_ENERGEST_ENERGY = re.compile(
 _RE_RADIO_TOTAL = re.compile(r"Radio total\s*:\s*([0-9\.]+)\s*/\s*([0-9\.]+)")
 # Processing data packet input (is_for_us=%d) with seqnum %d at ASN %" PRIu64 ", from %02x:%02x\n"
 _RE_RX_SEQ = re.compile(
-    r"Processing data packet input \(is_for_us=(?P<is_for_us>\d+)\) with seqnum (?P<seq>\d+) at ASN (?P<asn>\d+), from (?P<ip>[\da-fA-F:]+)"
+    r"Processing data packet input with seqnum(?P<seq>\d+) at ASN (?P<asn>\d+), from (?P<ip>[\da-fA-F:]+)"
 )
 _RE_RL_ASL_TRACE = re.compile(
     r".*TRACE_OUTCOME,"
@@ -242,27 +242,25 @@ def process_line(timestamp: float, node: Node, msg: str, network: Network, args)
                        time_at_tx=asn)
 
     if receive_seq:
-        is_for_us = _safe_int(receive_seq.group("is_for_us"))
-        if is_for_us:
-            seq = _safe_int(receive_seq.group("seq"))
-            asn = _safe_int(receive_seq.group("asn"))
-            ipaddress = receive_seq.group("ip")  # 04:00
-            try:
+        seq = _safe_int(receive_seq.group("seq"))
+        asn = _safe_int(receive_seq.group("asn"))
+        ipaddress = receive_seq.group("ip")  # 04:00
+        try:
 
-                ip_parts = ipaddress.split(":")
-                if len(ip_parts) >= 2:
-                    node_id_part = ip_parts[0]  # last part
-                    node_id = int(node_id_part, 16)
-                else:
-                    node_id = int(ipaddress, 16)
-            except Exception:
-                node_id = -1
-            src_node = network.nodes_get(node_id)
-            if src_node is None:
-                logger.debug(
-                    "Source node %s (id=%s) not found in network", ipaddress, node_id)
+            ip_parts = ipaddress.split(":")
+            if len(ip_parts) >= 2:
+                node_id_part = ip_parts[0]  # last part
+                node_id = int(node_id_part, 16)
             else:
-                src_node.delay_update_time_at_rx(seq=seq, time_at_rx=asn)
+                node_id = int(ipaddress, 16)
+        except Exception:
+            node_id = -1
+        src_node = network.nodes_get(node_id)
+        if src_node is None:
+            logger.debug(
+                "Source node %s (id=%s) not found in network", ipaddress, node_id)
+        else:
+            src_node.delay_update_time_at_rx(seq=seq, time_at_rx=asn)
 
     if "RL ASL node joining network" in msg:
         node.joined_set(timestamp)

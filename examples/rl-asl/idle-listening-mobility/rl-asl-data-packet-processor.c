@@ -9,7 +9,7 @@
 
 #include "os/sys/log.h"
 #define LOG_MODULE "rl-asl-data-packet-processor"
-#define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_DATA_PACKET_PROCESSOR
+#define LOG_LEVEL LOG_LEVEL_NONE
 
 /*---------------------------------------------------------------------------*/
 void rl_asl_data_packet_input(const uip_ipaddr_t *src, const uint16_t seqnum)
