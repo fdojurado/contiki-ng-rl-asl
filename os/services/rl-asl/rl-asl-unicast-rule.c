@@ -80,7 +80,7 @@ activate_rx_link(void)
     tsch_schedule_add_link(sf_unicast,
         LINK_OPTION_SHARED | LINK_OPTION_RX,
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
-        timeslot, get_node_channel_offset(&linkaddr_node_addr), 0);
+        timeslot, get_node_channel_offset(&linkaddr_node_addr), 1);
     return 1;
   }
   return 0;

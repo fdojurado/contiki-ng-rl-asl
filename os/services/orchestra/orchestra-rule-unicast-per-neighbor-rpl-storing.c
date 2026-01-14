@@ -40,7 +40,7 @@
  * \author Simon Duquennoy <simonduq@sics.se>
  */
 
- #if !WITH_RL_ASL_NET
+ #if !WITH_RL_ASL_ROUTING
 #include "contiki.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -259,11 +259,9 @@ struct orchestra_rule unicast_per_neighbor_rpl_storing = {
   select_packet,
   child_added,
   child_removed,
-#if BUILD_WITH_RL_ASL
   NULL,
   NULL,
   NULL,
-#endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,
   "unicast per neighbor storing",
@@ -271,4 +269,4 @@ struct orchestra_rule unicast_per_neighbor_rpl_storing = {
 };
 
 #endif /* UIP_MAX_ROUTES */
-#endif /* !WITH_RL_ASL_NET */
+#endif /* !WITH_RL_ASL_ROUTING */

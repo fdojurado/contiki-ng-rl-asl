@@ -1,15 +1,15 @@
-CONTIKI_PROJECT = idle-listening
+CONTIKI_PROJECT = idle-listening udp-server
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = ../../..
 
 MAKE_MAC = MAKE_MAC_TSCH
-MAKE_ROUTING = MAKE_ROUTING_RPL_LITE
-MAKE_NET = MAKE_NET_IPV6
+MAKE_ROUTING ?= MAKE_ROUTING_OTHER
+MAKE_NET ?= MAKE_NET_IPV6
+
+CFLAGS += -DBUILD_WITH_IDLE_LISTENING=1
 
 MAKE_WITH_RL_ASL ?= 0
-
-MAKE_WITH_PRIL ?= 0
 
 MAKE_WITH_RL_ASL_TRAIN ?= 1
 
@@ -22,14 +22,10 @@ MAKE_WITH_RL_ASL_MODEL ?= ../models/topology-a
 # Convert MODEL to an include path
 MODEL_INCLUDE += -I$(MAKE_WITH_RL_ASL_MODEL)
 CFLAGS += $(MODEL_INCLUDE) -DRL_ASL_MODEL_SCENARIO=\"$(MAKE_WITH_RL_ASL_MODEL)\"
+# print 
+$(info MAKE_WITH_RL_ASL_MODEL is $(MAKE_WITH_RL_ASL_MODEL))
 endif
 
-ifeq ($(MAKE_WITH_PRIL),1)
-  MODULES += $(CONTIKI_NG_SERVICES_DIR)/pril
-  ifeq ($(MAKE_WITH_RL_ASL),1)
-     $(error "PRIL and RL-ASL cannot be enabled at the same time")
-  endif
-endif
 
 ifeq ($(MAKE_WITH_RL_ASL_TOPOLOGY_A),1)
   CFLAGS += -DTOPOLOGY_A=1
@@ -40,10 +36,6 @@ endif
 MAKE_WITH_TRAFFIC_PATTERN ?= 1
 
 CFLAGS += -DTRAFFIC_PATTERN=$(MAKE_WITH_TRAFFIC_PATTERN)
-
-CFLAGS += -DWITH_RL_ASL_NET=1
-CFLAGS += -DNETSTACK_CONF_NETWORK=rl_asl_net_driver
-CFLAGS += -DNETSTACK_CONF_ROUTING=rl_asl_routing_driver
 
 ifeq ($(MAKE_WITH_RL_ASL),1)
   MODULES += $(CONTIKI_NG_SERVICES_DIR)/rl-asl
@@ -80,29 +72,18 @@ MODULES_SOURCES_EXCLUDES += slip.c
 
 CONTIKI_SOURCES_EXCLUDES_COOJA += slip-arch.c
 
-PROJECT_SOURCEFILES += ../rl-asl-buf.c ../rl-asl-utils.c ../rl-asl-ds-nbr.c ../rl-asl-data-packet-processor.c ../rl-asl-data-packet-generator.c ../rl-asl-net-processor.c ../rl-asl-net.c
-ifeq ($(MAKE_ROUTING), MAKE_ROUTING_OTHER)
-  PROJECT_SOURCEFILES += ../rl-asl-routing.c
-endif
-# ifeq ($(MAKE_ROUTING), MAKE_ROUTING_RPL_LITE)
-#   PROJECT_SOURCEFILES += ../uip.h
-# endif
-CFLAGS += -I../../rl-asl
+PROJECT_SOURCEFILES += rl-asl-handshake.c rl-asl-ds-nbr.c
 
 ifeq (${ROOT}, 1)
  CFLAGS += -DROOT
 else ifeq (${RELAY}, 1)
  MODULES += $(CONTIKI_NG_SERVICES_DIR)/simple-energest
  CFLAGS += -DRELAY
- ifeq ($(MAKE_WITH_RL_ASL),1)
-  PROJECT_SOURCEFILES += ../rl-asl-handshake.c
- endif
+ PROJECT_SOURCEFILES += rl-asl-data-packet-processor.c rl-asl-ds-nbr.c
 else ifeq (${LEAF}, 1)
  MODULES += $(CONTIKI_NG_SERVICES_DIR)/simple-energest
+ PROJECT_SOURCEFILES += rl-asl-data-packet-generator.c rl-asl-data-packet-processor.c rl-asl-ds-nbr.c
  CFLAGS += -DLEAF
- ifeq ($(MAKE_WITH_RL_ASL),1)
-  PROJECT_SOURCEFILES += ../rl-asl-handshake.c
- endif
 endif
 
 include $(CONTIKI)/Makefile.dir-variables

@@ -39,7 +39,7 @@
 
 #include "contiki.h"
 #include "tsch.h"
-#include "rl-asl-net-processor.h"
+// #include "rl-asl-net-processor.h"
 
 // #if (ROOT || RELAY) && !WITH_RL_ASL_ORCHESTRA
 // #include "sage-broadcast-schedule.h"
@@ -49,6 +49,10 @@
 #ifdef LEAF
 #include "rl-asl-data-packet-generator.h"
 #endif /* LEAF */
+
+#if (LEAF || RELAY) && BUILD_WITH_RL_ASL
+#include "rl-asl-handshake.h"
+#endif /* LEAF || RELAY && BUILD_WITH_RL_ASL */
 
 #if CONTIKI_TARGET_IOTLAB
 #include "platform.h"
@@ -61,6 +65,40 @@
 /*---------------------------------------------------------------------------*/
 PROCESS(rl_asl_idle_listening_process, "RL ASL idle listening process");
 AUTOSTART_PROCESSES(&rl_asl_idle_listening_process);
+/*---------------------------------------------------------------------------*/
+void rl_asl_callback_joining_network(void)
+{
+  LOG_INFO("RL ASL node joining network\n");
+// We need to update the time source with the actual parent in the routing layer
+#if BUILD_WITH_RL_ASL
+  struct tsch_neighbor *time_source = tsch_queue_get_time_source();
+  linkaddr_t *time_source_addr;
+  time_source_addr = tsch_queue_get_nbr_address(time_source);
+  LOG_INFO("Setting time source to %02x:%02x\n", time_source_addr->u8[0], time_source_addr->u8[1]);
+  tsch_queue_update_time_source(time_source_addr);
+  rl_asl_handshake_update_parent(time_source_addr);
+#endif /* BUILD_WITH_RL_ASL */
+  //     const linkaddr_t *nxthop;
+  //     nxthop = NETSTACK_ROUTING.nexthop(&linkaddr_node_addr, &root_node_addr);
+  //     if (nxthop != NULL)
+  //     {
+  //         LOG_INFO("Setting time source to %02x:%02x\n", nxthop->u8[0], nxthop->u8[1]);
+  //         tsch_queue_update_time_source(nxthop);
+  //     }
+  // #if BUILD_WITH_RL_ASL
+  //     if (!linkaddr_cmp(nxthop, &root_node_addr))
+  //     {
+  //         rl_asl_handshake_update_parent(nxthop);
+  //     }
+  //     else
+  //     {
+  // /* This is the root node, deactivate the rx link to the parent */
+  // #if BUILD_WITH_RL_ASL
+  //         TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK(&root_node_addr);
+  // #endif /* BUILD_WITH_RL_ASL */
+  //     }
+  // #endif /* BUILD_WITH_RL_ASL */
+}
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(rl_asl_idle_listening_process, ev, data)
 {
@@ -91,12 +129,9 @@ PROCESS_THREAD(rl_asl_idle_listening_process, ev, data)
   NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, PHY_POWER_m5dBm);
 #endif /* CONTIKI_TARGET_IOTLAB */
 
-  process_start(&rl_asl_net_processor_process, NULL);
-
-#if (ROOT || RELAY)
-  // process_start(&sage_broadcast_schedule_process, NULL);
-  // process_start(&sage_process, NULL);
-#endif /* ROOT || RELAY */
+#if (LEAF || RELAY) && BUILD_WITH_RL_ASL
+  process_start(&rl_asl_handshake_process, NULL);
+#endif /* BUILD_WITH_RL_ASL */
 
 #ifdef LEAF
   LOG_INFO("Starting data packet generator process\n");

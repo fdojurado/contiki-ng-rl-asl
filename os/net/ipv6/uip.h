@@ -1982,6 +1982,10 @@ uint16_t uip_chksum(uint16_t *data, uint16_t len);
  */
 uint16_t uip_ipchksum(void);
 
+#if BUILD_WITH_IDLE_LISTENING
+uint16_t idle_data_chksum(void);
+#endif /* BUILD_WITH_IDLE_LISTENING */
+
 /**
  * Calculate the TCP checksum of the packet in uip_buf and uip_appdata.
  *

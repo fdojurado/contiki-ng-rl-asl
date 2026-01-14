@@ -54,10 +54,10 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 static uint64_t last_tx, last_rx, last_time, last_cpu, last_lpm, last_deep_lpm;
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
 static uint64_t last_uc_rx;
 static uint64_t last_uc_idle_rx;
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
 
 PROCESS(simple_energest_process, "Simple Energest");
 /*---------------------------------------------------------------------------*/
@@ -79,7 +79,7 @@ simple_energest_step(void)
 {
   static uint16_t count = 0;
   uint64_t curr_tx, curr_rx, curr_time, curr_cpu, curr_lpm, curr_deep_lpm;
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
   uint64_t curr_uc_rx;
   uint64_t curr_uc_idle_rx;
 #endif
@@ -93,7 +93,7 @@ simple_energest_step(void)
   curr_deep_lpm = energest_type_time(ENERGEST_TYPE_DEEP_LPM);
   curr_tx       = energest_type_time(ENERGEST_TYPE_TRANSMIT);
   curr_rx       = energest_type_time(ENERGEST_TYPE_LISTEN);
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
   curr_uc_rx    = energest_type_time(ENERGEST_TYPE_UC_LISTEN);
   curr_uc_idle_rx = energest_type_time(ENERGEST_TYPE_UC_IDLE_LISTEN);
 #endif
@@ -114,7 +114,7 @@ simple_energest_step(void)
   log_energest("Radio total", curr_tx - last_tx + curr_rx - last_rx,
                delta_time);
 
-#if WITH_RL_ASL_NET  
+#if BUILD_WITH_IDLE_LISTENING  
   log_energest("UC Radio Rx",   curr_uc_rx - last_uc_rx,       delta_time);
   log_energest("UC Idle Rx",   curr_uc_idle_rx - last_uc_idle_rx,  delta_time);
 #endif
@@ -126,7 +126,7 @@ simple_energest_step(void)
   last_deep_lpm = curr_deep_lpm;
   last_tx       = curr_tx;
   last_rx       = curr_rx;
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
   last_uc_rx    = curr_uc_rx;
   last_uc_idle_rx = curr_uc_idle_rx;
 #endif
@@ -158,10 +158,10 @@ simple_energest_init(void)
   last_deep_lpm = energest_type_time(ENERGEST_TYPE_DEEP_LPM);
   last_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT);
   last_rx = energest_type_time(ENERGEST_TYPE_LISTEN);
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
   last_uc_rx = energest_type_time(ENERGEST_TYPE_UC_LISTEN);
   last_uc_idle_rx = energest_type_time(ENERGEST_TYPE_UC_IDLE_LISTEN);
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
   process_start(&simple_energest_process, NULL);
 }
 

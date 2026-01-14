@@ -33,13 +33,11 @@
  *
  * \author Fernando Jurado-Lasso <fdo.jurado@gmail.com>
  */
-
+#if WITH_RL_ASL_ROUTING
 #include "contiki.h"
 #include "orchestra.h"
 #include "net/routing/routing.h"
-#if WITH_RL_ASL_NET
 #include "rl-asl-routing.h"
-#endif /* WITH_RL_ASL_NET */
 #include "net/packetbuf.h"
 #include "os/sys/log.h"
 
@@ -239,13 +237,12 @@ struct orchestra_rule unicast_per_neighbor_link_based_static = {
     select_packet,
     NULL,
     NULL,
-#if BUILD_WITH_RL_ASL
     NULL,
     NULL,
     NULL,
-#endif /* BUILD_WITH_RL_ASL */
     NULL,
     NULL,
     "unicast per neighbor link based static",
     ORCHESTRA_UNICAST_PERIOD,
 };
+#endif /* WITH_RL_ASL_ROUTING */

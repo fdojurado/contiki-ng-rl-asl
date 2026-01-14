@@ -53,9 +53,9 @@
 #include "net/mac/framer/framer-802154.h"
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
 #include "sys/energest.h"
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
 
 #if BUILD_WITH_RL_ASL
 #include "rl-asl.h"
@@ -87,9 +87,9 @@
 #define TSCH_DEBUG_SLOT_END()
 #endif
 
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
 struct tsch_asn_t last_rx_asn;
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
 
 /* Check if TSCH_MAX_INCOMING_PACKETS is power of two */
 #if (TSCH_MAX_INCOMING_PACKETS & (TSCH_MAX_INCOMING_PACKETS - 1)) != 0
@@ -482,14 +482,14 @@ tsch_radio_on(enum tsch_radio_state_on_cmd command)
   }
   if(do_it) {
     NETSTACK_RADIO.on();
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
     /* Count idle listen only for unicast (Orchestra) slotframe handle */
     if(current_link != NULL
        && current_link->slotframe_handle == 1) {
       // ENERGEST_ON(ENERGEST_TYPE_UC_IDLE_LISTEN);
       ENERGEST_ON(ENERGEST_TYPE_UC_LISTEN);
     }
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -520,13 +520,13 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
     break;
   }
   if(do_it) {
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
     if(current_link != NULL
        && current_link->slotframe_handle == 1) {
       // ENERGEST_OFF(ENERGEST_TYPE_UC_IDLE_LISTEN);
       ENERGEST_OFF(ENERGEST_TYPE_UC_LISTEN);
     }
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
     NETSTACK_RADIO.off();
   }
 }
@@ -882,12 +882,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif /* BUILD_WITH_RL_ASL */
     if(!packet_seen) {
       /* no packets on air */
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
     if(current_link != NULL
        && current_link->slotframe_handle == 1) {
       ENERGEST_IDLE_LISTEN(ENERGEST_TYPE_UC_LISTEN, ENERGEST_TYPE_UC_IDLE_LISTEN);
       }
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
     } else {
       TSCH_DEBUG_RX_EVENT();
@@ -1045,9 +1045,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 
             /* Log every reception */
-#if WITH_RL_ASL_NET
+#if BUILD_WITH_IDLE_LISTENING
             last_rx_asn = tsch_current_asn;
-#endif /* WITH_RL_ASL_NET */
+#endif /* BUILD_WITH_IDLE_LISTENING */
             TSCH_LOG_ADD(tsch_log_rx,
               linkaddr_copy(&log->rx.src, (linkaddr_t *)&frame.src_addr);
               log->rx.is_unicast = frame.fcf.ack_required;

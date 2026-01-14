@@ -81,11 +81,9 @@ struct orchestra_rule default_common = {
   select_packet,
   NULL,
   NULL,
-#if BUILD_WITH_RL_ASL
   NULL,
   NULL,
   NULL,
-#endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,
   "default common",

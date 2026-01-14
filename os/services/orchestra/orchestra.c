@@ -50,7 +50,7 @@
 
 #if BUILD_WITH_RL_ASL
 #include "rl-asl-packets.h"
-#include "rl-asl-buf.h"
+// #include "rl-asl-buf.h"
 #endif /* BUILD_WITH_RL_ASL */
 
 
@@ -78,7 +78,7 @@ orchestra_packet_received(void)
 {
 #if BUILD_WITH_RL_ASL
   /* Check if our parent just sent us a handshake */
-  if(rl_asl_buf_get_attr(RL_ASL_BUF_ATTR_NETWORK_ID) == RL_ASL_PROTO_HANDSHAKE_ACK
+  if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
      && !linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
      && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_SENDER))) {
     orchestra_parent_knows_us = 1;
@@ -94,7 +94,7 @@ orchestra_packet_sent(int mac_status)
      && mac_status == MAC_TX_OK
 #if (ROUTING_CONF_RPL_CLASSIC || ROUTING_CONF_RPL_LITE)
      && packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
-     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO))
+     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)
 #endif /* WITH_RL_ASL */
   )
     {
@@ -129,7 +129,6 @@ orchestra_callback_child_removed(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if BUILD_WITH_RL_ASL
 int
 orchestra_callback_activate_rx_link(void)
 {
@@ -143,9 +142,7 @@ orchestra_callback_activate_rx_link(void)
   }
   return 0;
 }
-#endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
-#if BUILD_WITH_RL_ASL
 int
 orchestra_callback_deactivate_rx_link(void)
 {
@@ -159,9 +156,7 @@ orchestra_callback_deactivate_rx_link(void)
   }
   return 0;
 }
-#endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
-#if BUILD_WITH_RL_ASL
 int
 orchestra_callback_deactivate_rx_parent_link(const linkaddr_t *parent_addr)
 {
@@ -175,7 +170,6 @@ orchestra_callback_deactivate_rx_parent_link(const linkaddr_t *parent_addr)
   }
   return 0;
 }
-#endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
 void
 orchestra_callback_neighbor_updated(const linkaddr_t *addr, uint8_t is_added)

@@ -48,11 +48,9 @@ struct orchestra_rule {
   int  (* select_packet)(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset);
   void (* child_added)(const linkaddr_t *addr);
   void (* child_removed)(const linkaddr_t *addr);
-#if BUILD_WITH_RL_ASL
   int  (* activate_rx_link)(void);
   int  (* deactivate_rx_link)(void);
   int  (* deactivate_rx_parent_link)(const linkaddr_t *parent_addr);
-#endif /* BUILD_WITH_RL_ASL */
   void (* neighbor_updated)(const linkaddr_t *addr, uint8_t is_added);
   void (* root_node_updated)(const linkaddr_t *addr, uint8_t is_added);
   const char *const name;
@@ -65,9 +63,9 @@ extern struct orchestra_rule unicast_per_neighbor_rpl_ns;
 extern struct orchestra_rule unicast_per_neighbor_link_based;
 extern struct orchestra_rule special_for_root;
 extern struct orchestra_rule default_common;
-#if WITH_RL_ASL_NET
+#if WITH_RL_ASL_ROUTING
 extern struct orchestra_rule unicast_per_neighbor_link_based_static;
-#endif /* WITH_RL_ASL_NET */
+#endif /* WITH_RL_ASL_ROUTING */
 #if BUILD_WITH_RL_ASL
 extern struct orchestra_rule unicast_rl_asl;
 extern struct orchestra_rule rl_asl_link_based;
@@ -91,14 +89,12 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-#if BUILD_WITH_RL_ASL
 /* Set with #define TSCH_CALLBACK_ACTIVATE_RX_LINK orchestra_callback_activate_rx_link */
 int orchestra_callback_activate_rx_link(void);
 /* Set with #define TSCH_CALLBACK_DEACTIVATE_RX_LINK orchestra_callback_deactivate_rx_link */
 int orchestra_callback_deactivate_rx_link(void);
 /* Set with #define TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK orchestra_callback_deactivate_rx_parent_link */
 int orchestra_callback_deactivate_rx_parent_link(const linkaddr_t *parent_addr);
-#endif /* BUILD_WITH_RL_ASL */
 
 /* Returns nonzero if the root slotframe should be used to transmit to the specific address */
 uint8_t orchestra_is_root_schedule_active(const linkaddr_t *addr);

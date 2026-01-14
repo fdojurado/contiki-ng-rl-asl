@@ -216,11 +216,9 @@ struct orchestra_rule unicast_per_neighbor_link_based = {
   select_packet,
   child_added,
   child_removed,
-#if BUILD_WITH_RL_ASL
   NULL,
   NULL,
   NULL,
-#endif /* BUILD_WITH_RL_ASL */
   NULL,
   NULL,
   "unicast per neighbor link based",

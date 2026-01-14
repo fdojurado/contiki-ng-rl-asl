@@ -7,8 +7,4 @@
 #define RL_ASL_UNICAST_SLOTFRAME_HANDLE 1
 #endif /* SRL_ASL_CONF_UNICAST_SLOTFRAME_HANDLE */
 
-#define TSCH_CALLBACK_ACTIVATE_RX_LINK orchestra_callback_activate_rx_link
-#define TSCH_CALLBACK_DEACTIVATE_RX_LINK orchestra_callback_deactivate_rx_link
-#define TSCH_CALLBACK_DEACTIVATE_RX_PARENT_LINK orchestra_callback_deactivate_rx_parent_link
-
 #endif /* RL_ASL_CONF_H */

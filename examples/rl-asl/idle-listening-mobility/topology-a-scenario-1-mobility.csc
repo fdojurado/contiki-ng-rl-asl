@@ -18,9 +18,9 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>root</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening-mobility/udp-server.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE idle-listening.cooja ROOT=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE udp-server.cooja ROOT=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -42,9 +42,9 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>relay</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening-mobility/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE idle-listening.cooja RELAY=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 RELAY=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
@@ -66,9 +66,9 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>leaf</identifier>
       <description>RPL/TSCH Node</description>
-      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening/idle-listening.c</source>
+      <source>[CONTIKI_DIR]/examples/rl-asl/idle-listening-mobility/idle-listening.c</source>
       <commands>$(MAKE) TARGET=cooja clean
-      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE idle-listening.cooja LEAF=1</commands>
+      $(MAKE) -j$(CPUS) TARGET=cooja MAKE_ROUTING=MAKE_ROUTING_RPL_LITE idle-listening.cooja MAKE_WITH_RL_ASL=1 MAKE_WITH_RL_ASL_TRAIN=0 LEAF=1</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
       <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>

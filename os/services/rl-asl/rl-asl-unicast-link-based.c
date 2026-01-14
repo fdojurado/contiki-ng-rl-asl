@@ -37,9 +37,9 @@
 #include "contiki.h"
 #include "orchestra.h"
 #include "net/routing/routing.h"
-#if WITH_RL_ASL_NET
+#if WITH_RL_ASL_ROUTING
 #include "rl-asl-routing.h"
-#endif /* WITH_RL_ASL_NET */
+#endif /* WITH_RL_ASL_ROUTING */
 #include "net/packetbuf.h"
 #include "os/sys/log.h"
 

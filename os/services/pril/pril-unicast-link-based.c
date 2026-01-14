@@ -39,9 +39,9 @@
 #include "net/routing/routing.h"
 #include "net/packetbuf.h"
 #include "pril-nbr.h"
-#if WITH_RL_ASL_NET
+#if WITH_RL_ASL_ROUTING
 #include "rl-asl-routing.h"
-#endif /* WITH_RL_ASL_NET */
+#endif /* WITH_RL_ASL_ROUTING */
 #include "os/sys/log.h"
 
 #define LOG_MODULE "PRIL Link-Based"

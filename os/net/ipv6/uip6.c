@@ -80,6 +80,10 @@
 #include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "net/routing/routing.h"
+#if BUILD_WITH_IDLE_LISTENING
+#include "rl-asl-packets.h"
+#include "rl-asl-data-packet-processor.h"
+#endif
 
 #if UIP_ND6_SEND_NS
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -314,6 +318,17 @@ uip_chksum(uint16_t *data, uint16_t len)
 {
   return uip_htons(chksum(0, (uint8_t *)data, len));
 }
+/*---------------------------------------------------------------------------*/
+#if BUILD_WITH_IDLE_LISTENING
+uint16_t idle_data_chksum(void)
+{
+    uint16_t sum;
+
+    sum = chksum(0, UIP_IP_PAYLOAD(0), RL_ASL_DATAH_LEN);
+    LOG_DBG("Data checksum: %04x\n", sum);
+    return (sum == 0) ? 0xffff : uip_htons(sum);
+}
+#endif /* BUILD_WITH_IDLE_LISTENING */
 /*---------------------------------------------------------------------------*/
 #ifndef UIP_ARCH_IPCHKSUM
 uint16_t
@@ -1295,6 +1310,23 @@ uip_process(uint8_t flag)
         /* Send ICMPv6 error, prepared by the function that just returned false */
         goto send;
       }
+
+#if BUILD_WITH_RL_ASL
+      if (next_header != NULL && uip_last_proto == UIP_PROTO_UDP)
+      {
+        LOG_INFO("Processing Hop-by-Hop header for RL-ASL\n");
+        unsigned char *buffer;
+        buffer = UIP_UDP_PAYLOAD;
+        if (buffer[0] == RL_ASL_PROTO_DATA)
+        {
+          uint16_t version = (buffer[1] << 8) | buffer[2];
+          LOG_INFO("Forwarding RL-ASL packet, dest: ");
+          LOG_INFO_6ADDR(&UIP_IP_BUF->destipaddr);
+          LOG_INFO_(" with RL-ASL version %u\n", version);
+          rl_asl_data_packet_input(&UIP_IP_BUF->srcipaddr, version);
+        }
+      }
+#endif /* BUILD_WITH_RL_ASL */
 
       LOG_INFO("Forwarding packet to next hop, dest: ");
       LOG_INFO_6ADDR(&UIP_IP_BUF->destipaddr);

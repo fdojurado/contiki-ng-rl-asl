@@ -49,19 +49,19 @@
 
 #include "contiki.h"
 
-#if !WITH_RL_ASL_NET
+#if !WITH_RL_ASL_ROUTING
 #include "net/ipv6/uip.h"
 #include "net/ipv6/uip-ds6-nbr.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-sr.h"
-#endif /* WITH_RL_ASL_NET */
+#endif /* WITH_RL_ASL_ROUTING */
 
 #include "net/linkaddr.h"
 
 /**
  * The structure of a routing protocol driver.
  */
-#if !WITH_RL_ASL_NET
+#if !WITH_RL_ASL_ROUTING
 struct routing_driver
 {
   char *name;
@@ -194,9 +194,9 @@ struct routing_driver
   uint8_t (*is_in_leaf_mode)(void);
 };
 
-#endif /* !WITH_RL_ASL_NET */
+#endif /* !WITH_RL_ASL_ROUTING */
 
-#if WITH_RL_ASL_NET
+#if WITH_RL_ASL_ROUTING
 struct routing_driver
 {
   char *name;
@@ -223,7 +223,7 @@ struct routing_driver
    */
   uint8_t (*is_in_leaf_mode)(void);
 };
-#endif /* WITH_RL_ASL_NET */
+#endif /* WITH_RL_ASL_ROUTING */
 
 #endif /* ROUTING_H_ */
 /**
