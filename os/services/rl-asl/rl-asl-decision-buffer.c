@@ -3,7 +3,11 @@
 /* Log system */
 #include "sys/log.h"
 #define LOG_MODULE "rl-asl-decision-buffer"
+#ifdef LOG_CONF_LEVEL_RL_ASL_BUF
 #define LOG_LEVEL LOG_CONF_LEVEL_RL_ASL_BUF
+#else
+#define LOG_LEVEL LOG_LEVEL_NONE
+#endif /* LOG_CONF_LEVEL_RL_ASL_BUF */
 
 rl_asl_decision_t rl_asl_decision_buffer[RL_ASL_DECISION_BUFFER_SIZE];
 static int decision_buffer_index = 0;
