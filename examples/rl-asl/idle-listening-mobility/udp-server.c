@@ -32,6 +32,7 @@
 #include "net/netstack.h"
 #include "net/ipv6/simple-udp.h"
 #include "rl-asl-handshake.h"
+#include "net/mac/tsch/tsch.h"
 
 #include "sys/log.h"
 #define LOG_MODULE "App"
@@ -61,12 +62,12 @@ udp_rx_callback(struct simple_udp_connection *c,
                 const uint8_t *data,
                 uint16_t datalen)
 {
-  uint8_t protocol = data[0];
   uint16_t seqnum = (data[1] << 8) | data[2];
-  LOG_INFO("Received UDP packet from ");
+  uint64_t full_asn = ((uint64_t)last_rx_asn.ms1b << 32) | last_rx_asn.ls4b;
+  LOG_INFO("Processing data packet input with seqnum %d at ASN %" PRIu64 ", from ",
+           seqnum, full_asn);
   LOG_INFO_6ADDR(sender_addr);
-  LOG_INFO_(", port %d, protocol %d, seqnum %d, length %d\n",
-            sender_port, protocol, seqnum, datalen);
+  LOG_INFO_("\n");
 #if WITH_SERVER_REPLY
   /* send back the same string to the client as an echo reply */
   LOG_INFO("Sending response.\n");
