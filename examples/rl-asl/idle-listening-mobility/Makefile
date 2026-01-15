@@ -18,7 +18,7 @@ MAKE_WITH_RL_ASL_TOPOLOGY_A ?= 1
 MAKE_WITH_LINK_BASED_ORCHESTRA ?= 0
 
 ifeq ($(MAKE_WITH_RL_ASL),1)
-MAKE_WITH_RL_ASL_MODEL ?= ../models/topology-a
+MAKE_WITH_RL_ASL_MODEL ?= ../idle-listening/results/topology-a/
 # Convert MODEL to an include path
 MODEL_INCLUDE += -I$(MAKE_WITH_RL_ASL_MODEL)
 CFLAGS += $(MODEL_INCLUDE) -DRL_ASL_MODEL_SCENARIO=\"$(MAKE_WITH_RL_ASL_MODEL)\"
