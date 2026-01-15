@@ -80,10 +80,10 @@
 #include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "net/routing/routing.h"
-#if BUILD_WITH_IDLE_LISTENING
+#if BUILD_WITH_RL_ASL
 #include "rl-asl-packets.h"
 #include "rl-asl-data-packet-processor.h"
-#endif
+#endif /* BUILD_WITH_RL_ASL */
 
 #if UIP_ND6_SEND_NS
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -319,7 +319,7 @@ uip_chksum(uint16_t *data, uint16_t len)
   return uip_htons(chksum(0, (uint8_t *)data, len));
 }
 /*---------------------------------------------------------------------------*/
-#if BUILD_WITH_IDLE_LISTENING
+#if BUILD_WITH_RL_ASL
 uint16_t idle_data_chksum(void)
 {
     uint16_t sum;
@@ -328,7 +328,7 @@ uint16_t idle_data_chksum(void)
     LOG_DBG("Data checksum: %04x\n", sum);
     return (sum == 0) ? 0xffff : uip_htons(sum);
 }
-#endif /* BUILD_WITH_IDLE_LISTENING */
+#endif /* BUILD_WITH_RL_ASL */
 /*---------------------------------------------------------------------------*/
 #ifndef UIP_ARCH_IPCHKSUM
 uint16_t
