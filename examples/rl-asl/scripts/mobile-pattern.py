@@ -6,7 +6,7 @@ import random
 # -----------------------------
 # Configuration
 # -----------------------------
-NODE_ID = 4
+NODE_ID = 3
 OUTPUT_FILE = "simple-topology-mobility.dat"
 
 # Circle definition

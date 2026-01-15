@@ -106,7 +106,7 @@
     <mote>
       <interface_config>
         org.contikios.cooja.interfaces.Position
-        <x>20</x>
+        <x>0</x>
         <y>40</y>
         <z>0.0</z>
       </interface_config>
@@ -123,7 +123,7 @@
     <mote>
       <interface_config>
         org.contikios.cooja.interfaces.Position
-        <x>-20</x>
+        <x>-40</x>
         <y>40</y>
         <z>0.0</z>
       </interface_config>
@@ -140,13 +140,30 @@
     <mote>
       <interface_config>
         org.contikios.cooja.interfaces.Position
+        <x>0</x>
+        <y>80</y>
+        <z>0.0</z>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.contikimote.interfaces.ContikiMoteID
+        <id>4</id>
+      </interface_config>
+      <interface_config>
+        org.contikios.cooja.contikimote.interfaces.ContikiRadio
+        <bitrate>250.0</bitrate>
+      </interface_config>
+      <motetype_identifier>leaf</motetype_identifier>
+    </mote>
+    <mote>
+      <interface_config>
+        org.contikios.cooja.interfaces.Position
         <x>40</x>
         <y>40</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
         org.contikios.cooja.contikimote.interfaces.ContikiMoteID
-        <id>4</id>
+        <id>5</id>
       </interface_config>
       <interface_config>
         org.contikios.cooja.contikimote.interfaces.ContikiRadio
@@ -210,13 +227,13 @@
     <location_x>0</location_x>
     <location_y>412</location_y>
   </plugin>
-  <plugin>
+  <!-- <plugin>
     org.contikios.cooja.plugins.Mobility
     <plugin_config>
       <positions>[CONFIG_DIR]/simple-topology-mobility.dat</positions>
     </plugin_config>
     <bounds x="0" y="0" height="200" width="500" z="4" />
-  </plugin>
+  </plugin> -->
   <plugin>
     org.contikios.cooja.plugins.RadioLogger
     <plugin_config>
