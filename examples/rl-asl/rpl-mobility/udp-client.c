@@ -17,9 +17,13 @@
 
 #define SEND_INTERVAL (10 * CLOCK_SECOND)
 
+#if LEAF
 static struct tsch_asn_t *asn = &tsch_current_asn;
+#endif /* LEAF */
 
+#if LEAF
 static struct simple_udp_connection udp_conn;
+#endif /* LEAF */
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client");
@@ -27,25 +31,37 @@ AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
 {
+#if LEAF
   static struct etimer periodic_timer;
   uip_ipaddr_t dest_ipaddr;
   static char payload[3];
   static int16_t seqnum = 0;
   static uint64_t full_asn;
+#endif /* LEAF */
 
   PROCESS_BEGIN();
 
   NETSTACK_MAC.on();
 
+#if LEAF
   /* Initialize UDP connection */
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, NULL);
+#endif /* LEAF */
 
+#if LEAF
   etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
+#endif /* LEAF */
+
   while (1)
   {
+#if LEAF
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+#else
+    PROCESS_YIELD();
+#endif /* LEAF */
 
+#if LEAF
     if (NETSTACK_ROUTING.node_is_reachable() &&
         NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr))
     {
@@ -65,6 +81,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
     /* Add some jitter */
     etimer_set(&periodic_timer, SEND_INTERVAL - CLOCK_SECOND + (random_rand() % (2 * CLOCK_SECOND)));
+#endif /* LEAF */
   }
 
   PROCESS_END();
