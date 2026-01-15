@@ -15,7 +15,7 @@ CENTER_Y = 40.0
 RADIUS = 40.0
 
 # Motion parameters
-SPEED_MPS = 0.5          # meters per second
+SPEED_MPS = 0.3          # meters per second
 TIME_STEP = 1.0          # seconds per mobility update
 
 # Pause parameters (seconds)
