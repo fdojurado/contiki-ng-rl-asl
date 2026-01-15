@@ -135,7 +135,7 @@
         org.contikios.cooja.contikimote.interfaces.ContikiRadio
         <bitrate>250.0</bitrate>
       </interface_config>
-      <motetype_identifier>leaf</motetype_identifier>
+      <motetype_identifier>relay</motetype_identifier>
     </mote>
     <mote>
       <interface_config>
