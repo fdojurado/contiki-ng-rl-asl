@@ -335,6 +335,12 @@ send_ack(uint16_t version, const uip_ipaddr_t *dest)
 /* Update parent address and trigger handshake send from handshake process. */
 void rl_asl_handshake_update_parent(const linkaddr_t *addr)
 {
+    // We only send a new handshake if the parent address changed
+    if (linkaddr_cmp(&parent_addr, addr))
+    {
+        LOG_INFO("Parent address unchanged, not updating\n");
+        return;
+    }
     // flush packets queued for previous parent
     tsch_queue_free_packets_to(&parent_addr);
     if (addr == NULL)
