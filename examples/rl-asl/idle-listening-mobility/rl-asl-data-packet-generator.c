@@ -313,7 +313,6 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
         etimer_set(&et, tx_interval * CLOCK_SECOND);
         first_start_done = true;
       }
-      continue;
     }
 
     /* If et fired, handle TX; but only when et was actually started (first_start_done) */
@@ -335,8 +334,8 @@ PROCESS_THREAD(data_packet_generator_process, ev, data)
 
       int is_reachable = NETSTACK_ROUTING.node_is_reachable();
       int has_root = NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr);
-      LOG_DBG("Timer expired, TSCH associated=%d, routing reachable=%d, has_root=%d\n",
-              tsch_is_associated, is_reachable, has_root);
+      LOG_DBG("Timer expired, TSCH associated=%d, routing reachable=%d, has_root=%d, tsch_is_associated=%d, orchestra_parent_knows_us=%d\n",
+              tsch_is_associated, is_reachable, has_root, tsch_is_associated, orchestra_parent_knows_us);
       if (!is_reachable || !has_root)
       {
         LOG_WARN("Routing not ready at TX time — postponing transmissions\n");

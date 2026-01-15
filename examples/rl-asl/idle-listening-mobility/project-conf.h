@@ -50,6 +50,8 @@
 
 #define RL_ASL_CONF_INIT_ENERGEST 50000L
 
+#define RPL_MRHOF_CONF_TIME_THRESHOLD_S 30
+
 #define TSCH_CALLBACK_PACKET_READY orchestra_callback_packet_ready
 #define TSCH_CALLBACK_NEW_TIME_SOURCE orchestra_callback_new_time_source
 #define NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK orchestra_callback_child_added

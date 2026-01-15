@@ -101,7 +101,11 @@
 /* Additional, custom hysteresis based on time. If a neighbor was consistently
  * better than our preferred parent for at least TIME_THRESHOLD, switch to
  * this neighbor regardless of RANK_THRESHOLD. */
+#ifdef RPL_MRHOF_CONF_TIME_THRESHOLD_S
+#define TIME_THRESHOLD (RPL_MRHOF_CONF_TIME_THRESHOLD_S * CLOCK_SECOND)
+#else /* RPL_MRHOF_CONF_TIME_THRESHOLD_S */
 #define TIME_THRESHOLD (10 * 60 * CLOCK_SECOND)
+#endif /* RPL_MRHOF_CONF_TIME_THRESHOLD_S */
 
 /*---------------------------------------------------------------------------*/
 static void
