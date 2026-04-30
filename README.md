@@ -44,7 +44,7 @@ Engage with the community:
 This fork extends Contiki-NG **release/v5.1** (tagged 2025-07-10) with the
 reference implementation of the paper **RL-ASL — A Dynamic Listening
 Optimization for TSCH Networks Using Reinforcement Learning**
-(arXiv:[2604.07533v2](https://arxiv.org/pdf/2604.07533v2)).
+(doi:[10.1109/TMC.2026.3688437](https://doi.org/10.1109/TMC.2026.3688437)).
 
 All RL-ASL changes were authored on top of upstream `release/v5.1`. The
 first RL-ASL commit is `8887a896c` (2025-09-15, *"feat(routing): add RL
