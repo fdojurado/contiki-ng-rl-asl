@@ -140,3 +140,27 @@ If you are reproducing a specific paper result, find the matching
 `.csc` file under `examples/rl-asl/idle-listening/` — its filename
 encodes the topology (`topology-a` / `topology-b`), scenario
 (`scenario-1..4`), and protocol variant.
+
+### Citing RL-ASL
+
+If you use any part of this code — the RL-ASL service, the Q-learning
+agent, the PRIL baseline, the Orchestra rules, the example
+applications, or the Python analysis pipeline — in academic work,
+please cite the paper:
+
+> F. F. Jurado-Lasso and J. F. Jurado, *"RL-ASL: A Dynamic Listening
+> Optimization for TSCH Networks Using Reinforcement Learning,"* IEEE
+> Transactions on Mobile Computing, 2026.
+> doi: [10.1109/TMC.2026.3688437](https://doi.org/10.1109/TMC.2026.3688437)
+
+BibTeX:
+
+```bibtex
+@article{juradolasso2026rlasl,
+  author  = {Jurado-Lasso, F. Fernando and Jurado, J. F.},
+  title   = {{RL-ASL}: A Dynamic Listening Optimization for {TSCH} Networks Using Reinforcement Learning},
+  journal = {IEEE Transactions on Mobile Computing},
+  year    = {2026},
+  doi     = {10.1109/TMC.2026.3688437}
+}
+```
